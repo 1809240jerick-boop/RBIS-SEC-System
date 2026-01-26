@@ -1,5 +1,5 @@
 // --- 1. UPDATE VERSION HERE ---
-const CACHE_NAME = 'rbi-system-v3'; 
+const CACHE_NAME = 'rbi-system-v4'; 
 
 // 2. Install: Safe caching strategy
 self.addEventListener('install', (event) => {
@@ -60,4 +60,5 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
+
 
