@@ -39,11 +39,10 @@
     .login-box { background: #212529; padding: 40px; border-radius: 10px; box-shadow: 0 0 20px rgba(255,255,255,0.1); width: 400px; text-align: center; }
     .d-none { display: none !important; }
     
-    /* --- THE FIX: PRINT AREA CONTROL --- */
-    #print-area { display: none; } /* Hidden on screen */
+    /* --- PRINT AREA CONTROL --- */
+    #print-area { display: none; } 
 
     @media print {
-        /* Hide everything except the print area */
         body > * { display: none !important; }
         #print-area { 
             display: block !important; 
@@ -53,7 +52,6 @@
             width: 100%; 
             background: white;
         }
-        /* Fix for potential blank pages */
         @page { size: auto; margin: 10mm; }
     }
 </style>
@@ -63,12 +61,14 @@
     <div id="security-overlay" class="overlay">
         <div class="login-box">
             <h3 class="mb-4"><i class="fas fa-shield-alt"></i> RBI SECURE</h3>
+            
             <div id="login-phase-1">
                 <p class="text-muted small mb-3">System requires Dynamic Authentication.</p>
                 <input type="password" id="dynamic-code" class="form-control mb-3 text-center" placeholder="Enter Dynamic Access Code">
                 <button onclick="checkDynamic()" class="btn btn-primary w-100">Authenticate</button>
                 <div class="mt-3 text-white-50" style="font-size: 0.8rem;" id="server-time-display"></div>
             </div>
+
             <div id="login-phase-2" class="d-none">
                 <p class="text-success small mb-3">Authentication Verified.</p>
                 <p class="text-muted small">Please set your personal password.</p>
@@ -76,6 +76,7 @@
                 <input type="password" id="confirm-custom-pass" class="form-control mb-3" placeholder="Confirm Password">
                 <button onclick="setCustomPassword()" class="btn btn-success w-100">Set Password & Login</button>
             </div>
+
             <div id="login-phase-3" class="d-none">
                 <p class="text-white small mb-3">Welcome Back</p>
                 <input type="password" id="input-custom-pass" class="form-control mb-3 text-center" placeholder="Enter Password">
@@ -102,7 +103,7 @@
     <div class="content" id="main-container">
         
         <div id="section-home">
-            <h2 class="mb-4">Dashboard Overview</h2>
+            <h2 class="mb-4"> Dashboard Overview</h2>
             <div class="row mb-4">
                 <div class="col-md-3">
                     <div class="card card-custom stat-card stat-primary p-3">
@@ -320,7 +321,13 @@
                         <p class="mb-3"><strong>House No:</strong> <span id="view-hh-num">-</span></p>
                         <input type="hidden" id="manage-hh-name">
                         <button class="btn btn-primary w-100 mb-2" onclick="showAddMemberModal()"><i class="fas fa-user-plus"></i> Add Member</button>
-                        <button class="btn btn-outline-dark w-100" onclick="printHousehold()"><i class="fas fa-print"></i> Print Household</button>
+                        <button class="btn btn-outline-dark w-100 mb-3" onclick="printHousehold()"><i class="fas fa-print"></i> Print Household</button>
+                        
+                        <div class="border-top pt-3">
+                            <label class="small text-muted mb-2">Manage Household</label>
+                            <button class="btn btn-warning w-100 mb-2 btn-sm" onclick="showEditHHModal()"><i class="fas fa-edit"></i> Edit Details</button>
+                            <button class="btn btn-danger w-100 btn-sm" onclick="deleteHH()"><i class="fas fa-trash"></i> Delete Household</button>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-8">
@@ -425,6 +432,27 @@
             </div>
         </div>
     </div>
+    
+    <div class="modal fade" id="modal-edit-hh" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header"><h5>Edit Household Details</h5></div>
+                <div class="modal-body">
+                    <input type="hidden" id="edit-hh-old-name">
+                    <label>Household Name (Family Name)</label>
+                    <input type="text" id="edit-hh-name" class="form-control text-uppercase mb-2">
+                    <label>Purok</label>
+                    <input type="text" id="edit-hh-purok" class="form-control text-uppercase mb-2">
+                    <label>House Number</label>
+                    <input type="text" id="edit-hh-num" class="form-control text-uppercase">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-success" onclick="saveEditedHH()">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="modal fade" id="modal-add-mem" tabindex="-1">
         <div class="modal-dialog">
@@ -496,9 +524,7 @@
     <script>
         // --- GLOBAL STATE ---
         let db = JSON.parse(localStorage.getItem('rbi_db')) || [];
-        // New: Separate DB for Household Metadata (Purok, House No)
         let household_db = JSON.parse(localStorage.getItem('rbi_hh_db')) || []; 
-        
         let settings = JSON.parse(localStorage.getItem('rbi_settings')) || {
             user_password: null,
             barangay: '', province: '', municipality: '', secretary: '', lguType: 'MUNICIPALITY'
@@ -508,14 +534,22 @@
         let stagingValid = [], stagingInvalid = [], stagingDup = [];
 
         document.addEventListener("DOMContentLoaded", () => {
+            // SECURITY CHECK: If password exists, skip Dynamic Code
             if(settings.user_password) {
-                document.getElementById('login-phase-1').classList.add('d-none');
-                document.getElementById('login-phase-3').classList.remove('d-none');
+                document.getElementById('login-phase-1').classList.add('d-none'); // Hide Dynamic Code
+                document.getElementById('login-phase-2').classList.add('d-none'); // Hide Set Pass
+                document.getElementById('login-phase-3').classList.remove('d-none'); // Show Login
+            } else {
+                // Ensure Dynamic Code is shown if no password
+                document.getElementById('login-phase-1').classList.remove('d-none');
+                document.getElementById('login-phase-2').classList.add('d-none');
+                document.getElementById('login-phase-3').classList.add('d-none');
             }
             updateServerTime();
-            renderList(); // Initial Render Trigger
+            renderList();
         });
 
+        // --- SECURITY FUNCTIONS ---
         function updateServerTime() {
             const now = new Date();
             document.getElementById('server-time-display').innerText = `System Time: ${now.toLocaleString()}`;
@@ -781,7 +815,7 @@
             }
         }
 
-        // --- DASHBOARD LIST FIXED ---
+        // --- DASHBOARD LIST ---
         function renderList() {
             const q = document.getElementById('search-input').value.toLowerCase();
             const list = document.getElementById('record-list');
@@ -903,6 +937,78 @@
             renderHHMembers(name);
         }
 
+        function showEditHHModal() {
+            const name = document.getElementById('manage-hh-name').value;
+            const meta = household_db.find(h => h.name === name) || { purok: '', houseNo: '' };
+            
+            document.getElementById('edit-hh-old-name').value = name;
+            document.getElementById('edit-hh-name').value = name;
+            document.getElementById('edit-hh-purok').value = meta.purok;
+            document.getElementById('edit-hh-num').value = meta.houseNo;
+            
+            new bootstrap.Modal(document.getElementById('modal-edit-hh')).show();
+        }
+
+        function saveEditedHH() {
+            const oldName = document.getElementById('edit-hh-old-name').value;
+            const newName = document.getElementById('edit-hh-name').value.toUpperCase();
+            const newPurok = document.getElementById('edit-hh-purok').value.toUpperCase();
+            const newNum = document.getElementById('edit-hh-num').value.toUpperCase();
+
+            if(!newName) return alert("Household Name cannot be empty");
+
+            if(oldName !== newName && household_db.some(h => h.name === newName)) {
+                return alert("Household Name already exists. Please choose another.");
+            }
+
+            let hh = household_db.find(h => h.name === oldName);
+            if(hh) {
+                hh.name = newName;
+                hh.purok = newPurok;
+                hh.houseNo = newNum;
+            } else {
+                household_db.push({ name: newName, purok: newPurok, houseNo: newNum });
+            }
+
+            if(oldName !== newName) {
+                db.forEach(r => {
+                    if(r.hh_name === oldName) {
+                        r.hh_name = newName;
+                    }
+                });
+            }
+
+            saveDB();
+            
+            const el = document.getElementById('modal-edit-hh');
+            const modal = bootstrap.Modal.getInstance(el);
+            if(modal) modal.hide();
+
+            loadHH(newName, newPurok, newNum);
+            renderHHList();
+            alert("Household details updated successfully.");
+        }
+
+        function deleteHH() {
+            const name = document.getElementById('manage-hh-name').value;
+            if(!confirm(`Are you sure you want to delete the household "${name}"? \n\nNote: Members will NOT be deleted, but they will be unassigned from this household.`)) return;
+
+            db.forEach(r => {
+                if(r.hh_name === name) {
+                    r.hh_name = '';
+                    r.hh_role = '';
+                }
+            });
+
+            household_db = household_db.filter(h => h.name !== name);
+
+            saveDB();
+            alert("Household deleted.");
+            document.getElementById('hh-view').style.display='none';
+            document.getElementById('hh-list-container').style.display='block';
+            renderHHList();
+        }
+
         function renderHHMembers(hhName) {
             const tbody = document.getElementById('hh-members-body');
             tbody.innerHTML = '';
@@ -981,7 +1087,7 @@
             document.getElementById('rep-family-total').innerText = totalFamilies;
         }
 
-        // --- PRINTING FUNCTIONS (FIXED) ---
+        // --- PRINTING FUNCTIONS ---
         function printStats() {
             const living = db.filter(r => !r.isDead);
             const ageBrackets = { '0-6 MOS': {m:0, f:0}, '6 MOS - 1 YR': {m:0, f:0}, '1 - 5 YRS': {m:0, f:0}, '5 - 12 YRS': {m:0, f:0}, '12 - 17 YRS': {m:0, f:0}, '17 - 18 YRS': {m:0, f:0}, '18 - 59 YRS': {m:0, f:0}, '60+ SENIOR': {m:0, f:0}, 'UNKNOWN': {m:0, f:0} };
@@ -1011,11 +1117,17 @@
             window.print();
         }
 
-        function printRBI(id) {
-            const r = db.find(x => x.id === id); if(!r) return;
-            const brgy = settings.barangay || "MUNICIPALITY"; const prov = settings.province || "PROVINCE"; const muni = settings.municipality || "___________";
+    function printRBI(id) {
+            const r = db.find(x => x.id === id); 
+            if(!r) return;
+
+            const brgy = settings.barangay || "BARANGAY"; 
+            const prov = settings.province || "PROVINCE"; 
+            const muni = settings.municipality || "___________";
             const lguLabel = settings.lguType === 'CITY' ? 'City' : 'Municipality';
             
+            const provinceLine = settings.lguType === 'CITY' ? '' : `<h4>Province of ${prov}</h4>`;
+
             const html = `
                 <style>
                     .rbi-modern { font-family: 'Arial', sans-serif; color: #000; max-width: 800px; margin: 0 auto; border: 2px solid #000; padding: 20px; position: relative; }
@@ -1035,7 +1147,13 @@
                     .watermark-footer { margin-top: 30px; border-top: 1px solid #ccc; padding-top: 5px; display: flex; justify-content: space-between; font-size: 8pt; color: #888; font-family: 'Courier New', monospace; }
                 </style>
                 <div class="rbi-modern">
-                    <div class="header-mod"><h4>Republic of the Philippines</h4><h4>Province of ${prov}</h4><h4>${lguLabel} of ${muni}</h4><h2>BARANGAY ${brgy}</h2><small>OFFICE OF THE PUNONG BARANGAY</small></div>
+                    <div class="header-mod">
+                        <h4>Republic of the Philippines</h4>
+                        ${provinceLine} 
+                        <h4>${lguLabel} of ${muni}</h4>
+                        <h2>BARANGAY ${brgy}</h2>
+                        <small>OFFICE OF THE PUNONG BARANGAY</small>
+                    </div>
                     <div class="form-title">Individual Record of Barangay Inhabitant (RBI)</div>
                     <div class="data-grid"><div class="data-box full"><span class="lbl">Full Name</span><span class="val">${r.last}, ${r.first} ${r.middle} ${r.suffix || ''}</span></div></div>
                     <div class="data-grid"><div class="data-box"><span class="lbl">Date of Birth</span><span class="val">${r.bdate}</span></div><div class="data-box"><span class="lbl">Sex</span><span class="val">${r.sex}</span></div><div class="data-box"><span class="lbl">Civil Status</span><span class="val">${r.civil}</span></div></div>
@@ -1107,10 +1225,12 @@
             XLSX.utils.book_append_sheet(wb, wsData, "DATA");
             XLSX.writeFile(wb, "RBI_Export_BIMS.xlsx");
         }
+
         function backupData() {
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({db, settings, household_db}));
             const a = document.createElement('a'); a.href = dataStr; a.download = "RBI_Backup.json"; a.click();
         }
+
         function restoreData(event) {
             const file = event.target.files[0]; if (!file) return;
             const reader = new FileReader();
@@ -1121,6 +1241,7 @@
                 } catch(err) { alert("Error reading file"); }
             }; reader.readAsText(file);
         }
+
         function previewImport() {
             const file = document.getElementById('import-file').files[0]; if(!file) return;
             const reader = new FileReader();
@@ -1150,15 +1271,30 @@
                 document.getElementById('modal-import').style.display = 'block'; document.getElementById('modal-import').classList.add('show'); showImportTab('valid');
             }; reader.readAsBinaryString(file);
         }
+
         function showImportTab(tab) { document.querySelectorAll('.import-view').forEach(el => el.classList.add('d-none')); document.getElementById('view-'+tab).classList.remove('d-none'); }
         function closeImportModal() { document.getElementById('modal-import').style.display = 'none'; document.getElementById('modal-import').classList.remove('show'); document.getElementById('import-file').value = ''; }
         function commitImport() { if(stagingValid.length === 0) return; db = db.concat(stagingValid); saveDB(); closeImportModal(); alert(`Imported ${stagingValid.length} records.`); showHome(); }
+
         function saveSettings() {
-            const sec = document.getElementById('set-sec').value; const brgy = document.getElementById('set-brgy').value; const prov = document.getElementById('set-prov').value; const muni = document.getElementById('set-muni').value; const lguType = document.getElementById('set-lgu-type').value;
-            if(!sec || !brgy || !prov) return alert("Please fill in Barangay, Province, and Secretary name.");
-            settings.secretary = sec.toUpperCase(); settings.barangay = brgy.toUpperCase(); settings.province = prov.toUpperCase(); settings.municipality = muni ? muni.toUpperCase() : ''; settings.lguType = lguType;
-            localStorage.setItem('rbi_settings', JSON.stringify(settings)); alert('Configuration Saved!');
+            const sec = document.getElementById('set-sec').value; 
+            const brgy = document.getElementById('set-brgy').value; 
+            const prov = document.getElementById('set-prov').value; 
+            const muni = document.getElementById('set-muni').value; 
+            const lguType = document.getElementById('set-lgu-type').value;
+
+            if(!sec || !brgy) return alert("Please fill in Barangay and Secretary name.");
+            
+            settings.secretary = sec.toUpperCase(); 
+            settings.barangay = brgy.toUpperCase(); 
+            settings.province = prov ? prov.toUpperCase() : ''; 
+            settings.municipality = muni ? muni.toUpperCase() : ''; 
+            settings.lguType = lguType;
+
+            localStorage.setItem('rbi_settings', JSON.stringify(settings)); 
+            alert('Configuration Saved!');
         }
     </script>
 </body>
 </html>
+
