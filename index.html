@@ -627,7 +627,38 @@
             alert("Please enter the Dynamic Access Code to reset your password.");
         }
         
-        function logout() { location.reload(); }
+        // --- LOGOUT (Updated: No Reload) ---
+        function logout() { 
+            // Hide Content
+            document.getElementById('main-container').classList.add('d-none');
+            document.querySelector('.sidebar').style.display = 'none'; // Optional visual tweak
+            
+            // Show Overlay & Login Phase 3
+            document.getElementById('security-overlay').classList.remove('d-none');
+            document.getElementById('login-phase-1').classList.add('d-none');
+            document.getElementById('login-phase-2').classList.add('d-none');
+            document.getElementById('login-phase-3').classList.remove('d-none');
+            
+            // Clear input for security
+            document.getElementById('input-custom-pass').value = '';
+            
+            // Note: If you want full reload, use location.reload(), 
+            // but this keeps state 'loaded' but locked.
+            // To ensure Sidebar re-appears on login, we add this small fix to verifyCustomPassword:
+        }
+        
+        // Patch verifyCustomPassword to show sidebar if hidden by logout
+        const originalVerify = verifyCustomPassword;
+        verifyCustomPassword = function() {
+            const input = document.getElementById('input-custom-pass').value;
+            if(input === settings.user_password) {
+                document.getElementById('security-overlay').classList.add('d-none');
+                document.getElementById('main-container').classList.remove('d-none'); // Ensure content visible
+                document.querySelector('.sidebar').style.display = 'block'; // Restore sidebar
+            } else {
+                alert("Incorrect Password.");
+            }
+        }
 
         // --- CORE FUNCTIONS ---
         function saveDB() {
@@ -647,7 +678,19 @@
         function showAdd() { hideAll(); document.getElementById('section-add').classList.remove('d-none'); clearForm(); }
         function showHouseholds() { hideAll(); document.getElementById('section-hh').classList.remove('d-none'); renderHHList(); }
         function showImport() { hideAll(); document.getElementById('section-import').classList.remove('d-none'); }
-        function showSettings() { hideAll(); document.getElementById('section-settings').classList.remove('d-none'); }
+        
+        // --- FIXED SETTINGS DISPLAY ---
+        function showSettings() { 
+            hideAll(); 
+            document.getElementById('section-settings').classList.remove('d-none');
+            // FILL INPUTS FROM SAVED DATA
+            document.getElementById('set-lgu-type').value = settings.lguType || 'MUNICIPALITY';
+            document.getElementById('set-prov').value = settings.province || '';
+            document.getElementById('set-muni').value = settings.municipality || '';
+            document.getElementById('set-brgy').value = settings.barangay || '';
+            document.getElementById('set-sec').value = settings.secretary || '';
+        }
+        
         function showDeaths() { hideAll(); document.getElementById('section-deaths').classList.remove('d-none'); renderDeathList(); }
 
         function calculateAgeDetailed(bdate) {
@@ -1297,4 +1340,3 @@
     </script>
 </body>
 </html>
-
