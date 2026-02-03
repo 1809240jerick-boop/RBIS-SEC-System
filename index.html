@@ -44,6 +44,7 @@
 
     @media print {
         body > * { display: none !important; }
+        .sidebar, .content, #security-overlay { display: none !important; }
         #print-area { 
             display: block !important; 
             position: absolute; 
@@ -51,8 +52,27 @@
             left: 0; 
             width: 100%; 
             background: white;
+            z-index: 99999;
         }
-        @page { size: auto; margin: 10mm; }
+        @page { margin: 10mm; }
+        
+        /* Strict Printing Rules */
+        .print-table { width: 100%; border-collapse: collapse; font-family: 'Times New Roman', serif; font-size: 10pt; }
+        .print-table th, .print-table td { border: 1px solid black; padding: 4px; vertical-align: middle; }
+        .print-header { text-align: left; font-family: 'Arial', sans-serif; margin-bottom: 10px; }
+        .print-title { font-weight: bold; font-size: 14pt; text-align: center; text-transform: uppercase; }
+        .print-subtitle { font-weight: bold; font-size: 11pt; text-align: center; text-transform: uppercase; margin-bottom: 20px; }
+        .print-label { font-weight: bold; display: inline-block; width: 180px; }
+        .print-line { border-bottom: 1px solid black; display: inline-block; width: 300px; }
+        .legal-text { font-size: 9pt; font-style: italic; text-align: justify; margin-top: 20px; }
+        .sig-box { margin-top: 40px; display: flex; justify-content: space-between; page-break-inside: avoid; }
+        .sig-line { border-top: 1px solid black; width: 200px; margin: 40px auto 5px auto; }
+        
+        /* Landscape specific for Form A */
+        .landscape-page {
+            width: 100%;
+            orientation: landscape;
+        }
     }
 </style>
 </head>
@@ -139,7 +159,7 @@
                  <div class="col-md-2"><div class="card p-2 text-center bg-white"><small>Adults</small><strong id="rep-adult">0</strong></div></div>
                  <div class="col-md-2"><div class="card p-2 text-center bg-white"><small>PWD</small><strong id="rep-pwd">0</strong></div></div>
                  <div class="col-md-2"><div class="card p-2 text-center bg-white"><small>Solo Parent</small><strong id="rep-solo">0</strong></div></div>
-                 <div class="col-md-2 mt-2"><div class="card p-2 text-center bg-white"><small>OSY</small><strong id="rep-osy">0</strong></div></div>
+                 <div class="col-md-2 mt-2"><div class="card p-2 text-center bg-white"><small>OSY (15-24)</small><strong id="rep-osy">0</strong></div></div>
             </div>
 
             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -184,6 +204,7 @@
                             <option value="FEMALE">FEMALE</option>
                         </select>
                     </div>
+                    
                     <div class="col-md-3">
                         <label>Civil Status</label>
                         <select id="f-civil" class="form-select">
@@ -191,12 +212,20 @@
                             <option value="MARRIED">MARRIED</option>
                             <option value="WIDOWED">WIDOWED</option>
                             <option value="SEPARATED">SEPARATED</option>
-                            <option value="LIVE-IN">LIVE-IN</option>
+                            <option value="LIVE-IN">LIVE-IN / COMMON LAW</option>
+                            <option value="ANNULLED">ANNULLED</option>
                         </select>
                     </div>
                     <div class="col-md-3">
+                        <label>Religion</label>
+                        <input type="text" id="f-religion" class="form-control text-uppercase" placeholder="e.g. ROMAN CATHOLIC">
+                    </div>
+                    <div class="col-md-3">
                         <label>Citizenship</label>
-                        <input type="text" id="f-citizen" class="form-control text-uppercase" value="FILIPINO">
+                        <select id="f-citizen" class="form-select">
+                            <option value="FILIPINO">FILIPINO</option>
+                            <option value="FOREIGNER">FOREIGNER</option>
+                        </select>
                     </div>
 
                     <div class="col-md-4">
@@ -205,7 +234,7 @@
                     </div>
                     <div class="col-md-4">
                         <label>Occupation</label>
-                        <input type="text" id="f-prof" class="form-control text-uppercase">
+                        <input type="text" id="f-prof" class="form-control text-uppercase" placeholder="Put 'Student' or 'Unemployed' if applicable">
                     </div>
                     <div class="col-md-4">
                         <label>PhilSys ID</label>
@@ -232,14 +261,38 @@
                     </div>
                     <div class="col-md-3">
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="f-osy">
-                            <label class="form-check-label">Out of School Youth (OSY)</label>
+                            <input class="form-check-input" type="checkbox" id="f-pwd">
+                            <label class="form-check-label">Person with Disability (PWD)</label>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="f-pwd">
-                            <label class="form-check-label">Person with Disability (PWD)</label>
+                            <input class="form-check-input" type="checkbox" id="f-ofw">
+                            <label class="form-check-label">OFW</label>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="f-ip">
+                            <label class="form-check-label">Indigenous People (IP)</label>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="f-osc">
+                            <label class="form-check-label">Out of School Child (6-14 y/o)</label>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="f-osy">
+                            <label class="form-check-label">Out of School Youth (15-24 y/o)</label>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="f-unemployed">
+                            <label class="form-check-label text-warning">Unemployed (Labor Force)</label>
                         </div>
                     </div>
                     <div class="col-md-3">
@@ -278,6 +331,7 @@
                             <option value="HIGH SCHOOL">HIGH SCHOOL</option>
                             <option value="COLLEGE UNDERGRAD">COLLEGE UNDERGRAD</option>
                             <option value="COLLEGE GRADUATE">COLLEGE GRADUATE</option>
+                            <option value="POST GRAD">POST GRAD</option>
                             <option value="VOCATIONAL">VOCATIONAL</option>
                             <option value="NONE">NONE</option>
                         </select>
@@ -321,7 +375,10 @@
                         <p class="mb-3"><strong>House No:</strong> <span id="view-hh-num">-</span></p>
                         <input type="hidden" id="manage-hh-name">
                         <button class="btn btn-primary w-100 mb-2" onclick="showAddMemberModal()"><i class="fas fa-user-plus"></i> Add Member</button>
-                        <button class="btn btn-outline-dark w-100 mb-3" onclick="printHousehold()"><i class="fas fa-print"></i> Print Household</button>
+                        
+                        <div class="d-grid gap-2 mb-3">
+                            <button class="btn btn-outline-dark" onclick="printFormA()"><i class="fas fa-print"></i> Print Form A (Household)</button>
+                        </div>
                         
                         <div class="border-top pt-3">
                             <label class="small text-muted mb-2">Manage Household</label>
@@ -392,6 +449,10 @@
                     </select>
                 </div>
                 <div class="mb-3">
+                    <label>Region</label>
+                    <input type="text" id="set-region" class="form-control text-uppercase" placeholder="e.g. REGION II">
+                </div>
+                <div class="mb-3">
                     <label>Province</label>
                     <input type="text" id="set-prov" class="form-control text-uppercase">
                 </div>
@@ -404,8 +465,12 @@
                     <input type="text" id="set-brgy" class="form-control text-uppercase">
                 </div>
                 <div class="mb-3">
+                    <label>Punong Barangay (Signatory)</label>
+                    <input type="text" id="set-captain" class="form-control text-uppercase" placeholder="Full Name of Captain">
+                </div>
+                <div class="mb-3">
                     <label>Barangay Secretary (Signatory)</label>
-                    <input type="text" id="set-sec" class="form-control text-uppercase">
+                    <input type="text" id="set-sec" class="form-control text-uppercase" placeholder="Full Name of Secretary">
                 </div>
                 <button class="btn btn-primary" onclick="saveSettings()">Save Configuration</button>
             </div>
@@ -413,134 +478,37 @@
 
     </div>
 
-    <div class="modal fade" id="modal-new-hh" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header"><h5>Create New Household</h5></div>
-                <div class="modal-body">
-                    <label>Household Name (Family Name)</label>
-                    <input type="text" id="new-hh-name" class="form-control text-uppercase mb-2">
-                    <label>Purok</label>
-                    <input type="text" id="new-hh-purok" class="form-control text-uppercase mb-2">
-                    <label>House Number</label>
-                    <input type="text" id="new-hh-num" class="form-control text-uppercase">
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary" onclick="createHH()">Create</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <div class="modal fade" id="modal-new-hh" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5>Create New Household</h5></div><div class="modal-body"><label>Household Name (Family Name)</label><input type="text" id="new-hh-name" class="form-control text-uppercase mb-2"><label>Purok</label><input type="text" id="new-hh-purok" class="form-control text-uppercase mb-2"><label>House Number</label><input type="text" id="new-hh-num" class="form-control text-uppercase"></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button><button type="button" class="btn btn-primary" onclick="createHH()">Create</button></div></div></div></div>
     
-    <div class="modal fade" id="modal-edit-hh" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header"><h5>Edit Household Details</h5></div>
-                <div class="modal-body">
-                    <input type="hidden" id="edit-hh-old-name">
-                    <label>Household Name (Family Name)</label>
-                    <input type="text" id="edit-hh-name" class="form-control text-uppercase mb-2">
-                    <label>Purok</label>
-                    <input type="text" id="edit-hh-purok" class="form-control text-uppercase mb-2">
-                    <label>House Number</label>
-                    <input type="text" id="edit-hh-num" class="form-control text-uppercase">
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-success" onclick="saveEditedHH()">Save Changes</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <div class="modal fade" id="modal-edit-hh" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5>Edit Household Details</h5></div><div class="modal-body"><input type="hidden" id="edit-hh-old-name"><label>Household Name (Family Name)</label><input type="text" id="edit-hh-name" class="form-control text-uppercase mb-2"><label>Purok</label><input type="text" id="edit-hh-purok" class="form-control text-uppercase mb-2"><label>House Number</label><input type="text" id="edit-hh-num" class="form-control text-uppercase"></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button><button type="button" class="btn btn-success" onclick="saveEditedHH()">Save Changes</button></div></div></div></div>
 
-    <div class="modal fade" id="modal-add-mem" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header"><h5>Add Member to Household</h5></div>
-                <div class="modal-body">
-                    <input type="text" id="search-mem-hh" class="form-control mb-2" placeholder="Search Resident..." onkeyup="searchMemForHH()">
-                    <div class="list-group" id="hh-search-results" style="max-height: 300px; overflow-y: auto;"></div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-add-mem')">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <div class="modal fade" id="modal-add-mem" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5>Add Member to Household</h5></div><div class="modal-body"><input type="text" id="search-mem-hh" class="form-control mb-2" placeholder="Search Resident..." onkeyup="searchMemForHH()"><div class="list-group" id="hh-search-results" style="max-height: 300px; overflow-y: auto;"></div></div><div class="modal-footer"><button type="button" class="btn btn-secondary" onclick="closeModal('modal-add-mem')">Close</button></div></div></div></div>
     
-    <div class="modal fade" id="modal-select-role" tabindex="-1">
-        <div class="modal-dialog modal-sm">
-            <div class="modal-content">
-                <div class="modal-header"><h5>Select Role</h5></div>
-                <div class="modal-body">
-                    <input type="hidden" id="temp-mem-id">
-                    <select id="select-role-input" class="form-select">
-                        <option value="HEAD">HEAD OF FAMILY</option>
-                        <option value="SPOUSE">SPOUSE</option>
-                        <option value="SON">SON</option>
-                        <option value="DAUGHTER">DAUGHTER</option>
-                        <option value="MEMBER">MEMBER (Other)</option>
-                    </select>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-primary w-100" onclick="confirmAddToHH()">Add</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <div class="modal fade" id="modal-select-role" tabindex="-1"><div class="modal-dialog modal-sm"><div class="modal-content"><div class="modal-header"><h5>Select Role</h5></div><div class="modal-body"><input type="hidden" id="temp-mem-id"><select id="select-role-input" class="form-select"><option value="HEAD">HEAD OF FAMILY</option><option value="SPOUSE">SPOUSE</option><option value="SON">SON</option><option value="DAUGHTER">DAUGHTER</option><option value="MEMBER">MEMBER (Other)</option></select></div><div class="modal-footer"><button type="button" class="btn btn-primary w-100" onclick="confirmAddToHH()">Add</button></div></div></div></div>
 
-    <div class="modal" id="modal-import" tabindex="-1" style="background:rgba(0,0,0,0.5);">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header"><h5>Import Preview</h5></div>
-                <div class="modal-body">
-                    <ul class="nav nav-tabs mb-3">
-                        <li class="nav-item"><a class="nav-link active" onclick="showImportTab('valid')" href="#">Valid (<span id="count-valid">0</span>)</a></li>
-                        <li class="nav-item"><a class="nav-link text-warning" onclick="showImportTab('dup')" href="#">Duplicates (<span id="count-dup">0</span>)</a></li>
-                        <li class="nav-item"><a class="nav-link text-danger" onclick="showImportTab('invalid')" href="#">Invalid (<span id="count-invalid">0</span>)</a></li>
-                    </ul>
-                    <div id="view-valid" class="import-view" style="max-height:300px; overflow-y:auto;">
-                        <p class="text-success">Ready to import <span id="lbl-valid-count">0</span> records.</p>
-                    </div>
-                    <div id="view-dup" class="import-view d-none" style="max-height:300px; overflow-y:auto;">
-                        <div id="list-dup" class="text-warning small"></div>
-                    </div>
-                    <div id="view-invalid" class="import-view d-none" style="max-height:300px; overflow-y:auto;">
-                        <div id="list-invalid" class="text-danger small"></div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" onclick="closeImportModal()">Cancel</button>
-                    <button class="btn btn-success" id="btn-commit-import" onclick="commitImport()" disabled>Import Valid Records</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <div class="modal" id="modal-import" tabindex="-1" style="background:rgba(0,0,0,0.5);"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5>Import Preview</h5></div><div class="modal-body"><ul class="nav nav-tabs mb-3"><li class="nav-item"><a class="nav-link active" onclick="showImportTab('valid')" href="#">Valid (<span id="count-valid">0</span>)</a></li><li class="nav-item"><a class="nav-link text-warning" onclick="showImportTab('dup')" href="#">Duplicates (<span id="count-dup">0</span>)</a></li><li class="nav-item"><a class="nav-link text-danger" onclick="showImportTab('invalid')" href="#">Invalid (<span id="count-invalid">0</span>)</a></li></ul><div id="view-valid" class="import-view" style="max-height:300px; overflow-y:auto;"><p class="text-success">Ready to import <span id="lbl-valid-count">0</span> records.</p></div><div id="view-dup" class="import-view d-none" style="max-height:300px; overflow-y:auto;"><div id="list-dup" class="text-warning small"></div></div><div id="view-invalid" class="import-view d-none" style="max-height:300px; overflow-y:auto;"><div id="list-invalid" class="text-danger small"></div></div></div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeImportModal()">Cancel</button><button class="btn btn-success" id="btn-commit-import" onclick="commitImport()" disabled>Import Valid Records</button></div></div></div></div>
 
     <div id="print-area"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
+	<script>
         // --- GLOBAL STATE ---
         let db = JSON.parse(localStorage.getItem('rbi_db')) || [];
         let household_db = JSON.parse(localStorage.getItem('rbi_hh_db')) || []; 
         let settings = JSON.parse(localStorage.getItem('rbi_settings')) || {
             user_password: null,
-            barangay: '', province: '', municipality: '', secretary: '', lguType: 'MUNICIPALITY'
+            barangay: '', province: '', municipality: '', secretary: '', region: '', captain: '', lguType: 'MUNICIPALITY'
         };
 
         // Temporary Import Staging
         let stagingValid = [], stagingInvalid = [], stagingDup = [];
 
         document.addEventListener("DOMContentLoaded", () => {
-            // SECURITY CHECK: If password exists, skip Dynamic Code
             if(settings.user_password) {
-                document.getElementById('login-phase-1').classList.add('d-none'); // Hide Dynamic Code
-                document.getElementById('login-phase-2').classList.add('d-none'); // Hide Set Pass
-                document.getElementById('login-phase-3').classList.remove('d-none'); // Show Login
+                document.getElementById('login-phase-1').classList.add('d-none');
+                document.getElementById('login-phase-2').classList.add('d-none');
+                document.getElementById('login-phase-3').classList.remove('d-none');
             } else {
-                // Ensure Dynamic Code is shown if no password
                 document.getElementById('login-phase-1').classList.remove('d-none');
                 document.getElementById('login-phase-2').classList.add('d-none');
                 document.getElementById('login-phase-3').classList.add('d-none');
@@ -559,8 +527,7 @@
             d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
             d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
             var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-            var weekNo = Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);
-            return weekNo;
+            return Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);
         }
 
         function numToLetter(num) {
@@ -586,7 +553,7 @@
             const hourLetter = String.fromCharCode(97 + hours);
             const code = `RBI-${month}${day}${year}${week}${dayLetter}${ampm}${hourLetter}`;
             
-            console.log("Expected:", code);
+            console.log("Expected:", code); // Debugging
 
             if(input === code) {
                 if(settings.user_password) {
@@ -615,6 +582,8 @@
             const input = document.getElementById('input-custom-pass').value;
             if(input === settings.user_password) {
                 document.getElementById('security-overlay').classList.add('d-none');
+                document.getElementById('main-container').classList.remove('d-none');
+                document.querySelector('.sidebar').style.display = 'block';
             } else {
                 alert("Incorrect Password.");
             }
@@ -627,39 +596,16 @@
             alert("Please enter the Dynamic Access Code to reset your password.");
         }
         
-        // --- LOGOUT (Updated: No Reload) ---
         function logout() { 
-            // Hide Content
             document.getElementById('main-container').classList.add('d-none');
-            document.querySelector('.sidebar').style.display = 'none'; // Optional visual tweak
-            
-            // Show Overlay & Login Phase 3
+            document.querySelector('.sidebar').style.display = 'none';
             document.getElementById('security-overlay').classList.remove('d-none');
             document.getElementById('login-phase-1').classList.add('d-none');
             document.getElementById('login-phase-2').classList.add('d-none');
             document.getElementById('login-phase-3').classList.remove('d-none');
-            
-            // Clear input for security
             document.getElementById('input-custom-pass').value = '';
-            
-            // Note: If you want full reload, use location.reload(), 
-            // but this keeps state 'loaded' but locked.
-            // To ensure Sidebar re-appears on login, we add this small fix to verifyCustomPassword:
         }
         
-        // Patch verifyCustomPassword to show sidebar if hidden by logout
-        const originalVerify = verifyCustomPassword;
-        verifyCustomPassword = function() {
-            const input = document.getElementById('input-custom-pass').value;
-            if(input === settings.user_password) {
-                document.getElementById('security-overlay').classList.add('d-none');
-                document.getElementById('main-container').classList.remove('d-none'); // Ensure content visible
-                document.querySelector('.sidebar').style.display = 'block'; // Restore sidebar
-            } else {
-                alert("Incorrect Password.");
-            }
-        }
-
         // --- CORE FUNCTIONS ---
         function saveDB() {
             localStorage.setItem('rbi_db', JSON.stringify(db));
@@ -679,15 +625,15 @@
         function showHouseholds() { hideAll(); document.getElementById('section-hh').classList.remove('d-none'); renderHHList(); }
         function showImport() { hideAll(); document.getElementById('section-import').classList.remove('d-none'); }
         
-        // --- FIXED SETTINGS DISPLAY ---
         function showSettings() { 
             hideAll(); 
             document.getElementById('section-settings').classList.remove('d-none');
-            // FILL INPUTS FROM SAVED DATA
             document.getElementById('set-lgu-type').value = settings.lguType || 'MUNICIPALITY';
+            document.getElementById('set-region').value = settings.region || '';
             document.getElementById('set-prov').value = settings.province || '';
             document.getElementById('set-muni').value = settings.municipality || '';
             document.getElementById('set-brgy').value = settings.barangay || '';
+            document.getElementById('set-captain').value = settings.captain || '';
             document.getElementById('set-sec').value = settings.secretary || '';
         }
         
@@ -705,18 +651,26 @@
             return { y: years, m: months, d: days, totalMonths: (years * 12) + months };
         }
 
-        function getAgeBracket(bdate) {
+        function getFormCBracket(bdate) {
             const age = calculateAgeDetailed(bdate);
-            const tm = age.totalMonths;
             const y = age.y;
-            if (tm <= 6) return '0-6 MOS';
-            if (tm > 6 && y < 1) return '6 MOS - 1 YR';
-            if (y >= 1 && y < 5) return '1 - 5 YRS';
-            if (y >= 5 && y < 12) return '5 - 12 YRS';
-            if (y >= 12 && y < 17) return '12 - 17 YRS';
-            if (y >= 17 && y < 18) return '17 - 18 YRS';
-            if (y >= 18 && y < 60) return '18 - 59 YRS';
-            if (y >= 60) return '60+ SENIOR';
+            if (y < 5) return 'Under 5 years old';
+            if (y >= 5 && y <= 9) return '5-9 years old';
+            if (y >= 10 && y <= 14) return '10-14 years old';
+            if (y >= 15 && y <= 19) return '15-19 years old';
+            if (y >= 20 && y <= 24) return '20-24 years old';
+            if (y >= 25 && y <= 29) return '25-29 years old';
+            if (y >= 30 && y <= 34) return '30-34 years old';
+            if (y >= 35 && y <= 39) return '35-39 years old';
+            if (y >= 40 && y <= 44) return '40-44 years old';
+            if (y >= 45 && y <= 49) return '45-49 years old';
+            if (y >= 50 && y <= 54) return '50-54 years old';
+            if (y >= 55 && y <= 59) return '55-59 years old';
+            if (y >= 60 && y <= 64) return '60-64 years old';
+            if (y >= 65 && y <= 69) return '65-69 years old';
+            if (y >= 70 && y <= 74) return '70-74 years old';
+            if (y >= 75 && y <= 79) return '75-79 years old';
+            if (y >= 80) return '80 years old and over';
             return 'UNKNOWN';
         }
 
@@ -767,6 +721,7 @@
                 bdate: bdate,
                 sex: document.getElementById('f-sex').value,
                 civil: document.getElementById('f-civil').value,
+                religion: document.getElementById('f-religion').value, // NEW FIELD
                 citizen: document.getElementById('f-citizen').value,
                 philsys: document.getElementById('f-philsys').value,
                 bplace: document.getElementById('f-bplace').value,
@@ -775,10 +730,14 @@
                 mother_first: document.getElementById('f-m-first').value,
                 mother_middle: document.getElementById('f-m-middle').value,
                 isSoloParent: document.getElementById('f-solo').checked,
+                isPwd: document.getElementById('f-pwd').checked,
+                isOfw: document.getElementById('f-ofw').checked,
+                isIp: document.getElementById('f-ip').checked,
+                isOsc: document.getElementById('f-osc').checked,
                 isOSY: document.getElementById('f-osy').checked,
+                isUnemployed: document.getElementById('f-unemployed').checked,
                 isDead: document.getElementById('f-dead').checked,
                 deathDate: document.getElementById('f-death-date').value,
-                isPwd: document.getElementById('f-pwd').checked, 
                 contact: document.getElementById('f-contact').value,
                 email: document.getElementById('f-email').value,
                 edu: document.getElementById('f-edu').value,
@@ -791,7 +750,7 @@
             saveDB();
             alert('Saved');
             if(record.isDead) showDeaths();
-            else showHome(); // This triggers renderList
+            else showHome(); 
         }
 
         function loadRecord(id) {
@@ -807,7 +766,8 @@
             document.getElementById('f-bdate').value = r.bdate;
             document.getElementById('f-sex').value = r.sex;
             document.getElementById('f-civil').value = r.civil;
-            document.getElementById('f-citizen').value = r.citizen;
+            document.getElementById('f-religion').value = r.religion || ''; // NEW FIELD
+            document.getElementById('f-citizen').value = r.citizen || 'FILIPINO';
             document.getElementById('f-philsys').value = r.philsys || '';
             document.getElementById('f-bplace').value = r.bplace || '';
             document.getElementById('f-prof').value = r.prof || '';
@@ -815,11 +775,15 @@
             document.getElementById('f-m-first').value = r.mother_first || '';
             document.getElementById('f-m-middle').value = r.mother_middle || '';
             document.getElementById('f-solo').checked = r.isSoloParent || false;
+            document.getElementById('f-pwd').checked = r.isPwd || false;
+            document.getElementById('f-ofw').checked = r.isOfw || false;
+            document.getElementById('f-ip').checked = r.isIp || false;
+            document.getElementById('f-osc').checked = r.isOsc || false;
             document.getElementById('f-osy').checked = r.isOSY || false;
+            document.getElementById('f-unemployed').checked = r.isUnemployed || false;
             document.getElementById('f-dead').checked = r.isDead || false;
             document.getElementById('f-death-date').value = r.deathDate || '';
             toggleDeathInput(); 
-            document.getElementById('f-pwd').checked = r.isPwd || false;
             document.getElementById('f-contact').value = r.contact || '';
             document.getElementById('f-email').value = r.email || '';
             document.getElementById('f-edu').value = r.edu || '';
@@ -843,6 +807,7 @@
             document.querySelectorAll('#section-add select').forEach(s => s.selectedIndex = 0);
             document.querySelectorAll('#section-add input[type=checkbox]').forEach(c => c.checked = false);
             document.getElementById('f-citizen').value = 'FILIPINO';
+            document.getElementById('f-religion').value = ''; // NEW CLEAR
             document.getElementById('btn-del').style.display = 'none';
             document.getElementById('mother-search-results').classList.add('d-none');
             toggleDeathInput();
@@ -885,6 +850,7 @@
                 if(r.isPwd) badges += '<span class="badge bg-danger me-1">PWD</span>';
                 if(r.isSoloParent) badges += '<span class="badge bg-info text-dark me-1">SOLO</span>';
                 if(r.isOSY) badges += '<span class="badge bg-secondary me-1">OSY</span>';
+                if(r.isOfw) badges += '<span class="badge bg-primary me-1">OFW</span>';
 
                 item.innerHTML = `
                     <div class="d-flex justify-content-between align-items-center">
@@ -895,7 +861,7 @@
                             ${badges}
                         </div>
                         <div class="no-print">
-                            <button class="btn btn-sm btn-outline-dark" onclick="event.stopPropagation(); printRBI('${r.id}')"><i class="fas fa-print"></i></button>
+                            <button class="btn btn-sm btn-outline-dark" onclick="event.stopPropagation(); printFormB('${r.id}')"><i class="fas fa-print"></i> Form B</button>
                         </div>
                     </div>
                 `;
@@ -1102,6 +1068,384 @@
             if(r) { r.hh_name = hh; r.hh_role = role; saveDB(); renderHHMembers(hh); closeModal('modal-select-role'); }
         }
 
+        // --- FORM A PRINT LOGIC (STRICT) ---
+        function printFormA() {
+            const hhName = document.getElementById('manage-hh-name').value;
+            const purok = document.getElementById('view-hh-purok').innerText;
+            const houseNo = document.getElementById('view-hh-num').innerText;
+
+            const members = db.filter(r => r.hh_name === hhName && !r.isDead);
+            // Sort: Head first
+            members.sort((a,b) => { 
+                const roles = {'HEAD': 1, 'SPOUSE': 2, 'SON': 3, 'DAUGHTER': 4, 'MEMBER': 5};
+                const ra = roles[a.hh_role] || 99; const rb = roles[b.hh_role] || 99;
+                if(ra !== rb) return ra - rb; return a.last.localeCompare(b.last); 
+            });
+
+            // Build rows
+            let rowsHtml = '';
+            members.forEach((m, i) => {
+                let indicators = [];
+                if(m.prof && !m.isUnemployed) indicators.push("Employed");
+                if(m.isUnemployed) indicators.push("Unemployed");
+                if(m.isPwd) indicators.push("PWD");
+                if(m.isOfw) indicators.push("OFW");
+                if(m.isSoloParent) indicators.push("Solo Parent");
+                if(m.isOSY) indicators.push("OSY");
+                if(m.isOsc) indicators.push("OSC");
+                if(m.isIp) indicators.push("IP");
+
+                rowsHtml += `
+                <tr>
+                    <td>${i+1}</td>
+                    <td>${m.last}</td>
+                    <td>${m.first}</td>
+                    <td>${m.middle}</td>
+                    <td>${m.suffix || ''}</td>
+                    <td>${m.bplace}</td>
+                    <td>${m.bdate}</td>
+                    <td>${calculateAgeDetailed(m.bdate).y}</td>
+                    <td>${m.sex}</td>
+                    <td>${m.civil}</td>
+                    <td>${m.citizen || 'FILIPINO'}</td>
+                    <td>${m.prof || ''}</td>
+                    <td>${indicators.join(', ')}</td>
+                </tr>`;
+            });
+
+            // Fill empty rows to looks like a full form
+            for(let i=members.length; i<15; i++) {
+                rowsHtml += `<tr><td>${i+1}</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`;
+            }
+
+            const html = `
+            <div class="landscape-page">
+                <div class="print-header">
+                    <strong>RBI FORM A (Revised 2024)</strong><br>
+                    <strong>RECORDS OF BARANGAY INHABITANTS BY HOUSEHOLD</strong>
+                </div>
+                
+                <table style="width:100%; margin-bottom: 10px; font-family: Arial; font-size: 10pt;">
+                    <tr>
+                        <td style="border:none; width: 100px;">REGION:</td>
+                        <td style="border:none; border-bottom: 1px solid black;">${settings.region}</td>
+                        <td style="border:none; width: 50px;"></td>
+                        <td style="border:none; width: 150px;">PROVINCE:</td>
+                        <td style="border:none; border-bottom: 1px solid black;">${settings.province}</td>
+                    </tr>
+                    <tr>
+                        <td style="border:none;">CITY/MUNICIPALITY:</td>
+                        <td style="border:none; border-bottom: 1px solid black;">${settings.municipality}</td>
+                        <td style="border:none;"></td>
+                        <td style="border:none;">BARANGAY:</td>
+                        <td style="border:none; border-bottom: 1px solid black;">${settings.barangay}</td>
+                    </tr>
+                    <tr>
+                        <td style="border:none;">HOUSEHOLD ADDRESS:</td>
+                        <td style="border:none; border-bottom: 1px solid black;" colspan="4">PUROK ${purok}, HOUSE NO. ${houseNo}</td>
+                    </tr>
+                    <tr>
+                        <td style="border:none;">NO. OF MEMBERS:</td>
+                        <td style="border:none; border-bottom: 1px solid black;">${members.length}</td>
+                    </tr>
+                </table>
+
+                <table class="print-table">
+                    <thead>
+                        <tr>
+                            <th rowspan="2" width="3%">NO.</th>
+                            <th colspan="4" width="25%">NAME</th>
+                            <th rowspan="2" width="10%">PLACE OF BIRTH</th>
+                            <th rowspan="2" width="8%">DATE OF BIRTH</th>
+                            <th rowspan="2" width="4%">AGE</th>
+                            <th rowspan="2" width="5%">SEX</th>
+                            <th rowspan="2" width="8%">CIVIL STATUS</th>
+                            <th rowspan="2" width="8%">CITIZENSHIP</th>
+                            <th rowspan="2" width="10%">OCCUPATION</th>
+                            <th rowspan="2" width="15%">REMARKS / STATUS</th>
+                        </tr>
+                        <tr>
+                            <th>LAST NAME</th>
+                            <th>FIRST NAME</th>
+                            <th>MIDDLE NAME</th>
+                            <th>EXT</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rowsHtml}
+                    </tbody>
+                </table>
+
+                <div class="sig-box">
+                    <div style="text-align:center;">
+                        <p>Prepared by:</p>
+                        <div class="sig-line"></div>
+                        <strong>Name of Household/Head Member</strong><br>
+                        (Signature over Printed Name)
+                    </div>
+                    <div style="text-align:center;">
+                        <p>Certified Correct:</p>
+                        <div class="sig-line"><b>${settings.secretary}</b></div>
+                        <strong>Barangay Secretary</strong><br>
+                        (Signature over Printed Name)
+                    </div>
+                    <div style="text-align:center;">
+                        <p>Validated by:</p>
+                        <div class="sig-line"><b>${settings.captain}</b></div>
+                        <strong>Punong Barangay</strong><br>
+                        (Signature over Printed Name)
+                    </div>
+                </div>
+
+                <div class="legal-text">
+                    "I hereby certify that the above information are true and correct to the best of my knowledge. I understand that for the Barangay to carry out its mandate pursuant 
+                    to Section 394 (d)(6) of the Local Government Code of 1991, they must necessarily process my personal information for easy identification of inhabitants, as a tool in planning, and as an updated reference in the number of inhabitants of the Barangay.
+                    Therefore, I grant my consent and recognize the authority of the Barangay to process my personal information, subject to the provision of the Philippine Data Privacy Act of 2012."
+                </div>
+            </div>`;
+
+            const area = document.getElementById('print-area');
+            area.innerHTML = html;
+            window.print();
+        }
+
+        // --- FORM B PRINT LOGIC (STRICT COMPLIANCE REVISED 2024) ---
+        function printFormB(id) {
+            const r = db.find(x => x.id === id);
+            if (!r) return;
+
+            // Helper to check education boxes
+            const chk = (val, target) => (val === target) ? '&#9745;' : '&#9744;';
+            const edu = r.edu || '';
+            
+            // Logic to determine Graduate/Undergrad check
+            let isElem = edu === 'ELEMENTARY';
+            let isHS = edu === 'HIGH SCHOOL';
+            let isCol = edu.includes('COLLEGE');
+            let isPost = edu === 'POST GRAD';
+            let isVoc = edu === 'VOCATIONAL';
+            let isGrad = edu.includes('GRADUATE') && !edu.includes('UNDER');
+            let isUnder = edu.includes('UNDER');
+
+            // Get Household Number if assigned
+            let hhNum = '';
+            if (r.hh_name) {
+                const hhObj = household_db.find(h => h.name === r.hh_name);
+                if (hhObj) hhNum = hhObj.houseNo;
+            }
+
+            const html = `
+            <style>
+                @media print {
+                    @page { margin: 10mm; size: portrait; }
+                    body { -webkit-print-color-adjust: exact; }
+                }
+                .form-b-container { font-family: Arial, sans-serif; width: 100%; max-width: 800px; margin: 0 auto; color: black; }
+                .form-header { text-align: center; margin-bottom: 20px; text-transform: uppercase; line-height: 1.2; }
+                .form-title { font-weight: 800; font-size: 13pt; margin-top: 15px; }
+                .main-box { border: 2px solid black; padding: 2px; }
+                .box-title { text-align: center; font-weight: bold; padding: 5px; font-size: 11pt; margin-bottom: 10px; }
+                
+                /* Input Field Style mimics */
+                .input-box { border: 1px solid black; height: 25px; display: flex; align-items: center; padding-left: 5px; font-weight: bold; font-size: 10pt; background: #fff; }
+                .label-under { text-align: center; font-size: 8pt; margin-top: 2px; margin-bottom: 5px; }
+                
+                /* Table Layout for precision */
+                .layout-table { width: 100%; border-collapse: separate; border-spacing: 5px 0; }
+                .layout-table td { vertical-align: bottom; }
+
+                /* Edu Checkboxes */
+                .chk-group { display: flex; gap: 10px; font-size: 9pt; align-items: center; margin-left: 10px; }
+                .chk-box { font-size: 14pt; line-height: 10pt; }
+
+                .legal-text { text-align: justify; font-size: 8pt; margin: 15px 5px; line-height: 1.1; }
+                
+                .thumb-box { border: 1px solid black; width: 80px; height: 80px; margin: 0 auto; }
+                .sig-line { border-bottom: 1px solid black; margin-top: 30px; }
+                
+                .underline { border-bottom: 1px solid black; display: inline-block; padding: 0 5px; min-width: 150px; text-align: center; font-weight: bold;}
+            </style>
+
+            <div class="form-b-container">
+                <div class="form-header">
+                    <div style="font-size: 9pt;">RBI Form B (Revised 2024)</div>
+                    <div class="form-title">INDIVIDUAL RECORDS OF BARANGAY INHABITANT</div>
+                </div>
+
+                <table style="width:100%; font-size: 9pt; font-weight: bold; margin-bottom: 10px;">
+                    <tr>
+                        <td width="10%">REGION</td><td width="2%">:</td>
+                        <td style="border-bottom: 1px solid black;">${settings.region}</td>
+                        <td width="5%"></td>
+                        <td width="15%">CITY/MUN</td><td width="2%">:</td>
+                        <td style="border-bottom: 1px solid black;">${settings.municipality}</td>
+                    </tr>
+                    <tr>
+                        <td>PROVINCE</td><td>:</td>
+                        <td style="border-bottom: 1px solid black;">${settings.province}</td>
+                        <td></td>
+                        <td>BARANGAY</td><td>:</td>
+                        <td style="border-bottom: 1px solid black;">${settings.barangay}</td>
+                    </tr>
+                </table>
+
+                <div class="main-box">
+                    <div class="box-title">PERSONAL INFORMATION</div>
+
+                    <table class="layout-table">
+                        <tr>
+                            <td width="30%">
+                                <div class="input-box">${r.philsys || ''}</div>
+                                <div class="label-under">(PhilSys Card No.)</div>
+                            </td>
+                            <td width="70%"></td>
+                        </tr>
+                    </table>
+
+                    <table class="layout-table">
+                        <tr>
+                            <td width="25%">
+                                <div class="input-box">${r.last}</div>
+                                <div class="label-under">(Last Name)</div>
+                            </td>
+                            <td width="10%">
+                                <div class="input-box">${r.suffix || ''}</div>
+                                <div class="label-under">(Suffix)</div>
+                            </td>
+                            <td width="35%">
+                                <div class="input-box">${r.first}</div>
+                                <div class="label-under">(First Name)</div>
+                            </td>
+                            <td width="30%">
+                                <div class="input-box">${r.middle || ''}</div>
+                                <div class="label-under">(Middle Name)</div>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <table class="layout-table">
+                        <tr>
+                            <td width="20%">
+                                <div class="input-box">${r.bdate}</div>
+                                <div class="label-under">(Birth Date: mm/dd/yyyy)</div>
+                            </td>
+                            <td width="30%">
+                                <div class="input-box">${r.bplace || ''}</div>
+                                <div class="label-under">(Birth Place)</div>
+                            </td>
+                            <td width="10%">
+                                <div class="input-box">${r.sex}</div>
+                                <div class="label-under">(Sex)</div>
+                            </td>
+                            <td width="15%">
+                                <div class="input-box">${r.civil}</div>
+                                <div class="label-under">(Civil Status)</div>
+                            </td>
+                            <td width="25%">
+                                <div class="input-box">${r.religion || ''}</div>
+                                <div class="label-under">(Religion)</div>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <table class="layout-table">
+                        <tr>
+                            <td width="65%">
+                                <div class="input-box">${r.address}</div>
+                                <div class="label-under">(Residence Address)</div>
+                            </td>
+                            <td width="35%">
+                                <div class="input-box">${r.citizen || 'FILIPINO'}</div>
+                                <div class="label-under">(Citizenship)</div>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <table class="layout-table">
+                        <tr>
+                            <td width="35%">
+                                <div class="input-box">${r.prof || ''}</div>
+                                <div class="label-under">(Profession / Occupation)</div>
+                            </td>
+                            <td width="30%">
+                                <div class="input-box">${r.contact || ''}</div>
+                                <div class="label-under">(Contact Number)</div>
+                            </td>
+                            <td width="35%">
+                                <div class="input-box">${r.email || ''}</div>
+                                <div class="label-under">(E-mail Address)</div>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <hr style="border-top: 1px dashed #ccc; margin: 5px 0;">
+
+                    <div style="font-size: 9pt; padding: 5px;">
+                        <strong>HIGHEST EDUCATIONAL ATTAINMENT:</strong>
+                        <span class="chk-group" style="display:inline-flex;">
+                            <span><span class="chk-box">${chk(isElem, true)}</span> ELEMENTARY</span>
+                            <span><span class="chk-box">${chk(isHS, true)}</span> HIGH SCHOOL</span>
+                            <span><span class="chk-box">${chk(isCol, true)}</span> COLLEGE</span>
+                            <span><span class="chk-box">${chk(isPost, true)}</span> POST GRAD</span>
+                            <span><span class="chk-box">${chk(isVoc, true)}</span> VOCATIONAL</span>
+                        </span>
+                        <div style="margin-top:5px; margin-left: 200px;">
+                            <em>Please specify:</em> 
+                            <span class="chk-box" style="margin-left: 10px;">${chk(isGrad, true)}</span> Graduate 
+                            <span class="chk-box" style="margin-left: 20px;">${chk(isUnder, true)}</span> Under Graduate
+                        </div>
+                    </div>
+
+                    <div class="legal-text">
+                        I hereby certify that the above information is true and correct to the best of my knowledge. I understand that for the Barangay to carry out its mandate pursuant to Section 394 (d)(6) of the Local Government Code of 1991, they must necessarily process my personal information for easy identification of inhabitants, as a tool in planning, and as an updated reference in the number of inhabitants of the Barangay. Therefore, I grant my consent and recognize the authority of the Barangay to process my personal information, subject to the provision of the Philippine Data Privacy Act of 2012.
+                    </div>
+
+                    <table style="width:100%; margin-top: 30px; font-size: 9pt;">
+                        <tr>
+                            <td width="40%" style="text-align:center;">
+                                <div class="sig-line"></div>
+                                <div>Date Accomplished</div>
+                            </td>
+                            <td width="20%"></td>
+                            <td width="40%" style="text-align:center;">
+                                <div class="sig-line"></div>
+                                <div>Name/Signature of Person Accomplishing the Form</div>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <div style="margin-top: 20px; font-size: 9pt;">Attested By:</div>
+
+                    <table style="width:100%; margin-top: 10px; font-size: 9pt;">
+                        <tr>
+                            <td width="40%" style="text-align:center; vertical-align: bottom;">
+                                <div class="sig-line" style="font-weight:bold; text-transform:uppercase;">${settings.secretary}</div>
+                                <div style="font-weight:bold;">Barangay Secretary</div>
+                            </td>
+                            <td width="30%" style="text-align:center;">
+                                <div class="thumb-box"></div>
+                                <div style="font-size:8pt;">Left Thumbmark</div>
+                            </td>
+                            <td width="30%" style="text-align:center;">
+                                <div class="thumb-box"></div>
+                                <div style="font-size:8pt;">Right Thumbmark</div>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <div style="margin-top: 20px; display: flex; align-items: center;">
+                        <span style="font-weight:bold; font-size: 9pt; margin-right: 10px;">Household Number:</span>
+                        <div style="border: 2px solid black; width: 200px; height: 30px; display:flex; align-items:center; justify-content:center; font-weight:bold;">${hhNum}</div>
+                    </div>
+                    <div style="font-size: 8pt; font-style: italic; margin-top: 5px;">Note: The household number shall be filled up by the Barangay Secretary.</div>
+                </div>
+            </div>`;
+
+            const area = document.getElementById('print-area');
+            area.innerHTML = html;
+            window.print();
+        }
+
         // --- REPORTING ---
         function updateReportUI() {
             const living = db.filter(r => !r.isDead);
@@ -1133,98 +1477,143 @@
         // --- PRINTING FUNCTIONS ---
         function printStats() {
             const living = db.filter(r => !r.isDead);
-            const ageBrackets = { '0-6 MOS': {m:0, f:0}, '6 MOS - 1 YR': {m:0, f:0}, '1 - 5 YRS': {m:0, f:0}, '5 - 12 YRS': {m:0, f:0}, '12 - 17 YRS': {m:0, f:0}, '17 - 18 YRS': {m:0, f:0}, '18 - 59 YRS': {m:0, f:0}, '60+ SENIOR': {m:0, f:0}, 'UNKNOWN': {m:0, f:0} };
-            let solo = 0, osy = 0, pwd = 0;
+            // 1. Initialize Age Brackets
+            const ageData = {
+                'Under 5 years old': {m:0, f:0}, '5-9 years old': {m:0, f:0}, '10-14 years old': {m:0, f:0},
+                '15-19 years old': {m:0, f:0}, '20-24 years old': {m:0, f:0}, '25-29 years old': {m:0, f:0},
+                '30-34 years old': {m:0, f:0}, '35-39 years old': {m:0, f:0}, '40-44 years old': {m:0, f:0},
+                '45-49 years old': {m:0, f:0}, '50-54 years old': {m:0, f:0}, '55-59 years old': {m:0, f:0},
+                '60-64 years old': {m:0, f:0}, '65-69 years old': {m:0, f:0}, '70-74 years old': {m:0, f:0},
+                '75-79 years old': {m:0, f:0}, '80 years old and over': {m:0, f:0}
+            };
+
+            // 2. Initialize Sector Indicators
+            const sectorData = {
+                'Labor Force': {m:0, f:0}, 'Unemployed': {m:0, f:0}, 
+                'Out of School Children (OSC) (6-14 years old)': {m:0, f:0}, 
+                'Out of School Youth (OSY) (15-24 years old)': {m:0, f:0},
+                'Person with Disabilities (PWDs)': {m:0, f:0}, 'Overseas Filipino Workers (OFWs)': {m:0, f:0},
+                'Solo Parents': {m:0, f:0}, 'Indigenous Peoples (IPs)': {m:0, f:0}
+            };
+
+            // 3. Initialize Civil Status & Citizenship
+            const civilData = { 'Single': {m:0, f:0}, 'Married': {m:0, f:0}, 'Widowed': {m:0, f:0}, 'Separated': {m:0, f:0}, 'Live-in/Common Law': {m:0, f:0} };
+            const citizenData = { 'Filipino': {m:0, f:0}, 'Foreigner': {m:0, f:0} };
+
+            // 4. Totals
+            const totalFamilies = living.filter(r => r.hh_role === 'HEAD').length;
+            const uniqueHH = new Set(living.map(r => r.hh_name).filter(n => n && n.trim() !== ''));
+            const totalHH = uniqueHH.size;
+
+            // 5. Process Data
             living.forEach(r => {
-                const cat = getAgeBracket(r.bdate);
-                if(r.sex === 'MALE') ageBrackets[cat].m++; else ageBrackets[cat].f++;
-                if(r.isSoloParent) solo++; if(r.isOSY) osy++; if(r.isPwd) pwd++;
+                const sexKey = (r.sex === 'MALE') ? 'm' : 'f';
+                const bracket = getFormCBracket(r.bdate);
+                if(ageData[bracket]) ageData[bracket][sexKey]++;
+
+                // Sector Logic
+                if(r.isOsc) sectorData['Out of School Children (OSC) (6-14 years old)'][sexKey]++;
+                if(r.isOSY) sectorData['Out of School Youth (OSY) (15-24 years old)'][sexKey]++;
+                if(r.isPwd) sectorData['Person with Disabilities (PWDs)'][sexKey]++;
+                if(r.isOfw) sectorData['Overseas Filipino Workers (OFWs)'][sexKey]++;
+                if(r.isSoloParent) sectorData['Solo Parents'][sexKey]++;
+                if(r.isIp) sectorData['Indigenous Peoples (IPs)'][sexKey]++;
+                if(r.isUnemployed) sectorData['Unemployed'][sexKey]++;
+                
+                // Labor Force Logic (Age 15+ AND (Has Occupation OR Unemployed))
+                const age = calculateAgeDetailed(r.bdate).y;
+                if(age >= 15 && (r.prof || r.isUnemployed)) {
+                    sectorData['Labor Force'][sexKey]++;
+                }
+
+                // Civil Status
+                let cStatus = r.civil ? r.civil.charAt(0).toUpperCase() + r.civil.slice(1).toLowerCase() : 'Single';
+                if(cStatus === 'Live-in') cStatus = 'Live-in/Common Law';
+                if(civilData[cStatus]) civilData[cStatus][sexKey]++;
+                
+                // Citizenship
+                let cit = r.citizen ? r.citizen.charAt(0).toUpperCase() + r.citizen.slice(1).toLowerCase() : 'Filipino';
+                if(citizenData[cit]) citizenData[cit][sexKey]++;
             });
-            let tableRows = '';
-            let totalM = 0, totalF = 0;
-            for (const [bracket, counts] of Object.entries(ageBrackets)) {
-                if(bracket === 'UNKNOWN' && (counts.m + counts.f) === 0) continue;
-                const sub = counts.m + counts.f;
-                totalM += counts.m; totalF += counts.f;
-                tableRows += `<tr><td style="text-align:left; padding-left:10px;">${bracket}</td><td>${counts.m}</td><td>${counts.f}</td><td>${sub}</td></tr>`;
-            }
-            const html = `
-                <style>.stat-table { width: 100%; border-collapse: collapse; text-align: center; font-family: Arial, sans-serif; } .stat-table th, .stat-table td { border: 1px solid black; padding: 5px; } .stat-header { background-color: #ddd; font-weight: bold; }</style>
-                <div style="text-align:center; margin-bottom:20px; font-family: sans-serif;"><h3>DEMOGRAPHIC SUMMARY</h3><p>Barangay: ${settings.barangay} | Municipality/City: ${settings.municipality || '___________'}</p></div>
-                <table class="stat-table"><thead><tr class="stat-header"><th>AGE BRACKET</th><th>MALE</th><th>FEMALE</th><th>TOTAL</th></tr></thead><tbody>${tableRows}<tr style="font-weight:bold; background:#eee;"><td>GRAND TOTAL</td><td>${totalM}</td><td>${totalF}</td><td>${totalM + totalF}</td></tr></tbody></table>
-                <br><table class="stat-table" style="width:50%; margin: 0 auto;"><tr class="stat-header"><th colspan="2">SPECIAL CATEGORIES</th></tr><tr><td style="text-align:left; padding-left:20px;">Solo Parents</td><td>${solo}</td></tr><tr><td style="text-align:left; padding-left:20px;">Out of School Youth (OSY)</td><td>${osy}</td></tr><tr><td style="text-align:left; padding-left:20px;">PWD</td><td>${pwd}</td></tr><tr><td style="text-align:left; padding-left:20px;">Senior Citizens</td><td>${ageBrackets['60+ SENIOR'].m + ageBrackets['60+ SENIOR'].f}</td></tr></table>
-                <br><br><p style="text-align:center; font-family:sans-serif;">Certified Correct:<br><br><u>${settings.secretary}</u><br>Barangay Secretary</p>`;
-            
-            const area = document.getElementById('print-area');
-            area.innerHTML = html;
-            window.print();
-        }
 
-    function printRBI(id) {
-            const r = db.find(x => x.id === id); 
-            if(!r) return;
-
-            const brgy = settings.barangay || "BARANGAY"; 
-            const prov = settings.province || "PROVINCE"; 
-            const muni = settings.municipality || "___________";
-            const lguLabel = settings.lguType === 'CITY' ? 'City' : 'Municipality';
-            
-            const provinceLine = settings.lguType === 'CITY' ? '' : `<h4>Province of ${prov}</h4>`;
+            // 6. Build HTML Table Rows
+            const buildRows = (obj) => {
+                let html = '';
+                for (const [key, val] of Object.entries(obj)) {
+                    html += `<tr><td style="text-align:left; padding-left:20px;">${key}</td><td>${val.m}</td><td>${val.f}</td><td>${val.m + val.f}</td><td></td></tr>`;
+                }
+                return html;
+            };
 
             const html = `
                 <style>
-                    .rbi-modern { font-family: 'Arial', sans-serif; color: #000; max-width: 800px; margin: 0 auto; border: 2px solid #000; padding: 20px; position: relative; }
-                    .header-mod { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
-                    .header-mod h4 { margin: 0; font-size: 12pt; font-weight: normal; text-transform: uppercase; }
-                    .header-mod h2 { margin: 5px 0; font-size: 18pt; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
-                    .form-title { text-align: center; background: #000; color: #fff; font-weight: bold; padding: 5px; text-transform: uppercase; font-size: 14pt; margin-bottom: 20px; border-radius: 4px; }
-                    .data-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-                    .data-box { border: 1px solid #666; padding: 5px; border-radius: 2px; }
-                    .data-box.full { grid-column: span 3; } .data-box.two-thirds { grid-column: span 2; }
-                    .lbl { display: block; font-size: 8pt; color: #555; text-transform: uppercase; font-weight: bold; margin-bottom: 2px; }
-                    .val { display: block; font-size: 11pt; font-weight: 600; text-transform: uppercase; min-height: 18px; }
-                    .legal-text { font-size: 9pt; text-align: justify; line-height: 1.4; margin: 20px 0; font-style: italic; color: #333; }
-                    .sigs { display: flex; justify-content: space-between; margin-top: 40px; } .sig-block { text-align: center; width: 45%; }
-                    .line { border-bottom: 1px solid #000; margin-bottom: 5px; height: 30px; }
-                    .thumbs { display: flex; justify-content: center; gap: 10px; margin-top: 10px; } .thumb-box { width: 80px; height: 100px; border: 1px dashed #000; display: flex; align-items: flex-end; justify-content: center; font-size: 8pt; padding-bottom: 5px; color: #666; }
-                    .watermark-footer { margin-top: 30px; border-top: 1px solid #ccc; padding-top: 5px; display: flex; justify-content: space-between; font-size: 8pt; color: #888; font-family: 'Courier New', monospace; }
+                    .form-c { font-family: Arial, sans-serif; width: 100%; border-collapse: collapse; font-size: 10pt; }
+                    .form-c th, .form-c td { border: 1px solid black; padding: 4px; text-align: center; }
+                    .form-c .left { text-align: left; font-weight: bold; background: #f0f0f0; }
+                    .header-sec { text-align: center; margin-bottom: 20px; }
+                    .header-sec h3, .header-sec h4 { margin: 2px; }
+                    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; font-weight: bold; font-size: 11pt; }
                 </style>
-                <div class="rbi-modern">
-                    <div class="header-mod">
-                        <h4>Republic of the Philippines</h4>
-                        ${provinceLine} 
-                        <h4>${lguLabel} of ${muni}</h4>
-                        <h2>BARANGAY ${brgy}</h2>
-                        <small>OFFICE OF THE PUNONG BARANGAY</small>
+                <div class="header-sec">
+                    <h3>RBI FORM C (Revised 2024)</h3>
+                    <h2>MONITORING REPORT</h2>
+                    <p>for ___ Semester of CY ${new Date().getFullYear()}</p>
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <div>REGION : ${settings.region || '_________'}</div>
+                    <div>PROVINCE: ${settings.province || '_________'}</div>
+                    <div>CITY/MUNICIPALITY: ${settings.municipality || '_________'}</div>
+                    <div>BARANGAY: ${settings.barangay || '_________'}</div>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <div>Total No. of Barangay Inhabitants: <b>${living.length}</b></div>
+                    <div>Total No. of Households: <b>${totalHH}</b></div>
+                    <div>Total No. of Families: <b>${totalFamilies}</b></div>
+                </div>
+
+                <table class="form-c">
+                    <thead>
+                        <tr>
+                            <th style="width:40%">INDICATORS</th>
+                            <th>MALE</th>
+                            <th>FEMALE</th>
+                            <th>TOTAL</th>
+                            <th>REMARKS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="5" class="left">Population by Age Bracket:</td></tr>
+                        ${buildRows(ageData)}
+                        
+                        <tr><td colspan="5" class="left">Population by Sector:</td></tr>
+                        ${buildRows(sectorData)}
+
+                        <tr><td colspan="5" class="left">Civil Status:</td></tr>
+                        ${buildRows(civilData)}
+
+                        <tr><td colspan="5" class="left">Citizenship:</td></tr>
+                        ${buildRows(citizenData)}
+                    </tbody>
+                </table>
+
+                <div style="margin-top: 50px; display: flex; justify-content: space-between; text-align: center;">
+                    <div style="width: 40%;">
+                        <p>Prepared by:</p>
+                        <br><br>
+                        <div style="border-bottom: 1px solid black; font-weight: bold;">${settings.secretary || '_________________'}</div>
+                        <div>Barangay Secretary</div>
                     </div>
-                    <div class="form-title">Individual Record of Barangay Inhabitant (RBI)</div>
-                    <div class="data-grid"><div class="data-box full"><span class="lbl">Full Name</span><span class="val">${r.last}, ${r.first} ${r.middle} ${r.suffix || ''}</span></div></div>
-                    <div class="data-grid"><div class="data-box"><span class="lbl">Date of Birth</span><span class="val">${r.bdate}</span></div><div class="data-box"><span class="lbl">Sex</span><span class="val">${r.sex}</span></div><div class="data-box"><span class="lbl">Civil Status</span><span class="val">${r.civil}</span></div></div>
-                    <div class="data-grid"><div class="data-box two-thirds"><span class="lbl">Place of Birth</span><span class="val">${r.bplace}</span></div><div class="data-box"><span class="lbl">Citizenship</span><span class="val">${r.citizen}</span></div></div>
-                    <div class="data-grid"><div class="data-box full"><span class="lbl">Mother's Maiden Name</span><span class="val">${r.mother_last || ''}, ${r.mother_first || ''} ${r.mother_middle || ''}</span></div></div>
-                    <div class="data-grid"><div class="data-box"><span class="lbl">PhilSys ID No.</span><span class="val">${r.philsys || 'N/A'}</span></div><div class="data-box two-thirds"><span class="lbl">Profession / Occupation</span><span class="val">${r.prof || 'N/A'}</span></div></div>
-                    <div class="data-grid"><div class="data-box full"><span class="lbl">Current Address</span><span class="val">${r.address}</span></div></div>
-                    <div class="data-grid"><div class="data-box"><span class="lbl">Contact No.</span><span class="val">${r.contact}</span></div><div class="data-box two-thirds"><span class="lbl">Highest Educational Attainment</span><span class="val">${r.edu}</span></div></div>
-                    <p class="legal-text"><strong>CERTIFICATION & CONSENT:</strong> I hereby certify that the above information is true and correct. I authorize the Barangay ${brgy} to process my personal data for the purpose of maintaining the Registry of Barangay Inhabitants (RBI).</p>
-                    <div class="sigs"><div class="sig-block"><div class="line"></div><div>Signature of Inhabitant</div><div class="thumbs"><div class="thumb-box">L Thumb</div><div class="thumb-box">R Thumb</div></div></div><div class="sig-block"><br><br><div class="line" style="font-weight:bold;">${settings.secretary}</div><div>BARANGAY SECRETARY</div><small style="display:block; margin-top:5px; color:#555;">(Official Seal)</small></div></div>
-                    <div class="watermark-footer"><span>RBI Form 101 - Rev 2026</span></div>
+                    <div style="width: 40%;">
+                        <p>Submitted by:</p>
+                        <br><br>
+                        <div style="border-bottom: 1px solid black; font-weight: bold;">${settings.captain || '_________________'}</div>
+                        <div>Punong Barangay</div>
+                    </div>
                 </div>
             `;
-            const area = document.getElementById('print-area');
-            area.innerHTML = html;
-            window.print();
-        }
-
-        function printHousehold() {
-            const hhName = document.getElementById('manage-hh-name').value;
-            const members = db.filter(r => r.hh_name === hhName && !r.isDead);
-            members.sort((a,b) => { 
-                const roles = {'HEAD': 1, 'SPOUSE': 2, 'SON': 3, 'DAUGHTER': 4, 'MEMBER': 5};
-                const ra = roles[a.hh_role] || 99; const rb = roles[b.hh_role] || 99;
-                if(ra !== rb) return ra - rb; return a.last.localeCompare(b.last); 
-            });
-            let rows = members.map(m => `<tr><td>${m.last}, ${m.first}</td><td>${m.hh_role}</td><td>${m.sex}</td><td>${calculateAgeDetailed(m.bdate).y}</td><td>${m.civil}</td></tr>`).join('');
-            const html = `<style>.rbi-page { margin: 20px; font-family: sans-serif; } table { width: 100%; border-collapse: collapse; } th, td { border: 1px solid black; padding: 5px; }</style><div class="rbi-page"><h2>HOUSEHOLD: ${hhName}</h2><table><thead><tr><th>Name</th><th>Role</th><th>Sex</th><th>Age</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table><br><br><p>Certified Correct: <u>${settings.secretary}</u></p></div>`;
+            
             const area = document.getElementById('print-area');
             area.innerHTML = html;
             window.print();
@@ -1240,7 +1629,6 @@
             window.print();
         }
 
-        // --- IMPORT EXPORT ---
         function processExport() {
             const instrHeader = ["COLUMNS", "EXPECTED VALUES/ FORMAT", "REMARKS"];
             const instrData = [
@@ -1251,15 +1639,16 @@
                 ["", "MARRIED", "Required Field"], ["", "WIDOWED", "Required Field"], ["", "DIVORCED", "Required Field"],
                 ["", "SEPARATED", "Required Field"], ["", "COMMON LAW/ LIVE-IN", "Required Field"], ["", "UNKNOWN", "Required Field"],
                 ["", "ANNULLED", "Required Field"], ["CITIZENSHIP", "FILIPINO", "Required Field"], ["", "FOREIGNER", "Required Field"],
+                ["RELIGION", "", "Optional Field"],
                 ["PROFESSION/ OCCUPATION", "", "Optional Field"], ["CONTACT NUMBER", "", "Optional Field"], ["EMAIL ADDRESS", "", "Optional Field"],
                 ["HIGHEST EDUCATIONAL ATTAINMENT", "", "Optional Field"], ["MOTHER'S FIRST NAME", "", "Optional Field"],
                 ["MOTHER'S MIDDLE NAME", "", "Optional Field"], ["MOTHER'S LAST NAME", "", "Optional Field"]
             ];
-            const dataHeader = ["INHABITANT TYPE", "LAST NAME", "FIRST NAME", "MIDDLE NAME", "SUFFIX", "BIRTH PLACE", "BIRTHDATE (YYYY-MM-DD)", "SEX", "CIVIL STATUS", "CITIZENSHIP", "PROFESSION/ OCCUPATION", "CONTACT NUMBER", "EMAIL ADDRESS", "HIGHEST EDUCATIONAL ATTAINMENT", "MOTHER'S FIRST NAME", "MOTHER'S MIDDLE NAME", "MOTHER'S LAST NAME"];
+            const dataHeader = ["INHABITANT TYPE", "LAST NAME", "FIRST NAME", "MIDDLE NAME", "SUFFIX", "BIRTH PLACE", "BIRTHDATE (YYYY-MM-DD)", "SEX", "CIVIL STATUS", "CITIZENSHIP", "RELIGION", "PROFESSION/ OCCUPATION", "CONTACT NUMBER", "EMAIL ADDRESS", "HIGHEST EDUCATIONAL ATTAINMENT", "MOTHER'S FIRST NAME", "MOTHER'S MIDDLE NAME", "MOTHER'S LAST NAME"];
             const living = db.filter(r => !r.isDead);
             const dataRows = living.map(r => [
                 r.type || "", r.last || "", r.first || "", r.middle || "", r.suffix || "", r.bplace || "", r.bdate || "", r.sex || "", r.civil || "",
-                r.citizen || "FILIPINO", r.prof || "", r.contact || "", r.email || "", r.edu || "", r.mother_first || "", r.mother_middle || "", r.mother_last || ""
+                r.citizen || "FILIPINO", r.religion || "", r.prof || "", r.contact || "", r.email || "", r.edu || "", r.mother_first || "", r.mother_middle || "", r.mother_last || ""
             ]);
             const wb = XLSX.utils.book_new();
             const wsInstr = XLSX.utils.aoa_to_sheet([instrHeader, ...instrData]);
@@ -1297,8 +1686,8 @@
                 for(let i=startRow; i<json.length; i++) {
                     const row = json[i]; if(!row || row.length === 0) continue;
                     const tempRec = {
-                        type: row[0], last: row[1], first: row[2], middle: row[3] || '', suffix: row[4] || '', bplace: row[5] || '', bdate: row[6], sex: row[7], civil: row[8], citizen: row[9] || 'FILIPINO',
-                        prof: row[10] || '', contact: row[11] || '', email: row[12] || '', edu: row[13] || '', mother_first: row[14] || '', mother_middle: row[15] || '', mother_last: row[16] || '',
+                        type: row[0], last: row[1], first: row[2], middle: row[3] || '', suffix: row[4] || '', bplace: row[5] || '', bdate: row[6], sex: row[7], civil: row[8], citizen: row[9] || 'FILIPINO', religion: row[10] || '',
+                        prof: row[11] || '', contact: row[12] || '', email: row[13] || '', edu: row[14] || '', mother_first: row[15] || '', mother_middle: row[16] || '', mother_last: row[17] || '',
                         isPwd: false, isSoloParent: false, isOSY: false, isDead: false, address: '', hh_name: '', hh_role: 'MEMBER'
                     };
                     if(!tempRec.last || !tempRec.first || !tempRec.bdate) { stagingInvalid.push({ line: i+1, data: tempRec }); continue; }
@@ -1325,6 +1714,8 @@
             const prov = document.getElementById('set-prov').value; 
             const muni = document.getElementById('set-muni').value; 
             const lguType = document.getElementById('set-lgu-type').value;
+            const region = document.getElementById('set-region').value;
+            const captain = document.getElementById('set-captain').value;
 
             if(!sec || !brgy) return alert("Please fill in Barangay and Secretary name.");
             
@@ -1333,6 +1724,8 @@
             settings.province = prov ? prov.toUpperCase() : ''; 
             settings.municipality = muni ? muni.toUpperCase() : ''; 
             settings.lguType = lguType;
+            settings.region = region ? region.toUpperCase() : '';
+            settings.captain = captain ? captain.toUpperCase() : '';
 
             localStorage.setItem('rbi_settings', JSON.stringify(settings)); 
             alert('Configuration Saved!');
@@ -1340,5 +1733,3 @@
     </script>
 </body>
 </html>
-
-
