@@ -248,7 +248,7 @@
                 <div class="d-flex gap-2 flex-wrap">
                     <button class="btn btn-outline-primary" onclick="showAgeRangeModal()"><i class="fas fa-sliders-h me-1"></i> Print by Age Range</button>
                     <button class="btn btn-outline-success" onclick="showBulkFormBModal()"><i class="fas fa-file-alt me-1"></i> Bulk Print Form B</button>
-                    <button class="btn btn-dark" onclick="printStats()"><i class="fas fa-print me-1"></i> Print Demographics</button>
+                    <button class="btn btn-dark" onclick="printStats()"><i class="fas fa-print me-1"></i> Print Demographics (Form C)</button>
                 </div>
             </div>
             <div id="record-list"></div>
@@ -459,7 +459,7 @@
                 <div class="col-6 d-none" id="age-months-max-container"><label class="fw-bold">Maximum Months</label><select id="age-months-max" class="form-select"><option value="0">0 months</option><option value="1">1 month</option><option value="2">2 months</option><option value="3">3 months</option><option value="4">4 months</option><option value="5">5 months</option><option value="6">6 months</option><option value="7">7 months</option><option value="8">8 months</option><option value="9">9 months</option><option value="10">10 months</option><option value="11" selected>11 months</option></select></div>
                 <div class="col-12"><label class="fw-bold">Filter by Sex</label><select id="age-sex-filter" class="form-select"><option value="ALL">ALL</option><option value="MALE">MALE ONLY</option><option value="FEMALE">FEMALE ONLY</option></select></div>
             </div>
-            <div class="mt-3 p-3" style="background:#f8fafc; border-radius:var(--radius-sm); border:1px solid var(--border-color);"><small class="text-muted">Matching residents: </small><strong id="age-range-count">0</strong><br><small class="text-muted">Will print up to 100 records per page batch.</small></div>
+            <div class="mt-3 p-3" style="background:#f8fafc; border-radius:var(--radius-sm); border:1px solid var(--border-color);"><small class="text-muted">Will print up to 100 records per page batch.</small></div>
         </div>
         <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary" onclick="printAgeRange()"><i class="fas fa-print me-1"></i> Print</button></div>
     </div></div></div>
@@ -505,14 +505,12 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // --- GLOBAL STATE & DATABASE ---
-        // Initialize Dexie Database
         const iDB = new Dexie('RBI_DB_2026');
         iDB.version(1).stores({
             residents: 'id, last, hh_name',
             households: 'name'
         });
 
-        // In-Memory arrays for synchronous UI operations
         let db = [];
         let household_db = [];
         let settings = JSON.parse(localStorage.getItem('rbi_settings')) || { user_password: null, barangay: '', province: '', municipality: '', secretary: '', region: '', captain: '', lguType: 'MUNICIPALITY' };
@@ -539,7 +537,6 @@
         const debouncedFilterHHList = debounce(() => { hhPage = 0; renderHHList(); }, 400);
         const debouncedSearchMemForHH = debounce(() => searchMemForHH(), 400);
 
-        // Custom Alert Wrapper
         function showSystemAlert(message, title = "System Notification") {
             document.getElementById('custom-alert-msg').innerText = message;
             document.getElementById('custom-alert-title').innerText = title;
@@ -547,26 +544,22 @@
         }
 
         document.addEventListener("DOMContentLoaded", async () => {
-            // Check if we need to migrate from Old LocalStorage
             const oldDB = localStorage.getItem('rbi_db');
             const oldHH = localStorage.getItem('rbi_hh_db');
 
             if (oldDB) {
-                console.log("Migrating Residents...");
                 try {
                     await iDB.residents.bulkPut(JSON.parse(oldDB));
                     localStorage.removeItem('rbi_db');
                 } catch(e) { console.error("Migration Error", e); }
             }
             if (oldHH) {
-                console.log("Migrating Households...");
                 try {
                     await iDB.households.bulkPut(JSON.parse(oldHH));
                     localStorage.removeItem('rbi_hh_db');
                 } catch(e) { console.error("Migration Error", e); }
             }
 
-            // Load Data into Memory
             await refreshData();
 
             if(settings.user_password) { document.getElementById('login-phase-1').classList.add('d-none'); document.getElementById('login-phase-2').classList.add('d-none'); document.getElementById('login-phase-3').classList.remove('d-none'); }
@@ -580,7 +573,6 @@
             updateReportUI();
         }
 
-        // --- SECURITY ---
         function updateServerTime() { const now = new Date(); document.getElementById('server-time-display').innerText = `System Time: ${now.toLocaleString()}`; }
         function getWeekNumber(d) { d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7)); var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1)); return Math.ceil((((d - yearStart) / 86400000) + 1)/7); }
         function numToLetter(num) { let s = ''; while(num > 0) { let t = (num - 1) % 26; s = String.fromCharCode(97 + t) + s; num = Math.floor((num - 1) / 26); } return s; }
@@ -607,7 +599,6 @@
         function forgotPassword() { document.getElementById('login-phase-2').classList.add('d-none'); document.getElementById('login-phase-3').classList.add('d-none'); document.getElementById('login-phase-1').classList.remove('d-none'); showSystemAlert("Please enter the Dynamic Access Code to reset your password."); }
         function logout() { document.getElementById('main-container').classList.add('d-none'); document.querySelector('.sidebar').style.display = 'none'; document.getElementById('security-overlay').classList.remove('d-none'); document.getElementById('login-phase-1').classList.add('d-none'); document.getElementById('login-phase-2').classList.add('d-none'); document.getElementById('login-phase-3').classList.remove('d-none'); document.getElementById('input-custom-pass').value = ''; }
 
-        // --- CORE ---
         function hideAll() { ['section-home','section-add','section-hh','section-import','section-settings','section-deaths','section-other'].forEach(id => { document.getElementById(id).classList.add('d-none'); }); document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active')); }
         function showHome() { hideAll(); document.getElementById('section-home').classList.remove('d-none'); residentPage = 0; renderList(); }
         function showAdd() { hideAll(); document.getElementById('section-add').classList.remove('d-none'); clearForm(); }
@@ -616,8 +607,18 @@
         function showOtherSystems() { hideAll(); document.getElementById('section-other').classList.remove('d-none'); }
         function showSettings() { hideAll(); document.getElementById('section-settings').classList.remove('d-none'); document.getElementById('set-lgu-type').value = settings.lguType || 'MUNICIPALITY'; document.getElementById('set-region').value = settings.region || ''; document.getElementById('set-prov').value = settings.province || ''; document.getElementById('set-muni').value = settings.municipality || ''; document.getElementById('set-brgy').value = settings.barangay || ''; document.getElementById('set-captain').value = settings.captain || ''; document.getElementById('set-sec').value = settings.secretary || ''; }
         function showDeaths() { hideAll(); document.getElementById('section-deaths').classList.remove('d-none'); deathPage = 0; renderDeathList(); }
-        function calculateAgeDetailed(bdate) { if(!bdate) return { y: 0, m: 0, d: 0, totalMonths: 0 }; const birth = new Date(bdate); const now = new Date(); let years = now.getFullYear() - birth.getFullYear(); let months = now.getMonth() - birth.getMonth(); let days = now.getDate() - birth.getDate(); if (days < 0) { months--; days += 30; } if (months < 0) { years--; months += 12; } return { y: years, m: months, d: days, totalMonths: (years * 12) + months }; }
-        function getFormCBracket(bdate) { const age = calculateAgeDetailed(bdate); const y = age.y; if (y < 5) return 'Under 5 years old'; if (y >= 5 && y <= 9) return '5-9 years old'; if (y >= 10 && y <= 14) return '10-14 years old'; if (y >= 15 && y <= 19) return '15-19 years old'; if (y >= 20 && y <= 24) return '20-24 years old'; if (y >= 25 && y <= 29) return '25-29 years old'; if (y >= 30 && y <= 34) return '30-34 years old'; if (y >= 35 && y <= 39) return '35-39 years old'; if (y >= 40 && y <= 44) return '40-44 years old'; if (y >= 45 && y <= 49) return '45-49 years old'; if (y >= 50 && y <= 54) return '50-54 years old'; if (y >= 55 && y <= 59) return '55-59 years old'; if (y >= 60 && y <= 64) return '60-64 years old'; if (y >= 65 && y <= 69) return '65-69 years old'; if (y >= 70 && y <= 74) return '70-74 years old'; if (y >= 75 && y <= 79) return '75-79 years old'; if (y >= 80) return '80 years old and over'; return 'UNKNOWN'; }
+
+        function calculateAgeDetailed(bdate) { 
+            if(!bdate) return { y: 0, m: 0, d: 0, totalMonths: 0 }; 
+            const birth = new Date(bdate); const now = new Date(); 
+            let years = now.getFullYear() - birth.getFullYear(); 
+            let months = now.getMonth() - birth.getMonth(); 
+            let days = now.getDate() - birth.getDate(); 
+            if (days < 0) { months--; days += 30; } 
+            if (months < 0) { years--; months += 12; } 
+            return { y: years, m: months, d: days, totalMonths: (years * 12) + months }; 
+        }
+
         function searchMother(val) { const list = document.getElementById('mother-search-results'); if(!val || val.length < 2) { list.classList.add('d-none'); return; } const matches = db.filter(r => r.sex === 'FEMALE' && !r.isDead && (r.last + ' ' + r.first).toLowerCase().includes(val.toLowerCase())); list.innerHTML = ''; if(matches.length > 0) { matches.forEach(m => { const div = document.createElement('div'); div.className = 'search-item'; div.innerHTML = `<strong>${m.last}, ${m.first}</strong> <small>(${m.middle||'-'})</small>`; div.onclick = () => { document.getElementById('f-m-last').value = m.last; document.getElementById('f-m-first').value = m.first; document.getElementById('f-m-middle').value = m.middle; document.getElementById('mother-search-input').value = ''; list.classList.add('d-none'); }; list.appendChild(div); }); list.classList.remove('d-none'); } else { list.classList.add('d-none'); } }
 
         async function saveRecord() {
@@ -648,7 +649,6 @@
         function clearForm() { document.querySelectorAll('#section-add input').forEach(i => i.value = ''); document.querySelectorAll('#section-add select').forEach(s => s.selectedIndex = 0); document.querySelectorAll('#section-add input[type=checkbox]').forEach(c => c.checked = false); document.getElementById('f-citizen').value = 'FILIPINO'; document.getElementById('f-religion').value = ''; document.getElementById('btn-del').style.display = 'none'; document.getElementById('mother-search-results').classList.add('d-none'); toggleDeathInput(); }
         function toggleDeathInput() { const isDead = document.getElementById('f-dead').checked; const container = document.getElementById('death-date-container'); if(isDead) container.classList.remove('d-none'); else { container.classList.add('d-none'); document.getElementById('f-death-date').value = ''; } }
 
-        // --- RESIDENT LIST WITH PAGINATION (10 per page) ---
         function renderList() {
             const q = document.getElementById('search-input').value.toLowerCase(); const list = document.getElementById('record-list'); list.innerHTML = '';
             residentFiltered = db.filter(r => { const fullName = (r.last + ' ' + r.first + ' ' + (r.middle||'')).toLowerCase(); const hh = (r.hh_name || '').toLowerCase(); return (fullName.includes(q) || hh.includes(q)) && !r.isDead; });
@@ -665,7 +665,6 @@
         function residentPrevPage() { if(residentPage > 0) { residentPage--; renderList(); } }
         function residentNextPage() { if((residentPage + 1) * residentPerPage < residentFiltered.length) { residentPage++; renderList(); } }
 
-        // --- DEATH LIST WITH PAGINATION ---
         function renderDeathList() {
             const list = document.getElementById('death-list'); list.innerHTML = ''; const dead = db.filter(r => r.isDead); document.getElementById('death-total').innerText = dead.length;
             const totalPages = Math.ceil(dead.length / deathPerPage); const start = deathPage * deathPerPage; const end = Math.min(start + deathPerPage, dead.length); const pageData = dead.slice(start, end);
@@ -677,7 +676,6 @@
         function deathPrevPage() { if(deathPage > 0) { deathPage--; renderDeathList(); } }
         function deathNextPage() { const dead = db.filter(r => r.isDead); if((deathPage + 1) * deathPerPage < dead.length) { deathPage++; renderDeathList(); } }
 
-        // --- HOUSEHOLD WITH PAGINATION ---
         function renderHHList() {
             const q = document.getElementById('hh-search-input') ? document.getElementById('hh-search-input').value.toLowerCase() : ''; const list = document.getElementById('hh-list'); list.innerHTML = '';
             let existingNames = new Set(db.map(r => r.hh_name).filter(n => n && n.trim() !== '')); let hhObjects = household_db.filter(h => h && h.name); let hhMap = {}; hhObjects.forEach(h => hhMap[h.name] = h);
@@ -710,14 +708,11 @@
             const newNum = document.getElementById('edit-hh-num').value.toUpperCase(); 
             if(!newName) return showSystemAlert("Household Name cannot be empty"); 
             
-            // Check collision
             if(oldName !== newName && household_db.some(h => h.name === newName)) { return showSystemAlert("Household Name already exists. Please choose another."); } 
             
-            // Update Household DB
             await iDB.households.put({ name: newName, purok: newPurok, houseNo: newNum });
             if(oldName !== newName) {
                 await iDB.households.delete(oldName);
-                // Update all residents
                 const residentsToUpdate = db.filter(r => r.hh_name === oldName);
                 if(residentsToUpdate.length > 0) {
                     residentsToUpdate.forEach(r => r.hh_name = newName);
@@ -725,7 +720,6 @@
                 }
             }
             await refreshData();
-
             const el = document.getElementById('modal-edit-hh'); const modal = bootstrap.Modal.getInstance(el); if(modal) modal.hide(); loadHH(newName, newPurok, newNum); renderHHList(); showSystemAlert("Household details updated successfully."); 
         }
         
@@ -733,7 +727,6 @@
             const name = document.getElementById('manage-hh-name').value; 
             if(!confirm(`Are you sure you want to delete the household "${name}"? \n\nNote: Members will NOT be deleted, but they will be unassigned from this household.`)) return; 
             
-            // Update residents
             const residentsToUpdate = db.filter(r => r.hh_name === name);
             if(residentsToUpdate.length > 0) {
                 residentsToUpdate.forEach(r => { r.hh_name = ''; r.hh_role = ''; });
@@ -742,7 +735,6 @@
             
             await iDB.households.delete(name);
             await refreshData();
-
             showSystemAlert("Household deleted."); document.getElementById('hh-view').style.display='none'; document.getElementById('hh-list-container').style.display='block'; renderHHList(); 
         }
 
@@ -753,13 +745,10 @@
         
         function showAddMemberModal() { new bootstrap.Modal(document.getElementById('modal-add-mem')).show(); }
         function closeModal(id) { const el = document.getElementById(id); const modal = bootstrap.Modal.getInstance(el); if(modal) modal.hide(); }
-        // FIXED SEARCH MEM FUNCTION: EXCLUDES MEMBERS ALREADY IN A HOUSEHOLD
         function searchMemForHH() { 
             const q = document.getElementById('search-mem-hh').value.toLowerCase(); 
             const res = document.getElementById('hh-search-results'); 
             res.innerHTML = ''; 
-            
-            // Only show if user has NO household assigned (hh_name is empty or null)
             db.filter(r => (!r.hh_name || r.hh_name.trim() === '') && !r.isDead && (r.last+' '+r.first).toLowerCase().includes(q))
               .slice(0,10)
               .forEach(r => { 
@@ -769,7 +758,6 @@
         function promptRole(id) { document.getElementById('temp-mem-id').value = id; closeModal('modal-add-mem'); new bootstrap.Modal(document.getElementById('modal-select-role')).show(); }
         async function confirmAddToHH() { const id = document.getElementById('temp-mem-id').value; const role = document.getElementById('select-role-input').value; const hh = document.getElementById('manage-hh-name').value; const r = db.find(x => x.id === id); if(r) { r.hh_name = hh; r.hh_role = role; await iDB.residents.put(r); await refreshData(); renderHHMembers(hh); closeModal('modal-select-role'); } }
 
-        // --- FORM B HTML GENERATOR ---
         function generateFormBHTML(r) {
             const chk = (val, target) => (val === target) ? '&#9745;' : '&#9744;'; const edu = r.edu || '';
             let isElem = edu === 'ELEMENTARY'; let isHS = edu === 'HIGH SCHOOL'; let isCol = edu.includes('COLLEGE'); let isPost = edu === 'POST GRAD'; let isVoc = edu === 'VOCATIONAL'; let isGrad = edu.includes('GRADUATE') && !edu.includes('UNDER'); let isUnder = edu.includes('UNDER');
@@ -784,7 +772,6 @@
             window.print();
         }
 
-        // --- BULK FORM B FUNCTIONS ---
         function showBulkFormBModal() { bulkFormBData = db.filter(r => !r.isDead).sort((a,b) => a.last.localeCompare(b.last)); bulkFormBPage = 0; renderBulkFormBModal(); new bootstrap.Modal(document.getElementById('modal-bulk-formb')).show(); }
         function renderBulkFormBModal() {
             const total = bulkFormBData.length; const totalBatches = Math.ceil(total / bulkFormBPerPage); const start = bulkFormBPage * bulkFormBPerPage; const end = Math.min(start + bulkFormBPerPage, total); const pageData = bulkFormBData.slice(start, end);
@@ -803,152 +790,16 @@
             document.getElementById('print-area').innerHTML = allFormsHTML; window.print();
         }
 
-        // --- FORM A ---
-       function printFormA() {
-    const hhName = document.getElementById('manage-hh-name').value;
-    const purok = document.getElementById('view-hh-purok').innerText;
-    const houseNo = document.getElementById('view-hh-num').innerText;
-
-    // Filter members
-    const members = db.filter(r => r.hh_name === hhName && !r.isDead);
-
-    // Sort members: Head -> Spouse -> Son/Daughter -> Member -> Alphabetical
-    members.sort((a, b) => {
-        const roles = { 'HEAD': 1, 'SPOUSE': 2, 'SON': 3, 'DAUGHTER': 4, 'MEMBER': 5 };
-        const ra = roles[a.hh_role] || 99;
-        const rb = roles[b.hh_role] || 99;
-        if (ra !== rb) return ra - rb;
-        return a.last.localeCompare(b.last);
-    });
-
-    // Generate Rows
-    let rowsHtml = '';
-    members.forEach((m, i) => {
-        let indicators = [];
-        if (m.prof && !m.isUnemployed) indicators.push("Employed");
-        if (m.isUnemployed) indicators.push("Unemployed");
-        if (m.isVoter) indicators.push("VOTER");
-        if (m.isPwd) indicators.push("PWD");
-        if (m.isOfw) indicators.push("OFW");
-        if (m.isSoloParent) indicators.push("Solo Parent");
-        if (m.isOSY) indicators.push("OSY");
-        if (m.isOsc) indicators.push("OSC");
-        if (m.isIp) indicators.push("IP");
-
-        rowsHtml += `<tr>
-            <td>${i + 1}</td>
-            <td>${m.last}</td>
-            <td>${m.first}</td>
-            <td>${m.middle}</td>
-            <td>${m.suffix || ''}</td>
-            <td>${m.bplace}</td>
-            <td>${m.bdate}</td>
-            <td>${calculateAgeDetailed(m.bdate).y}</td>
-            <td>${m.sex}</td>
-            <td>${m.civil}</td>
-            <td>${m.citizen || 'FILIPINO'}</td>
-            <td>${m.prof || ''}</td>
-            <td>${indicators.join(', ')}</td>
-        </tr>`;
-    });
-
-    // Fill empty rows to reach at least 15 for layout consistency
-    for (let i = members.length; i < 15; i++) {
-        rowsHtml += `<tr><td>${i + 1}</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`;
-    }
-
-    const html = `
-    <div class="landscape-page">
-        <div class="print-header">
-            <strong>RBI FORM A (Revised 2024)</strong><br>
-            <strong>RECORDS OF BARANGAY INHABITANTS BY HOUSEHOLD</strong>
-        </div>
-
-        <table style="width:100%; margin-bottom: 10px; font-family: Arial; font-size: 10pt;">
-            <tr>
-                <td style="border:none; width: 100px;">REGION:</td>
-                <td style="border:none; border-bottom: 1px solid black;">${settings.region}</td>
-                <td style="border:none; width: 50px;"></td>
-                <td style="border:none; width: 150px;">PROVINCE:</td>
-                <td style="border:none; border-bottom: 1px solid black;">${settings.province}</td>
-            </tr>
-            <tr>
-                <td style="border:none;">CITY/MUNICIPALITY:</td>
-                <td style="border:none; border-bottom: 1px solid black;">${settings.municipality}</td>
-                <td style="border:none;"></td>
-                <td style="border:none;">BARANGAY:</td>
-                <td style="border:none; border-bottom: 1px solid black;">${settings.barangay}</td>
-            </tr>
-            <tr>
-                <td style="border:none;">HOUSEHOLD ADDRESS:</td>
-                <td style="border:none; border-bottom: 1px solid black;" colspan="4">PUROK ${purok}, HOUSE NO. ${houseNo}</td>
-            </tr>
-            <tr>
-                <td style="border:none;">NO. OF MEMBERS:</td>
-                <td style="border:none; border-bottom: 1px solid black;">${members.length}</td>
-            </tr>
-        </table>
-
-        <table class="print-table">
-            <thead>
-                <tr>
-                    <th rowspan="2" width="3%">NO.</th>
-                    <th colspan="4" width="25%">NAME</th>
-                    <th rowspan="2" width="10%">PLACE OF BIRTH</th>
-                    <th rowspan="2" width="8%">DATE OF BIRTH</th>
-                    <th rowspan="2" width="4%">AGE</th>
-                    <th rowspan="2" width="5%">SEX</th>
-                    <th rowspan="2" width="8%">CIVIL STATUS</th>
-                    <th rowspan="2" width="8%">CITIZENSHIP</th>
-                    <th rowspan="2" width="10%">OCCUPATION</th>
-                    <th rowspan="2" width="15%">REMARKS / STATUS</th>
-                </tr>
-                <tr>
-                    <th>LAST NAME</th><th>FIRST NAME</th><th>MIDDLE NAME</th><th>EXT</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${rowsHtml}
-            </tbody>
-        </table>
-
-        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 40px; font-family: Arial; page-break-inside: avoid;">
-            
-            <div style="width: 30%; text-align: center;">
-                <p style="text-align: left; margin-bottom: 30px;">Prepared by:</p>
-                <div style="border-bottom: 1px solid black; margin-bottom: 5px; height: 1em;"></div>
-                <strong>Name of Household/Head Member</strong><br>
-                <span style="font-size: 0.8em;">(Signature over Printed Name)</span>
-            </div>
-
-            <div style="width: 30%; text-align: center;">
-                <p style="text-align: left; margin-bottom: 30px;">Certified Correct:</p>
-                <div style="border-bottom: 1px solid black; margin-bottom: 5px; font-weight: bold; text-transform: uppercase;">
-                    ${settings.secretary}
-                </div>
-                <strong>Barangay Secretary</strong><br>
-                <span style="font-size: 0.8em;">(Signature over Printed Name)</span>
-            </div>
-
-            <div style="width: 30%; text-align: center;">
-                <p style="text-align: left; margin-bottom: 30px;">Validated by:</p>
-                <div style="border-bottom: 1px solid black; margin-bottom: 5px; font-weight: bold; text-transform: uppercase;">
-                    ${settings.captain}
-                </div>
-                <strong>Punong Barangay</strong><br>
-                <span style="font-size: 0.8em;">(Signature over Printed Name)</span>
-            </div>
-
-        </div>
-
-        <div class="legal-text" style="margin-top: 20px;">
-            "I hereby certify that the above information are true and correct to the best of my knowledge. I understand that for the Barangay to carry out its mandate pursuant to Section 394 (d)(6) of the Local Government Code of 1991, they must necessarily process my personal information for easy identification of inhabitants, as a tool in planning, and as an updated reference in the number of inhabitants of the Barangay. Therefore, I grant my consent and recognize the authority of the Barangay to process my personal information, subject to the provision of the Philippine Data Privacy Act of 2012."
-        </div>
-    </div>`;
-
-    document.getElementById('print-area').innerHTML = html;
-    window.print();
-}
+        function printFormA() {
+            const hhName = document.getElementById('manage-hh-name').value; const purok = document.getElementById('view-hh-purok').innerText; const houseNo = document.getElementById('view-hh-num').innerText;
+            const members = db.filter(r => r.hh_name === hhName && !r.isDead);
+            members.sort((a, b) => { const roles = { 'HEAD': 1, 'SPOUSE': 2, 'SON': 3, 'DAUGHTER': 4, 'MEMBER': 5 }; const ra = roles[a.hh_role] || 99; const rb = roles[b.hh_role] || 99; if (ra !== rb) return ra - rb; return a.last.localeCompare(b.last); });
+            let rowsHtml = ''; members.forEach((m, i) => { let indicators = []; if (m.prof && !m.isUnemployed) indicators.push("Employed"); if (m.isUnemployed) indicators.push("Unemployed"); if (m.isVoter) indicators.push("VOTER"); if (m.isPwd) indicators.push("PWD"); if (m.isOfw) indicators.push("OFW"); if (m.isSoloParent) indicators.push("Solo Parent"); if (m.isOSY) indicators.push("OSY"); if (m.isOsc) indicators.push("OSC"); if (m.isIp) indicators.push("IP");
+                rowsHtml += `<tr><td>${i + 1}</td><td>${m.last}</td><td>${m.first}</td><td>${m.middle}</td><td>${m.suffix || ''}</td><td>${m.bplace}</td><td>${m.bdate}</td><td>${calculateAgeDetailed(m.bdate).y}</td><td>${m.sex}</td><td>${m.civil}</td><td>${m.citizen || 'FILIPINO'}</td><td>${m.prof || ''}</td><td>${indicators.join(', ')}</td></tr>`; });
+            for (let i = members.length; i < 15; i++) { rowsHtml += `<tr><td>${i + 1}</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`; }
+            const html = `<div class="landscape-page"><div class="print-header"><strong>RBI FORM A (Revised 2024)</strong><br><strong>RECORDS OF BARANGAY INHABITANTS BY HOUSEHOLD</strong></div><table style="width:100%; margin-bottom: 10px; font-family: Arial; font-size: 10pt;"><tr><td style="border:none; width: 100px;">REGION:</td><td style="border:none; border-bottom: 1px solid black;">${settings.region}</td><td style="border:none; width: 50px;"></td><td style="border:none; width: 150px;">PROVINCE:</td><td style="border:none; border-bottom: 1px solid black;">${settings.province}</td></tr><tr><td style="border:none;">CITY/MUNICIPALITY:</td><td style="border:none; border-bottom: 1px solid black;">${settings.municipality}</td><td style="border:none;"></td><td style="border:none;">BARANGAY:</td><td style="border:none; border-bottom: 1px solid black;">${settings.barangay}</td></tr><tr><td style="border:none;">HOUSEHOLD ADDRESS:</td><td style="border:none; border-bottom: 1px solid black;" colspan="4">PUROK ${purok}, HOUSE NO. ${houseNo}</td></tr><tr><td style="border:none;">NO. OF MEMBERS:</td><td style="border:none; border-bottom: 1px solid black;">${members.length}</td></tr></table><table class="print-table"><thead><tr><th rowspan="2" width="3%">NO.</th><th colspan="4" width="25%">NAME</th><th rowspan="2" width="10%">PLACE OF BIRTH</th><th rowspan="2" width="8%">DATE OF BIRTH</th><th rowspan="2" width="4%">AGE</th><th rowspan="2" width="5%">SEX</th><th rowspan="2" width="8%">CIVIL STATUS</th><th rowspan="2" width="8%">CITIZENSHIP</th><th rowspan="2" width="10%">OCCUPATION</th><th rowspan="2" width="15%">REMARKS / STATUS</th></tr><tr><th>LAST NAME</th><th>FIRST NAME</th><th>MIDDLE NAME</th><th>EXT</th></tr></thead><tbody>${rowsHtml}</tbody></table><div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 40px; font-family: Arial; page-break-inside: avoid;"><div style="width: 30%; text-align: center;"><p style="text-align: left; margin-bottom: 30px;">Prepared by:</p><div style="border-bottom: 1px solid black; margin-bottom: 5px; height: 1em;"></div><strong>Name of Household/Head Member</strong><br><span style="font-size: 0.8em;">(Signature over Printed Name)</span></div><div style="width: 30%; text-align: center;"><p style="text-align: left; margin-bottom: 30px;">Certified Correct:</p><div style="border-bottom: 1px solid black; margin-bottom: 5px; font-weight: bold; text-transform: uppercase;">${settings.secretary}</div><strong>Barangay Secretary</strong><br><span style="font-size: 0.8em;">(Signature over Printed Name)</span></div><div style="width: 30%; text-align: center;"><p style="text-align: left; margin-bottom: 30px;">Validated by:</p><div style="border-bottom: 1px solid black; margin-bottom: 5px; font-weight: bold; text-transform: uppercase;">${settings.captain}</div><strong>Punong Barangay</strong><br><span style="font-size: 0.8em;">(Signature over Printed Name)</span></div></div></div>`;
+            document.getElementById('print-area').innerHTML = html; window.print();
+        }
 
         // --- REPORTING ---
         function updateReportUI() {
@@ -979,15 +830,266 @@
             document.getElementById('print-area').innerHTML = html; window.print();
         }
 
+        // --- NEW: PRINT AGE RANGE (Updated Logic) ---
+        function showAgeRangeModal() { new bootstrap.Modal(document.getElementById('modal-age-range')).show(); toggleAgeUnit(); }
+        function toggleAgeUnit() {
+            const unit = document.getElementById('age-unit').value;
+            if(unit === 'years') {
+                document.getElementById('age-years-min-container').classList.remove('d-none');
+                document.getElementById('age-years-max-container').classList.remove('d-none');
+                document.getElementById('age-months-min-container').classList.add('d-none');
+                document.getElementById('age-months-max-container').classList.add('d-none');
+            } else {
+                document.getElementById('age-years-min-container').classList.add('d-none');
+                document.getElementById('age-years-max-container').classList.add('d-none');
+                document.getElementById('age-months-min-container').classList.remove('d-none');
+                document.getElementById('age-months-max-container').classList.remove('d-none');
+            }
+        }
+
+        function printAgeRange() {
+            const unit = document.getElementById('age-unit').value;
+            const sexFilter = document.getElementById('age-sex-filter').value;
+            let filtered = db.filter(r => !r.isDead);
+
+            if(sexFilter !== 'ALL') {
+                filtered = filtered.filter(r => r.sex === sexFilter);
+            }
+
+            let label = "";
+
+            if(unit === 'years') {
+                const min = parseInt(document.getElementById('age-min').value);
+                const max = parseInt(document.getElementById('age-max').value);
+                filtered = filtered.filter(r => {
+                    const age = calculateAgeDetailed(r.bdate).y;
+                    return age >= min && age <= max;
+                });
+                label = `RESIDENTS AGED ${min} TO ${max} YEARS OLD`;
+            } else {
+                const min = parseInt(document.getElementById('age-months-min').value);
+                const max = parseInt(document.getElementById('age-months-max').value);
+                filtered = filtered.filter(r => {
+                    const age = calculateAgeDetailed(r.bdate); // returns {y, m, d, totalMonths}
+                    // Logic: Must be 0 years old AND within month range
+                    if(age.y > 0) return false; 
+                    return age.m >= min && age.m <= max;
+                });
+                label = `RESIDENTS AGED ${min} TO ${max} MONTHS OLD`;
+            }
+
+            if(sexFilter !== 'ALL') label += ` (${sexFilter})`;
+
+            if(filtered.length === 0) return showSystemAlert("No residents found in this range.");
+            
+            // Close filter modal
+            const el = document.getElementById('modal-age-range'); 
+            const modal = bootstrap.Modal.getInstance(el); 
+            if(modal) modal.hide();
+
+            // Open Print Preview Modal (Reusing existing one for 100 limit support)
+            filtered.sort((a,b) => a.last.localeCompare(b.last)); 
+            printCatData = filtered; 
+            printCatPage = 0; 
+            printCatLabel = label; 
+            renderPrintCatModal(); 
+            new bootstrap.Modal(document.getElementById('modal-print-category')).show();
+        }
+
+        // --- FIXED: PRINT STATS (FORM C) ---
+        function printStats() {
+            // Calculate Data strictly according to Form C layout
+            const living = db.filter(r => !r.isDead);
+            
+            // Age Brackets
+            const brackets = [
+                { lbl: "Under 5 years old", min:0, max:4 },
+                { lbl: "5-9 years old", min:5, max:9 },
+                { lbl: "10-14 years old", min:10, max:14 },
+                { lbl: "15-19 years old", min:15, max:19 },
+                { lbl: "20-24 years old", min:20, max:24 },
+                { lbl: "25-29 years old", min:25, max:29 },
+                { lbl: "30-34 years old", min:30, max:34 },
+                { lbl: "35-39 years old", min:35, max:39 },
+                { lbl: "40-44 years old", min:40, max:44 },
+                { lbl: "45-49 years old", min:45, max:49 },
+                { lbl: "50-54 years old", min:50, max:54 },
+                { lbl: "55-59 years old", min:55, max:59 },
+                { lbl: "60-64 years old", min:60, max:64 },
+                { lbl: "65-69 years old", min:65, max:69 },
+                { lbl: "70-74 years old", min:70, max:74 },
+                { lbl: "75-79 years old", min:75, max:79 },
+                { lbl: "80 years old and over", min:80, max:200 }
+            ];
+
+            let bracketData = brackets.map(b => ({ ...b, m:0, f:0 }));
+
+            // Sectors and Status
+            let sectors = {
+                labor: {m:0, f:0}, // Unemployed (Labor Force logic usually implies 15+, but sticking to simple unemployed flag check for now or specific field)
+                unemployed: {m:0, f:0},
+                osc: {m:0, f:0},
+                osy: {m:0, f:0},
+                pwd: {m:0, f:0},
+                ofw: {m:0, f:0},
+                solo: {m:0, f:0},
+                ip: {m:0, f:0},
+                single: {m:0, f:0},
+                married: {m:0, f:0},
+                filipino: {m:0, f:0},
+                foreigner: {m:0, f:0}
+            };
+
+            // Totals
+            const totalInhabitants = living.length;
+            const uniqueHH = new Set(living.map(r => r.hh_name).filter(n => n && n.trim() !== ''));
+            const totalHH = uniqueHH.size;
+            const totalFamilies = living.filter(r => r.hh_role === 'HEAD').length;
+
+            living.forEach(r => {
+                const age = calculateAgeDetailed(r.bdate).y;
+                const isMale = r.sex === 'MALE';
+                
+                // Age Bracket
+                for(let b of bracketData) {
+                    if(age >= b.min && age <= b.max) {
+                        if(isMale) b.m++; else b.f++;
+                        break;
+                    }
+                }
+
+                // Sectors
+                if(r.isUnemployed) { if(isMale) sectors.unemployed.m++; else sectors.unemployed.f++; }
+                // Labor force typically defined as employed + unemployed (usually 15+). 
+                // For this form, if user marks "Unemployed", they are counted. If they have a profession, they are labor force.
+                if(r.isUnemployed || (r.prof && r.prof.length > 1)) { if(isMale) sectors.labor.m++; else sectors.labor.f++; }
+                
+                if(r.isOsc) { if(isMale) sectors.osc.m++; else sectors.osc.f++; }
+                if(r.isOSY) { if(isMale) sectors.osy.m++; else sectors.osy.f++; }
+                if(r.isPwd) { if(isMale) sectors.pwd.m++; else sectors.pwd.f++; }
+                if(r.isOfw) { if(isMale) sectors.ofw.m++; else sectors.ofw.f++; }
+                if(r.isSoloParent) { if(isMale) sectors.solo.m++; else sectors.solo.f++; }
+                if(r.isIp) { if(isMale) sectors.ip.m++; else sectors.ip.f++; }
+
+                // Civil
+                if(r.civil === 'SINGLE') { if(isMale) sectors.single.m++; else sectors.single.f++; }
+                if(r.civil === 'MARRIED') { if(isMale) sectors.married.m++; else sectors.married.f++; }
+
+                // Citizenship
+                if(!r.citizen || r.citizen === 'FILIPINO') { if(isMale) sectors.filipino.m++; else sectors.filipino.f++; }
+                else { if(isMale) sectors.foreigner.m++; else sectors.foreigner.f++; }
+            });
+
+            // GENERATE HTML ROWS
+            let ageRows = bracketData.map(b => `<tr><td style="padding-left:20px;">${b.lbl}</td><td>${b.m}</td><td>${b.f}</td><td>${b.m+b.f}</td><td></td></tr>`).join('');
+
+            const sectorRow = (lbl, data) => `<tr><td style="padding-left:0px; font-weight:normal;">${lbl}</td><td>${data.m}</td><td>${data.f}</td><td>${data.m+data.f}</td><td></td></tr>`;
+            const sectorRowIndent = (lbl, data) => `<tr><td style="padding-left:20px; font-weight:normal;">${lbl}</td><td>${data.m}</td><td>${data.f}</td><td>${data.m+data.f}</td><td></td></tr>`;
+
+            // HTML Construction matches layout
+            const html = `
+            <style>
+                @media print { @page { size: portrait; margin: 10mm; } body { -webkit-print-color-adjust: exact; } }
+                .rbi-c-container { font-family: Arial, sans-serif; font-size: 10pt; width: 100%; color: black; }
+                .rbi-c-header { text-align: center; font-weight: bold; margin-bottom: 20px; }
+                .rbi-info-table { width: 100%; margin-bottom: 15px; }
+                .rbi-info-table td { padding: 2px; }
+                .rbi-main-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                .rbi-main-table th { border: 1px solid black; background: #e0e0e0; padding: 5px; text-align: center; font-weight: bold; }
+                .rbi-main-table td { border: 1px solid black; padding: 4px; text-align: center; }
+                .rbi-main-table td:first-child { text-align: left; }
+                .sig-box { margin-top: 40px; display: flex; justify-content: space-between; page-break-inside: avoid; }
+                .sig-line { border-bottom: 1px solid black; width: 200px; margin: 0 auto; margin-top: 30px; }
+            </style>
+            <div class="rbi-c-container">
+                <div class="rbi-c-header">
+                    <div style="font-size: 11pt;">RBI FORM C (Revised 2024)</div>
+                    <div style="font-size: 12pt; margin-top:5px;">MONITORING REPORT</div>
+                    <div style="font-weight: normal; margin-top: 5px;">for ___ Semester of CY ________</div>
+                </div>
+
+                <table class="rbi-info-table">
+                    <tr><td width="15%">REGION</td><td width="2%">:</td><td style="border-bottom: 1px solid black;">${settings.region}</td></tr>
+                    <tr><td>PROVINCE</td><td>:</td><td style="border-bottom: 1px solid black;">${settings.province}</td></tr>
+                    <tr><td>CITY/MUNICIPALITY</td><td>:</td><td style="border-bottom: 1px solid black;">${settings.municipality}</td></tr>
+                    <tr><td>BARANGAY</td><td>:</td><td style="border-bottom: 1px solid black;">${settings.barangay}</td></tr>
+                </table>
+
+                <table class="rbi-info-table" style="margin-top: 10px;">
+                    <tr><td width="30%">Total No. of Barangay Inhabitants:</td><td style="border-bottom: 1px solid black; font-weight:bold;">${totalInhabitants}</td></tr>
+                    <tr><td>Total No. of Households:</td><td style="border-bottom: 1px solid black; font-weight:bold;">${totalHH}</td></tr>
+                    <tr><td>Total No. of Families:</td><td style="border-bottom: 1px solid black; font-weight:bold;">${totalFamilies}</td></tr>
+                </table>
+
+                <table class="rbi-main-table">
+                    <thead>
+                        <tr>
+                            <th width="40%">INDICATORS</th>
+                            <th width="15%">MALE</th>
+                            <th width="15%">FEMALE</th>
+                            <th width="15%">TOTAL</th>
+                            <th width="15%">REMARKS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td style="font-weight:bold;">Population by Age Bracket:</td><td></td><td></td><td></td><td></td></tr>
+                        ${ageRows}
+                        
+                        <tr><td style="font-weight:bold; padding-top:10px;">Population by Sector:</td><td></td><td></td><td></td><td></td></tr>
+                        ${sectorRow("Labor Force", sectors.labor)}
+                        ${sectorRow("Unemployed", sectors.unemployed)}
+                        ${sectorRow("Out of School Children (OSC)<br><span style='font-size:8pt; margin-left:10px;'>(6-14 years old)</span>", sectors.osc)}
+                        ${sectorRow("Out of School Youth (OSY)<br><span style='font-size:8pt; margin-left:10px;'>(15-24 years old)</span>", sectors.osy)}
+                        ${sectorRow("Person with Disabilities (PWDs)", sectors.pwd)}
+                        ${sectorRow("Overseas Filipino Workers (OFWs)", sectors.ofw)}
+                        ${sectorRow("Solo Parents", sectors.solo)}
+                        ${sectorRow("Indigenous Peoples (IPs)", sectors.ip)}
+
+                        <tr><td style="font-weight:bold; padding-top:10px; border:none; border-left:1px solid black; border-right:1px solid black;"></td><td style="border:none; border-left:1px solid black; border-right:1px solid black;"></td><td style="border:none; border-left:1px solid black; border-right:1px solid black;"></td><td style="border:none; border-left:1px solid black; border-right:1px solid black;"></td><td style="border:none; border-left:1px solid black; border-right:1px solid black;"></td></tr>
+
+                        ${sectorRow("Civil Status : Single", sectors.single)}
+                        ${sectorRowIndent(": Married", sectors.married)}
+
+                        <tr><td style="font-weight:bold; padding-top:10px; border:none; border-left:1px solid black; border-right:1px solid black;"></td><td style="border:none; border-left:1px solid black; border-right:1px solid black;"></td><td style="border:none; border-left:1px solid black; border-right:1px solid black;"></td><td style="border:none; border-left:1px solid black; border-right:1px solid black;"></td><td style="border:none; border-left:1px solid black; border-right:1px solid black;"></td></tr>
+
+                        ${sectorRow("Citizenship : Filipino", sectors.filipino)}
+                        ${sectorRowIndent(": Foreigner", sectors.foreigner)}
+                    </tbody>
+                </table>
+
+                <div class="sig-box">
+                    <div style="text-align: center; width: 40%;">
+                        <div style="margin-bottom: 40px; text-align:left;">Prepared by:</div>
+                        <div class="sig-line" style="text-transform:uppercase; font-weight:bold;">${settings.secretary}</div>
+                        <div>Barangay Secretary</div>
+                        <div style="font-size: 8pt;">(Signature over Printed Name)</div>
+                        <div style="text-align:left; margin-top:20px;">Date Accomplished: ____________________</div>
+                    </div>
+                    <div style="text-align: center; width: 40%;">
+                        <div style="margin-bottom: 40px; text-align:left;">Submitted by:</div>
+                        <div class="sig-line" style="text-transform:uppercase; font-weight:bold;">${settings.captain}</div>
+                        <div>Punong Barangay</div>
+                        <div style="font-size: 8pt;">(Signature over Printed Name)</div>
+                    </div>
+                </div>
+
+                <div style="font-size: 8pt; margin-top: 20px;">
+                    Note: This RBI Form C (Semestral Monitoring Report) is to be submitted to DILG C/MLGOO as a reference for encoding to BIS-BPS.
+                </div>
+            </div>
+            `;
+
+            document.getElementById('print-area').innerHTML = html;
+            window.print();
+        }
+
         // --- IMPORT / EXPORT ---
         function processExport() {
             const instrHeader = ["COLUMNS", "EXPECTED VALUES/ FORMAT", "REMARKS"];
             const instrData = [["INHABITANT TYPE", "NON-MIGRANT", "Required Field"], ["", "MIGRANT", ""], ["", "TRANSIENT", ""], ["LAST NAME", "", "Required Field"], ["FIRST NAME", "", "Required Field"], ["MIDDLE NAME", "", "Optional Field"], ["SUFFIX", "", "Optional Field"], ["BIRTH PLACE", "", "Optional Field"], ["BIRTHDATE (YYYY-MM-DD)", "2000-12-30", "Required Field"], ["SEX", "MALE", "Required Field"], ["", "FEMALE", "Required Field"], ["CIVIL STATUS", "SINGLE", "Required Field"], ["", "MARRIED", "Required Field"], ["", "WIDOWED", "Required Field"], ["", "DIVORCED", "Required Field"], ["", "SEPARATED", "Required Field"], ["", "COMMON LAW/ LIVE-IN", "Required Field"], ["", "UNKNOWN", "Required Field"], ["", "ANNULLED", "Required Field"], ["CITIZENSHIP", "FILIPINO", "Required Field"], ["", "FOREIGNER", "Required Field"], ["RELIGION", "", "Optional Field"], ["PROFESSION/ OCCUPATION", "", "Optional Field"], ["CONTACT NUMBER", "", "Optional Field"], ["EMAIL ADDRESS", "", "Optional Field"], ["HIGHEST EDUCATIONAL ATTAINMENT", "", "Optional Field"], ["MOTHER'S FIRST NAME", "", "Optional Field"], ["MOTHER'S MIDDLE NAME", "", "Optional Field"], ["MOTHER'S LAST NAME", "", "Optional Field"]];
             const dataHeader = ["INHABITANT TYPE", "LAST NAME", "FIRST NAME", "MIDDLE NAME", "SUFFIX", "BIRTH PLACE", "BIRTHDATE (YYYY-MM-DD)", "SEX", "CIVIL STATUS", "CITIZENSHIP", "PROFESSION/ OCCUPATION", "CONTACT NUMBER", "EMAIL ADDRESS", "HIGHEST EDUCATIONAL ATTAINMENT", "MOTHER'S FIRST NAME", "MOTHER'S MIDDLE NAME", "MOTHER'S LAST NAME", "PUROK/SITIO", "ADDITIONAL ADDRESS", "RELIGION", "IS OSY", "IS PWD", "IS 4Ps", "IS IPS", "IS SOLO PARENT", "LABOR STATUS", "IS OFW", "IS ISY"];
             const living = db.filter(r => !r.isDead);
-            // Updated Export Loop to Match Import Structure
             const dataRows = living.map(r => {
-                // Split address if possible, though imperfect
                 let purok = '', addAdd = r.address || '';
                 if(r.address && r.address.includes('Purok')) {
                     const parts = r.address.split('Purok');
@@ -996,10 +1098,10 @@
                 }
                 return [
                     r.type || "NON-MIGRANT", r.last || "", r.first || "", r.middle || "", r.suffix || "", r.bplace || "", r.bdate || "", r.sex || "", r.civil || "", r.citizen || "FILIPINO", 
-                    r.prof || "", // Profession is now correctly placed
+                    r.prof || "", 
                     r.contact || "", r.email || "", r.edu || "", r.mother_first || "", r.mother_middle || "", r.mother_last || "", 
                     purok, addAdd, 
-                    r.religion || "", // Religion is now correctly placed
+                    r.religion || "", 
                     r.isOSY ? "YES" : "NO", r.isPwd ? "YES" : "NO", "NO", r.isIp ? "YES" : "NO", r.isSoloParent ? "YES" : "NO", r.isUnemployed ? "UNEMPLOYED" : "EMPLOYED", r.isOfw ? "YES" : "NO", "NO"
                 ];
             });
@@ -1042,12 +1144,11 @@
                 const startRow = (json[0] && json[0][0] === "INHABITANT TYPE") ? 1 : 0;
                 for(let i=startRow; i<json.length; i++) {
                     const row = json[i]; if(!row || row.length === 0) continue;
-                    // UPDATED MAPPING: Column K (10) is Religion, Column L (11) is Profession
                     const tempRec = { type: row[0], last: row[1], first: row[2], middle: row[3] || '', suffix: row[4] || '', bplace: row[5] || '', bdate: row[6], sex: row[7], civil: row[8], citizen: row[9] || 'FILIPINO', 
-                        prof: row[10] || '', // FIXED: Index 10 is Profession
+                        prof: row[10] || '', 
                         contact: row[11] || '', email: row[12] || '', edu: row[13] || '', mother_first: row[14] || '', mother_middle: row[15] || '', mother_last: row[16] || '', 
-                        address: (row[18] || '') + ' ' + (row[17] ? 'Purok ' + row[17] : ''), // Combine Address + Purok
-                        religion: row[19] || '', // FIXED: Index 19 is Religion
+                        address: (row[18] || '') + ' ' + (row[17] ? 'Purok ' + row[17] : ''), 
+                        religion: row[19] || '', 
                         isOSY: (row[20] && row[20].toString().toUpperCase() === 'YES'),
                         isPwd: (row[21] && row[21].toString().toUpperCase() === 'YES'),
                         isIp: (row[23] && row[23].toString().toUpperCase() === 'YES'),
@@ -1080,7 +1181,6 @@
             closeImportModal(); showSystemAlert(`Imported ${stagingValid.length} records.`); showHome(); 
         }
 
-        // --- SETTINGS ---
         function saveSettings() {
             const sec = document.getElementById('set-sec').value; const brgy = document.getElementById('set-brgy').value; const prov = document.getElementById('set-prov').value; const muni = document.getElementById('set-muni').value; const lguType = document.getElementById('set-lgu-type').value; const region = document.getElementById('set-region').value; const captain = document.getElementById('set-captain').value;
             if(!sec || !brgy) return showSystemAlert("Please fill in Barangay and Secretary name.");
@@ -1088,5 +1188,392 @@
             localStorage.setItem('rbi_settings', JSON.stringify(settings)); showSystemAlert('Configuration Saved!');
         }
     </script>
+<script>
+    // --- PATCH FIX FOR PRINTING HOUSEHOLDS ---
+
+    // 1. Fix for "Print Household Heads" button
+    function printHHHeads() {
+        // This reuses the robust "Head of Families" print category we already built
+        printStatCategory('families');
+    }
+
+    // 2. Fix for "Print Form A" (Household Card)
+    function printFormA() {
+        // Get current values directly from the active view
+        const hhName = document.getElementById('manage-hh-name').value;
+        const purok = document.getElementById('view-hh-purok').innerText;
+        const houseNo = document.getElementById('view-hh-num').innerText;
+
+        if (!hhName) {
+            showSystemAlert("Error: No household selected.");
+            return;
+        }
+
+        // Filter members for this specific household
+        const members = db.filter(r => r.hh_name === hhName && !r.isDead);
+
+        if (members.length === 0) {
+            showSystemAlert("This household has no members.");
+            return;
+        }
+
+        // Sort: Head -> Spouse -> Children -> Others -> Alphabetical
+        members.sort((a, b) => {
+            const roles = { 'HEAD': 1, 'SPOUSE': 2, 'SON': 3, 'DAUGHTER': 4, 'MEMBER': 5 };
+            const ra = roles[a.hh_role] || 99;
+            const rb = roles[b.hh_role] || 99;
+            if (ra !== rb) return ra - rb;
+            return a.last.localeCompare(b.last);
+        });
+
+        // Generate Rows
+        let rowsHtml = '';
+        members.forEach((m, i) => {
+            let indicators = [];
+            // Status Logic
+            if (m.prof && !m.isUnemployed) indicators.push("Employed");
+            if (m.isUnemployed) indicators.push("Unemployed");
+            if (m.isVoter) indicators.push("VOTER");
+            if (m.isPwd) indicators.push("PWD");
+            if (m.isOfw) indicators.push("OFW");
+            if (m.isSoloParent) indicators.push("Solo Parent");
+            if (m.isOSY) indicators.push("OSY");
+            if (m.isOsc) indicators.push("OSC");
+            if (m.isIp) indicators.push("IP");
+
+            const ageInfo = calculateAgeDetailed(m.bdate);
+            
+            rowsHtml += `
+            <tr>
+                <td style="text-align:center;">${i + 1}</td>
+                <td>${m.last}</td>
+                <td>${m.first}</td>
+                <td>${m.middle || ''}</td>
+                <td>${m.suffix || ''}</td>
+                <td>${m.bplace || ''}</td>
+                <td style="text-align:center;">${m.bdate}</td>
+                <td style="text-align:center;">${ageInfo.y}</td>
+                <td style="text-align:center;">${m.sex.substring(0,1)}</td>
+                <td style="text-align:center;">${m.civil}</td>
+                <td style="text-align:center;">${m.citizen || 'FIL'}</td>
+                <td>${m.prof || ''}</td>
+                <td style="font-size:8pt;">${indicators.join(', ')}</td>
+            </tr>`;
+        });
+
+        // Fill empty rows to make the sheet look full (up to 15 rows)
+        for (let i = members.length; i < 15; i++) {
+            rowsHtml += `<tr><td>${i + 1}</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`;
+        }
+
+        // Generate the Print Layout
+        const html = `
+        <div style="font-family: Arial, sans-serif; padding: 20px; color:black;">
+            <div style="text-align:center; margin-bottom: 20px;">
+                <h3 style="margin:0; font-weight:800;">RBI FORM A (Revised 2024)</h3>
+                <h4 style="margin:5px 0; font-weight:bold;">RECORDS OF BARANGAY INHABITANTS BY HOUSEHOLD</h4>
+            </div>
+
+            <table style="width:100%; margin-bottom: 15px; font-size: 10pt; font-weight:bold;">
+                <tr>
+                    <td width="10%">REGION:</td>
+                    <td width="30%" style="border-bottom: 1px solid black;">${settings.region}</td>
+                    <td width="10%"></td>
+                    <td width="15%">PROVINCE:</td>
+                    <td width="35%" style="border-bottom: 1px solid black;">${settings.province}</td>
+                </tr>
+                <tr>
+                    <td>MUNICIPALITY:</td>
+                    <td style="border-bottom: 1px solid black;">${settings.municipality}</td>
+                    <td></td>
+                    <td>BARANGAY:</td>
+                    <td style="border-bottom: 1px solid black;">${settings.barangay}</td>
+                </tr>
+                <tr>
+                    <td>ADDRESS:</td>
+                    <td style="border-bottom: 1px solid black;" colspan="4">PUROK ${purok}, HOUSE NO. ${houseNo}</td>
+                </tr>
+                 <tr>
+                    <td>HOUSEHOLD:</td>
+                    <td style="border-bottom: 1px solid black;" colspan="2">${hhName}</td>
+                    <td style="text-align:right;">NO. OF MEMBERS:</td>
+                    <td style="border-bottom: 1px solid black; padding-left:10px;">${members.length}</td>
+                </tr>
+            </table>
+
+            <table style="width:100%; border-collapse: collapse; font-size: 9pt;">
+                <thead>
+                    <tr style="background:#f0f0f0;">
+                        <th rowspan="2" style="border:1px solid black; width:3%;">NO.</th>
+                        <th colspan="4" style="border:1px solid black;">NAME</th>
+                        <th rowspan="2" style="border:1px solid black; width:10%;">BIRTH PLACE</th>
+                        <th rowspan="2" style="border:1px solid black; width:8%;">BIRTH DATE</th>
+                        <th rowspan="2" style="border:1px solid black; width:4%;">AGE</th>
+                        <th rowspan="2" style="border:1px solid black; width:3%;">SEX</th>
+                        <th rowspan="2" style="border:1px solid black; width:8%;">STATUS</th>
+                        <th rowspan="2" style="border:1px solid black; width:5%;">CITIZEN</th>
+                        <th rowspan="2" style="border:1px solid black; width:10%;">OCCUPATION</th>
+                        <th rowspan="2" style="border:1px solid black; width:15%;">REMARKS</th>
+                    </tr>
+                    <tr style="background:#f0f0f0;">
+                        <th style="border:1px solid black;">LAST</th>
+                        <th style="border:1px solid black;">FIRST</th>
+                        <th style="border:1px solid black;">MIDDLE</th>
+                        <th style="border:1px solid black;">EXT</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rowsHtml}
+                </tbody>
+            </table>
+
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 50px; font-size: 10pt;">
+                
+                <div style="width: 30%; text-align: center;">
+                    <p style="text-align: left; margin-bottom: 30px;">Prepared by:</p>
+                    <div style="border-bottom: 1px solid black; margin-bottom: 5px; height: 1em;"></div>
+                    <strong>Household Head / Member</strong><br>
+                    <span style="font-size: 0.8em;">(Signature over Printed Name)</span>
+                </div>
+
+                <div style="width: 30%; text-align: center;">
+                    <p style="text-align: left; margin-bottom: 30px;">Certified Correct:</p>
+                    <div style="border-bottom: 1px solid black; margin-bottom: 5px; font-weight: bold; text-transform: uppercase;">
+                        ${settings.secretary}
+                    </div>
+                    <strong>Barangay Secretary</strong><br>
+                    <span style="font-size: 0.8em;">(Signature over Printed Name)</span>
+                </div>
+
+                <div style="width: 30%; text-align: center;">
+                    <p style="text-align: left; margin-bottom: 30px;">Validated by:</p>
+                    <div style="border-bottom: 1px solid black; margin-bottom: 5px; font-weight: bold; text-transform: uppercase;">
+                        ${settings.captain}
+                    </div>
+                    <strong>Punong Barangay</strong><br>
+                    <span style="font-size: 0.8em;">(Signature over Printed Name)</span>
+                </div>
+
+            </div>
+            
+            <div style="margin-top: 20px; font-size: 8pt; font-style: italic; border-top: 1px dashed #999; padding-top: 10px;">
+                Generated by RBI System 2026. Date Printed: ${new Date().toLocaleDateString()}
+            </div>
+        </div>
+        `;
+
+        const printArea = document.getElementById('print-area');
+        printArea.innerHTML = html;
+        
+        // Force a small delay to ensure rendering before print dialog
+        setTimeout(() => {
+            window.print();
+        }, 300);
+    }
+</script>
+<script>
+    // --- PATCH: CLEAR SEARCH ON MODAL OPEN ---
+    
+    // This overrides the existing function to ensure a fresh start every time
+    function showAddMemberModal() {
+        // 1. Clear the text input
+        const inputField = document.getElementById('search-mem-hh');
+        inputField.value = ''; 
+        
+        // 2. Clear the previous search results list
+        document.getElementById('hh-search-results').innerHTML = '';
+
+        // 3. Show the modal
+        new bootstrap.Modal(document.getElementById('modal-add-mem')).show();
+
+        // 4. (Optional) Auto-focus the input so you can type immediately
+        setTimeout(() => {
+            inputField.focus();
+        }, 500);
+    }
+</script>
+<script>
+    // --- PATCH FIX FOR PRINTING HOUSEHOLDS (RBI FORM A REVISED 2024 STRICT COMPLIANCE) ---
+
+    // 1. Fix for "Print Household Heads" button (unchanged, still valid)
+    function printHHHeads() {
+        printStatCategory('families');
+    }
+
+    // 2. Fix for "Print Form A" (Strict RBI Form A Revised 2024 Layout)
+    function printFormA() {
+        const hhName = document.getElementById('manage-hh-name').value;
+        const purok = document.getElementById('view-hh-purok').innerText;
+        const houseNo = document.getElementById('view-hh-num').innerText;
+
+        if (!hhName) { showSystemAlert("Error: No household selected."); return; }
+
+        const members = db.filter(r => r.hh_name === hhName && !r.isDead);
+        if (members.length === 0) { showSystemAlert("This household has no members."); return; }
+
+        // Sort: Head -> Spouse -> Children -> Others -> Alphabetical
+        members.sort((a, b) => {
+            const roles = { 'HEAD': 1, 'SPOUSE': 2, 'SON': 3, 'DAUGHTER': 4, 'MEMBER': 5 };
+            const ra = roles[a.hh_role] || 99;
+            const rb = roles[b.hh_role] || 99;
+            if (ra !== rb) return ra - rb;
+            return a.last.localeCompare(b.last);
+        });
+
+        // Generate Rows matching the CSV columns:
+        // NO. | LAST NAME | FIRST NAME | MIDDLE NAME | EXT | PLACE OF BIRTH | DATE OF BIRTH | AGE | SEX | CIVIL STATUS | CITIZENSHIP | OCCUPATION | REMARKS/STATUS
+        let rowsHtml = '';
+        members.forEach((m, i) => {
+            let indicators = [];
+            if (m.prof && !m.isUnemployed) indicators.push("Employed");
+            if (m.isUnemployed) indicators.push("Unemployed");
+            if (m.isVoter) indicators.push("Voter");
+            if (m.isPwd) indicators.push("PWD");
+            if (m.isOfw) indicators.push("OFW");
+            if (m.isSoloParent) indicators.push("Solo Parent");
+            if (m.isOSY) indicators.push("OSY");
+            if (m.isOsc) indicators.push("OSC");
+            if (m.isIp) indicators.push("IP");
+
+            const ageInfo = calculateAgeDetailed(m.bdate);
+            
+            rowsHtml += `
+            <tr>
+                <td style="text-align:center;">${i + 1}</td>
+                <td>${m.last}</td>
+                <td>${m.first}</td>
+                <td>${m.middle || ''}</td>
+                <td>${m.suffix || ''}</td>
+                <td>${m.bplace || ''}</td>
+                <td style="text-align:center;">${m.bdate}</td>
+                <td style="text-align:center;">${ageInfo.y}</td>
+                <td style="text-align:center;">${m.sex ? m.sex.substring(0,1) : ''}</td>
+                <td style="text-align:center;">${m.civil || ''}</td>
+                <td style="text-align:center;">${m.citizen || 'FILIPINO'}</td>
+                <td>${m.prof || ''}</td>
+                <td style="font-size:8pt;">${indicators.join(', ')}</td>
+            </tr>`;
+        });
+
+        // Fill empty rows to make the sheet look full (up to 15 rows)
+        for (let i = members.length; i < 15; i++) {
+            rowsHtml += `<tr><td>${i + 1}</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`;
+        }
+
+        const html = `
+        <style>
+            @media print { 
+                @page { size: landscape; margin: 10mm; } 
+                body { -webkit-print-color-adjust: exact; } 
+                .no-print { display: none !important; }
+            }
+            .form-a-container { font-family: Arial, sans-serif; width: 100%; color: black; font-size: 10pt; }
+            .form-header { text-align: center; margin-bottom: 10px; }
+            .form-header h3 { margin: 0; font-weight: 800; font-size: 14pt; }
+            .form-header h4 { margin: 2px 0; font-weight: bold; font-size: 11pt; }
+            .info-table { width: 100%; border-collapse: collapse; margin-bottom: 5px; font-weight: bold; font-size: 10pt; }
+            .info-table td { padding: 2px 5px; border: none; }
+            .info-val { border-bottom: 1px solid black !important; }
+            
+            .main-table { width: 100%; border-collapse: collapse; margin-top: 5px; font-size: 9pt; }
+            .main-table th { border: 1px solid black; padding: 4px; text-align: center; font-weight: bold; background: #e0e0e0; vertical-align: middle; }
+            .main-table td { border: 1px solid black; padding: 4px; vertical-align: middle; }
+            
+            .footer-section { display: flex; justify-content: space-between; margin-top: 40px; page-break-inside: avoid; }
+            .sig-block { width: 30%; text-align: center; }
+            .sig-line { border-bottom: 1px solid black; margin-top: 30px; margin-bottom: 2px; font-weight: bold; text-transform: uppercase; }
+            .legal-text { margin-top: 15px; font-size: 7pt; font-style: italic; text-align: justify; }
+        </style>
+
+        <div class="form-a-container">
+            <div class="form-header">
+                <h3>RBI FORM A (Revised 2024)</h3>
+                <h4>RECORDS OF BARANGAY INHABITANTS BY HOUSEHOLD</h4>
+            </div>
+
+            <table class="info-table">
+                <tr>
+                    <td width="8%">REGION:</td>
+                    <td width="20%" class="info-val">${settings.region}</td>
+                    <td width="2%"></td>
+                    <td width="10%">PROVINCE:</td>
+                    <td width="25%" class="info-val">${settings.province}</td>
+                    <td width="2%"></td>
+                    <td width="15%">CITY/MUNICIPALITY:</td>
+                    <td width="18%" class="info-val">${settings.municipality}</td>
+                </tr>
+                <tr>
+                    <td>BARANGAY:</td>
+                    <td class="info-val">${settings.barangay}</td>
+                    <td></td>
+                    <td>HOUSEHOLD NO:</td>
+                    <td class="info-val" colspan="4"></td>
+                </tr>
+                <tr>
+                    <td colspan="2">HOUSEHOLD ADDRESS:</td>
+                    <td class="info-val" colspan="6">PUROK ${purok}, HOUSE NO. ${houseNo}</td>
+                </tr>
+            </table>
+
+            <table class="main-table">
+                <thead>
+                    <tr>
+                        <th rowspan="2" width="3%">NO.</th>
+                        <th colspan="4">NAME</th>
+                        <th rowspan="2" width="10%">PLACE OF BIRTH</th>
+                        <th rowspan="2" width="8%">DATE OF BIRTH<br>(mm/dd/yyyy)</th>
+                        <th rowspan="2" width="4%">AGE</th>
+                        <th rowspan="2" width="4%">SEX</th>
+                        <th rowspan="2" width="8%">CIVIL STATUS</th>
+                        <th rowspan="2" width="8%">CITIZENSHIP</th>
+                        <th rowspan="2" width="10%">OCCUPATION</th>
+                        <th rowspan="2" width="12%">REMARKS / STATUS</th>
+                    </tr>
+                    <tr>
+                        <th width="12%">LAST NAME</th>
+                        <th width="12%">FIRST NAME</th>
+                        <th width="12%">MIDDLE NAME</th>
+                        <th width="5%">EXT</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rowsHtml}
+                </tbody>
+            </table>
+            
+            <div class="footer-section">
+                <div class="sig-block">
+                    <div style="text-align:left;">Prepared by:</div>
+                    <div class="sig-line"></div>
+                    <div>Name of Household Head/Member</div>
+                    <div style="font-size:8pt;">(Signature over Printed Name)</div>
+                </div>
+
+                <div class="sig-block">
+                    <div style="text-align:left;">Certified Correct:</div>
+                    <div class="sig-line">${settings.secretary}</div>
+                    <div>Barangay Secretary</div>
+                    <div style="font-size:8pt;">(Signature over Printed Name)</div>
+                </div>
+
+                <div class="sig-block">
+                    <div style="text-align:left;">Validated by:</div>
+                    <div class="sig-line">${settings.captain}</div>
+                    <div>Punong Barangay</div>
+                    <div style="font-size:8pt;">(Signature over Printed Name)</div>
+                </div>
+            </div>
+
+            <div class="legal-text">
+                "I hereby certify that the above information are true and correct to the best of my knowledge. I understand that for the Barangay to carry out its mandate pursuant to Section 394 (d)(6) of the Local Government Code of 1991, they must necessarily process my personal information for easy identification of inhabitants, as a tool in planning, and as an updated reference in the number of inhabitants of the Barangay. Therefore, I grant my consent and recognize the authority of the Barangay to process my personal information, subject to the provision of the Philippine Data Privacy Act of 2012."
+            </div>
+        </div>
+        `;
+
+        document.getElementById('print-area').innerHTML = html;
+        setTimeout(() => { window.print(); }, 500);
+    }
+</script>
+
 </body>
 </html>
