@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Katarungang Pambarangay System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sidebar-bg: #111827; --sidebar-hover: #1f2937;
+            --body-bg: #f0f2f7; --card-bg: #ffffff;
+            --text-primary: #111827; --text-secondary: #6b7280;
+            --accent-blue: #2563eb; --accent-green: #059669; --accent-red: #dc2626;
+            --border-color: #e5e7eb; --radius: 12px; --radius-sm: 8px;
+        }
+        body { background-color: var(--body-bg); font-family: 'DM Sans', sans-serif; color: var(--text-primary); margin: 0; overflow-x: hidden; }
+        .sidebar { height: 100vh; width: 260px; position: fixed; top: 0; left: 0; background: var(--sidebar-bg); color: white; z-index: 1000; overflow-y: auto; }
+        .sidebar-header { padding: 24px; background: linear-gradient(135deg, rgba(37,99,235,0.15) 0%, transparent 100%); border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .sidebar a { padding: 12px 24px; text-decoration: none; color: rgba(255,255,255,0.6); display: flex; align-items: center; gap: 12px; transition: 0.2s; }
+        .sidebar a:hover { background: var(--sidebar-hover); color: white; }
+        .sidebar a.active { background: rgba(37,99,235,0.18); color: #60a5fa; font-weight: 600; border-left: 3px solid var(--accent-blue); }
+        .nav-label { padding: 20px 24px 10px; font-size: 0.7rem; text-transform: uppercase; color: rgba(255,255,255,0.3); font-weight: 700; }
+        .content { margin-left: 260px; padding: 30px; }
+        .page-title { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 1.5rem; margin-bottom: 20px; }
+        .card-custom { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--radius); padding: 25px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .form-label { font-weight: 600; font-size: 0.85rem; margin-bottom: 5px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+        .form-control, .form-select { border-radius: var(--radius-sm); padding: 10px; border: 1px solid var(--border-color); font-size: 0.9rem; }
+        .form-control:focus { border-color: var(--accent-blue); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+        .timeline-box { max-height: 500px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: #f9fafb; padding: 15px; }
+        .timeline-item { border-left: 3px solid var(--accent-blue); padding-left: 15px; margin-bottom: 20px; position: relative; }
+        .timeline-item::before { content: ''; position: absolute; left: -6px; top: 0; width: 9px; height: 9px; border-radius: 50%; background: var(--accent-blue); }
+        .t-date { font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; }
+        .t-action { font-weight: 700; font-size: 0.9rem; color: var(--text-primary); }
+        .t-desc { font-size: 0.85rem; color: #4b5563; margin-top: 2px; }
+        .party-row { position: relative; margin-bottom: 8px; display: flex; gap: 10px; }
+        .party-row input { flex: 1; }
+        .remove-btn { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; border-radius: 4px; width: 40px; }
+        .suggestion-box { position: absolute; top: 100%; left: 0; width: 100%; background: white; border: 1px solid #ddd; z-index: 100; display: none; max-height: 200px; overflow-y: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .suggestion-item { padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0; }
+        .suggestion-item:hover { background: #f0f4ff; }
+        .d-none { display: none !important; }
+        .btn-primary { background-color: var(--accent-blue); border-color: var(--accent-blue); }
+        .modal-tabs { border-bottom: 2px solid #e5e7eb; margin-bottom: 20px; }
+        .modal-tab { padding: 10px 20px; cursor: pointer; border: none; background: none; color: #6b7280; font-weight: 600; border-bottom: 3px solid transparent; transition: 0.2s; }
+        .modal-tab:hover { color: var(--accent-blue); }
+        .modal-tab.active { color: var(--accent-blue); border-bottom-color: var(--accent-blue); }
+        .tab-content-item { display: none; }
+        .tab-content-item.active { display: block; }
+        .member-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; margin-bottom: 10px; background: white; cursor: pointer; transition: 0.2s; }
+        .member-card:hover { background: #f9fafb; }
+        .member-card.selected { border-color: var(--accent-blue); background: #eff6ff; }
+        .custom-alert-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; display: none; align-items: center; justify-content: center; }
+        .custom-alert-box { background: white; border-radius: 12px; padding: 25px; max-width: 450px; width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,0.2); animation: alertSlideIn 0.3s ease; }
+        @keyframes alertSlideIn { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .custom-alert-icon { font-size: 3rem; margin-bottom: 15px; }
+        .custom-alert-icon.info { color: #3b82f6; }
+        .custom-alert-icon.success { color: #10b981; }
+        .custom-alert-icon.warning { color: #f59e0b; }
+        .custom-alert-icon.error { color: #ef4444; }
+        .custom-alert-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 10px; }
+        .custom-alert-message { color: #6b7280; margin-bottom: 20px; line-height: 1.5; white-space: pre-wrap; }
+        .custom-alert-buttons { display: flex; gap: 10px; justify-content: flex-end; }
+        .pagination-controls { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 20px; }
+        .pagination-controls button { border: 1px solid #e5e7eb; background: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; transition: 0.2s; }
+        .pagination-controls button:hover:not(:disabled) { background: #f3f4f6; border-color: var(--accent-blue); }
+        .pagination-controls button:disabled { opacity: 0.4; cursor: not-allowed; }
+        .pagination-controls span { font-weight: 600; color: var(--text-secondary); }
+    </style>
+</head>
+<body>
+
+<!-- CUSTOM ALERT MODAL -->
+<div class="custom-alert-overlay" id="customAlertOverlay" onclick="if(event.target === this) closeCustomAlert()">
+    <div class="custom-alert-box">
+        <div class="text-center">
+            <div class="custom-alert-icon" id="customAlertIcon"></div>
+            <div class="custom-alert-title" id="customAlertTitle"></div>
+            <div class="custom-alert-message" id="customAlertMessage"></div>
+        </div>
+        <div class="custom-alert-buttons" id="customAlertButtons"></div>
+    </div>
+</div>
+
+<div class="sidebar">
+    <div class="sidebar-header">
+        <h4 style="font-family:'Plus Jakarta Sans'; font-weight:800; margin:0;"><i class="fas fa-balance-scale me-2"></i> KP System</h4>
+        <small style="opacity:0.5;">Barangay Justice</small>
+    </div>
+    <div class="p-3">
+        <a href="javascript:void(0)" onclick="returnToRBIS()" class="btn btn-outline-light w-100 btn-sm text-start" style="border:1px solid rgba(255,255,255,0.2);"><i class="fas fa-arrow-left me-2"></i> Back to RBIS</a>
+    </div>
+    <span class="nav-label">Main Menu</span>
+    <a href="#" onclick="showTab('incident')" id="nav-incident"><i class="fas fa-exclamation-triangle"></i> Incident Report</a>
+    <a href="#" onclick="showTab('newcase')" id="nav-newcase" class="active"><i class="fas fa-file-signature"></i> New Case</a>
+    <a href="#" onclick="showTab('blotter')" id="nav-blotter"><i class="fas fa-book"></i> Case Records / Blotter</a>
+    <a href="#" onclick="showTab('lupon')" id="nav-lupon"><i class="fas fa-users-cog"></i> Lupon Configuration</a>
+</div>
+
+<div class="content">
+    <!-- INCIDENT REPORT TAB -->
+    <div id="tab-incident" class="d-none">
+        <div class="page-title">Incident Report / Blotter</div>
+        <div class="card-custom mb-3">
+            <div class="row g-3 mb-3">
+                <div class="col-md-4"><label class="form-label">Incident Number</label><input type="text" id="ir-no" class="form-control fw-bold bg-light" readonly></div>
+                <div class="col-md-4"><label class="form-label">Date of Incident</label><input type="date" id="ir-date" class="form-control"></div>
+                <div class="col-md-4"><label class="form-label">Time</label><input type="time" id="ir-time" class="form-control"></div>
+            </div>
+            <div class="mb-3"><label class="form-label">Location of Incident</label><input type="text" id="ir-location" class="form-control" placeholder="e.g. Purok 2, near the Chapel"></div>
+            <div class="mb-3">
+                <label class="form-label">Type of Incident</label>
+                <select id="ir-type" class="form-select">
+                    <option value="">-- Select Type --</option>
+                    <option>Altercation/Fight</option><option>Domestic Dispute</option><option>Noise Complaint</option>
+                    <option>Property Damage</option><option>Theft Report</option><option>Verbal Threat</option><option>Other</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Persons Involved</label>
+                <div id="ir-persons-list"></div>
+                <button type="button" class="btn btn-sm btn-success mt-2" onclick="addIncidentPerson()"><i class="fas fa-plus"></i> Add Person</button>
+            </div>
+            <div class="mb-3"><label class="form-label">Incident Details / Narrative</label><textarea id="ir-narrative" class="form-control" rows="5" placeholder="Describe what happened..."></textarea></div>
+            <div class="mb-3"><label class="form-label">Reported By</label><input type="text" id="ir-reporter" class="form-control" placeholder="Name of person reporting"></div>
+            <div class="text-end">
+                <button class="btn btn-secondary me-2" onclick="clearIncidentForm()">Clear</button>
+                <button class="btn btn-primary px-4" onclick="saveIncidentReport()">Save Incident Report</button>
+            </div>
+        </div>
+        <div class="card-custom">
+            <h5 class="fw-bold mb-3">Incident Blotter Records</h5>
+            <div class="mb-3"><input type="text" id="search-incident" class="form-control" placeholder="Search incidents..." onkeyup="renderIncidentBlotter()"></div>
+            <table class="table table-hover">
+                <thead class="table-light"><tr><th>IR No.</th><th>Date</th><th>Type</th><th>Location</th><th>Persons Involved</th><th>Action</th></tr></thead>
+                <tbody id="tbl-incident-blotter"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="tab-newcase">
+        <div class="page-title">File New Case (Incident Report)</div>
+        <div class="card-custom">
+            <div class="row g-3 mb-3">
+                <div class="col-md-4"><label class="form-label">Case Number</label><input type="text" id="nc-no" class="form-control fw-bold bg-light" readonly></div>
+                <div class="col-md-4"><label class="form-label">Date of Filing</label><input type="date" id="nc-date" class="form-control"></div>
+                <div class="col-md-4"><label class="form-label">Time</label><input type="time" id="nc-time" class="form-control"></div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label text-primary" style="font-size: 1rem;">Nature of Case</label>
+                <select id="nc-nature" class="form-select form-select-lg">
+                    <option value="">-- Select Specific Violation --</option>
+                    <optgroup label="CRIMINAL CASES (Revised Penal Code)">
+                        <option>Alarms and Scandals (Art. 155)</option><option>Falsification by private individuals (Art. 172)</option>
+                        <option>Using false certificates (Art. 175)</option><option>Using fictitious name (Art. 178)</option>
+                        <option>Physical Injuries (Art. 252, 266)</option><option>Unlawful arrest (Art. 269)</option>
+                        <option>Abandonment (Art. 275, 276)</option><option>Trespass to Dwelling (Art. 280, 281)</option>
+                        <option>Threats (Grave/Light) (Art. 282, 283, 285)</option><option>Coercion (Grave/Light) (Art. 286, 287, 288)</option>
+                        <option>Theft (Small Value) (Art. 308, 310)</option><option>Estafa / Swindling (Art. 315, 316, 317, 318)</option>
+                        <option>Malicious Mischief (Art. 327, 328)</option><option>Simple Seduction (Art. 338)</option>
+                        <option>Acts of Lasciviousness (Art. 339)</option><option>Slander / Oral Defamation (Art. 358)</option>
+                        <option>Issuing checks without funds (BP 22)</option><option>Fencing (PD 1612)</option>
+                    </optgroup>
+                    <optgroup label="CIVIL / OTHERS">
+                        <option>Collection of Sum of Money</option><option>Land Dispute / Boundary Dispute</option>
+                        <option>Ejectment</option><option>Family/Marital Dispute</option><option>Breach of Contract</option>
+                        <option>Damage to Property</option><option>Confrontation</option>
+                    </optgroup>
+                </select>
+                <div id="div-reason" class="mt-2" style="display:none;"><input type="text" id="nc-reason" class="form-control" placeholder="Specific reason for confrontation..."></div>
+            </div>
+            <div class="mb-4"><label class="form-label">Location of Incident</label><input type="text" id="nc-loc" class="form-control" placeholder="e.g. Purok 2, near the Chapel"></div>
+            <hr>
+            <div class="row g-4 mb-4">
+                <div class="col-md-6"><div class="d-flex align-items-center mb-2"><label class="form-label mb-0 text-primary">Complainant/s</label><button type="button" class="btn btn-sm btn-success ms-2" onclick="addParty('complainant')"><i class="fas fa-plus"></i> ADD</button></div><div id="list-complainants"></div></div>
+                <div class="col-md-6"><div class="d-flex align-items-center mb-2"><label class="form-label mb-0 text-danger">Respondent/s</label><button type="button" class="btn btn-sm btn-success ms-2" onclick="addParty('respondent')"><i class="fas fa-plus"></i> ADD</button></div><div id="list-respondents"></div></div>
+            </div>
+            <div class="row g-3">
+                <div class="col-12"><label class="form-label">The Complaint (Statement of Facts)</label><textarea id="nc-complaint" class="form-control" rows="5"></textarea></div>
+                <div class="col-12"><label class="form-label">The Prayer (Relief Sought)</label><textarea id="nc-prayer" class="form-control" rows="3"></textarea></div>
+            </div>
+            <div class="mt-4 text-end"><button class="btn btn-secondary me-2" onclick="clearForm()">Clear</button><button class="btn btn-primary px-4" onclick="saveCase()">Save Case Record</button></div>
+        </div>
+    </div>
+
+    <div id="tab-blotter" class="d-none">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="page-title mb-0">Case Records</div>
+            <input type="text" id="search-blotter" class="form-control w-25" placeholder="Search case..." onkeyup="handleBlotterSearch()">
+        </div>
+        <div class="card-custom p-0">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light"><tr><th>Case No.</th><th>Nature</th><th>Complainant</th><th>Respondent</th><th>Status</th><th>Action</th></tr></thead>
+                <tbody id="tbl-blotter"></tbody>
+            </table>
+        </div>
+        <div class="pagination-controls">
+            <button onclick="changeBlotterPage(-1)" id="btn-blotter-prev"><i class="fas fa-chevron-left"></i> Previous</button>
+            <span id="blotter-page-info">Page 1</span>
+            <button onclick="changeBlotterPage(1)" id="btn-blotter-next">Next <i class="fas fa-chevron-right"></i></button>
+        </div>
+    </div>
+
+    <div id="tab-lupon" class="d-none">
+        <div class="page-title">Lupon Members (Maximum 20)</div>
+        <div class="card-custom p-4">
+            <div class="row g-2 mb-3">
+                <div class="col-md-5"><input id="lupon-name" class="form-control" placeholder="Full Name"></div>
+                <div class="col-md-5">
+                    <select id="lupon-pos" class="form-select" onchange="autoFillChairman()">
+                        <option value="Member">Member</option>
+                        <option value="Chairman">Chairman (PB)</option>
+                        <option value="Secretary">Secretary</option>
+                    </select>
+                </div>
+                <div class="col-md-2"><button class="btn btn-primary w-100" onclick="addLupon()">Add</button></div>
+            </div>
+            <ul id="lupon-list" class="list-group"></ul>
+            <div class="pagination-controls">
+                <button onclick="changeLuponPage(-1)" id="btn-lupon-prev"><i class="fas fa-chevron-left"></i> Previous</button>
+                <span id="lupon-page-info">Page 1</span>
+                <button onclick="changeLuponPage(1)" id="btn-lupon-next">Next <i class="fas fa-chevron-right"></i></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MANAGE CASE MODAL -->
+<div class="modal fade" id="modal-manage" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title fw-bold" id="m-case-title">Manage Case</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <input type="hidden" id="manage-id">
+                <div class="row g-0" style="min-height: 600px;">
+                    <div class="col-md-4 border-end bg-white p-3 d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="fw-bold mb-0 text-secondary text-uppercase"><i class="fas fa-history me-2"></i> Case History</h6>
+                            <button class="btn btn-sm btn-outline-dark" onclick="printHistory()" title="Print History"><i class="fas fa-print"></i></button>
+                        </div>
+                        <div id="history-container" class="timeline-box flex-grow-1"></div>
+                    </div>
+                    <div class="col-md-8 p-4 bg-light overflow-auto" style="max-height: 650px;">
+                        <div class="modal-tabs d-flex gap-2">
+                            <button class="modal-tab active" onclick="switchModalTab('mediation')">Mediation / Conciliation</button>
+                            <button class="modal-tab" id="tab-btn-pangkat" onclick="switchModalTab('pangkat')" style="display:none;">Pangkat (Conciliation)</button>
+                        </div>
+
+                        <!-- MEDIATION TAB -->
+                        <div id="content-mediation" class="tab-content-item active">
+                            <div class="card p-3 mb-3 border-0 shadow-sm">
+                                <h6 class="fw-bold text-primary mb-2">1. Complaint Documents</h6>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-outline-primary btn-sm" onclick="printForm7()"><i class="fas fa-print me-1"></i> KP Form 7 (Complaint)</button>
+                                </div>
+                            </div>
+                            <div class="card p-3 mb-3 border-0 shadow-sm">
+                                <h6 class="fw-bold text-primary mb-2">2. Schedule Hearing & Summons</h6>
+                                <div class="alert alert-info py-1 px-2 mb-2 small" id="deadline-info"></div>
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-md-4"><label class="small text-muted">Hearing Type</label><select id="set-h-type" class="form-select form-select-sm"><option>Mediation</option><option>Conciliation</option></select></div>
+                                    <div class="col-md-4"><label class="small text-muted">Date & Time</label><input type="datetime-local" id="set-h-date" class="form-control form-control-sm"></div>
+                                    <div class="col-md-4"><button class="btn btn-success btn-sm w-100" onclick="scheduleHearing()"><i class="fas fa-calendar-plus me-1"></i> Set & Create Summons</button></div>
+                                </div>
+                                <div class="mt-2 d-flex gap-2">
+                                    <button class="btn btn-outline-dark btn-sm" onclick="printSummons()"><i class="fas fa-print me-1"></i> Print Summons (Form 9)</button>
+                                    <button class="btn btn-outline-dark btn-sm" onclick="printNotice()"><i class="fas fa-print me-1"></i> Print Notice (Form 8)</button>
+                                </div>
+                            </div>
+                            <div class="card p-3 mb-3 border-0 shadow-sm">
+                                <h6 class="fw-bold text-primary mb-2">3. Hearing Proceedings (Minutes)</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-bordered mb-0" style="font-size:0.85rem;">
+                                        <thead class="table-light"><tr><th>Date</th><th>Type</th><th>Minutes</th><th>Action</th></tr></thead>
+                                        <tbody id="tbl-hearings"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="card p-3 mb-3 border-0 shadow-sm">
+                                <h6 class="fw-bold text-primary mb-3">4. Update Service of Summons</h6>
+                                <div class="row g-2">
+                                    <div class="col-md-4"><label class="small text-muted">Serving Officer</label><input type="text" id="serv-officer" class="form-control form-control-sm" placeholder="Officer name"></div>
+                                    <div class="col-md-4"><label class="small text-muted">Service Status</label><select id="serv-status" class="form-select form-select-sm" onchange="toggleReissue()"><option value="">Select Status...</option><option value="Served">Served</option><option value="Refused">Refused</option><option value="Not Located">Not Located</option></select></div>
+                                    <div class="col-md-4" id="div-served"><label class="small text-muted">Received By</label><input type="text" id="serv-name" class="form-control form-control-sm" placeholder="Received By..."></div>
+                                    <div class="col-md-4 d-none" id="div-reissue"><label class="small text-muted">Reissue Date</label><input type="datetime-local" id="serv-reissue" class="form-control form-control-sm border-danger"></div>
+                                    <div class="col-12"><button class="btn btn-primary btn-sm w-100" onclick="updateService()">Update Service Status</button></div>
+                                </div>
+                            </div>
+                            <div id="mediation-cfa-section" style="display:none;">
+                                <div class="card p-3 mb-3 border-0 shadow-sm border-warning">
+                                    <h6 class="fw-bold text-warning mb-2"><i class="fas fa-exclamation-triangle"></i> Certification to File Action</h6>
+                                    <div class="alert alert-info small mb-2"><strong>Respondent Absence Count:</strong> <span id="mediation-absence-count">0</span> time(s)</div>
+                                    <div class="d-flex gap-2 flex-wrap">
+                                        <button class="btn btn-outline-warning btn-sm" onclick="printCertBarCounterclaim()"><i class="fas fa-print me-1"></i> Certificate to Bar Counterclaim</button>
+                                        <button class="btn btn-outline-warning btn-sm" onclick="printCFAFailed()"><i class="fas fa-print me-1"></i> CFA - Failed Settlement</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="mediation-dismiss-section" style="display:none;">
+                                <button class="btn btn-danger w-100" onclick="dismissCase()"><i class="fas fa-times-circle me-1"></i> Dismiss Case (2 Absent Notices)</button>
+                            </div>
+                        </div>
+
+                        <!-- PANGKAT TAB -->
+                        <div id="content-pangkat" class="tab-content-item">
+                            <div class="alert alert-warning mb-3">
+                                <strong><i class="fas fa-info-circle"></i> Pangkat ng Tagapagkasundo</strong><br>
+                                This process is activated when mediation/conciliation fails within 15 days. Select 3 Lupon members to constitute the Pangkat.
+                            </div>
+                            <div class="card p-3 mb-3 border-0 shadow-sm" id="pangkat-selection">
+                                <h6 class="fw-bold text-primary mb-2">1. Constitute Pangkat</h6>
+                                <div id="pangkat-notice-alert" class="alert alert-info small mb-3"></div>
+                                <div class="row g-2 mb-3">
+                                    <div class="col-12"><label class="form-label small">Select 3 Lupon Members:</label><div id="lupon-members-list"></div></div>
+                                </div>
+                                <div class="row g-2 mb-3">
+                                    <div class="col-md-6"><label class="form-label small">Pangkat Chairman:</label><select id="pangkat-chairman" class="form-select form-select-sm"><option value="">Select Chairman...</option></select></div>
+                                    <div class="col-md-6"><label class="form-label small">Pangkat Secretary:</label><select id="pangkat-secretary" class="form-select form-select-sm"><option value="">Select Secretary...</option></select></div>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-warning btn-sm" onclick="shufflePangkat()"><i class="fas fa-random me-1"></i> Auto-Shuffle (If All Absent)</button>
+                                    <button class="btn btn-success btn-sm" onclick="constitutePangkat()"><i class="fas fa-check me-1"></i> Constitute Pangkat</button>
+                                </div>
+                            </div>
+                            <div id="pangkat-activated" style="display:none;">
+                                <div class="card p-3 mb-3 border-0 shadow-sm">
+                                    <h6 class="fw-bold text-success mb-2"><i class="fas fa-check-circle"></i> Pangkat Constituted</h6>
+                                    <div id="pangkat-members-display" class="small"></div>
+                                    <div id="pangkat-deadline-alert" class="alert alert-warning small mt-2"></div>
+                                </div>
+                                <div class="card p-3 mb-3 border-0 shadow-sm">
+                                    <h6 class="fw-bold text-primary mb-2">2. Print Pangkat Documents</h6>
+                                    <div class="d-flex gap-2 flex-wrap">
+                                        <button class="btn btn-outline-primary btn-sm" onclick="printForm10()"><i class="fas fa-print me-1"></i> Form 10 (Notice to Constitute)</button>
+                                        <button class="btn btn-outline-primary btn-sm" onclick="printForm11()"><i class="fas fa-print me-1"></i> Form 11 (Summons for Pangkat)</button>
+                                        <button class="btn btn-outline-primary btn-sm" onclick="printForm14()"><i class="fas fa-print me-1"></i> Form 14 (Arbitration Agreement)</button>
+                                    </div>
+                                </div>
+                                <div class="card p-3 mb-3 border-0 shadow-sm">
+                                    <h6 class="fw-bold text-primary mb-2">3. Schedule Pangkat Hearing</h6>
+                                    <div class="row g-2 align-items-end">
+                                        <div class="col-md-6"><label class="small text-muted">Hearing Date & Time</label><input type="datetime-local" id="pangkat-h-date" class="form-control form-control-sm"></div>
+                                        <div class="col-md-6"><button class="btn btn-success btn-sm w-100" onclick="schedulePangkatHearing()"><i class="fas fa-calendar-plus me-1"></i> Set Pangkat Hearing</button></div>
+                                    </div>
+                                </div>
+                                <div class="card p-3 mb-3 border-0 shadow-sm">
+                                    <h6 class="fw-bold text-primary mb-2">4. Pangkat Proceedings</h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-bordered mb-0" style="font-size:0.85rem;">
+                                            <thead class="table-light"><tr><th>Date</th><th>Minutes</th><th>Action</th></tr></thead>
+                                            <tbody id="tbl-pangkat-hearings"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div id="pangkat-extend-section" style="display:none;">
+                                    <button class="btn btn-warning w-100 mb-2" onclick="extendPangkat()"><i class="fas fa-clock me-1"></i> Extend Pangkat by 15 Days</button>
+                                </div>
+                                <!-- PANGKAT CFA SECTION - for absence -->
+                                <div id="pangkat-cfa-section" style="display:none;">
+                                    <div class="card p-3 mb-3 border-0 shadow-sm border-warning">
+                                        <h6 class="fw-bold text-warning mb-2"><i class="fas fa-exclamation-triangle"></i> Certification to File Action (Absence)</h6>
+                                        <div class="alert alert-info small mb-2"><strong>Respondent Absence Count:</strong> <span id="pangkat-absence-count">0</span> time(s)</div>
+                                        <div class="d-flex gap-2 flex-wrap">
+                                            <button class="btn btn-outline-warning btn-sm" onclick="printCertBarCounterclaimPangkat()"><i class="fas fa-print me-1"></i> Certificate to Bar Counterclaim</button>
+                                            <button class="btn btn-outline-warning btn-sm" onclick="printCFAPangkat()"><i class="fas fa-print me-1"></i> CFA - Pangkat Failed (Absence)</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- NEW: PANGKAT PERIOD LAPSED CFA - all parties appeared but no settlement -->
+                                <div id="pangkat-period-cfa-section" style="display:none;">
+                                    <div class="card p-3 mb-3 border-0 shadow-sm" style="border-color:#7c3aed!important; border:2px solid #7c3aed;">
+                                        <h6 class="fw-bold mb-2" style="color:#7c3aed;"><i class="fas fa-file-certificate me-1"></i> KP Form 20-A: Certificate to File Action</h6>
+                                        <div class="alert alert-light small mb-2" style="border-left:3px solid #7c3aed;">
+                                            <i class="fas fa-info-circle text-primary"></i> <strong>Pangkat Period Lapsed</strong> — Both parties appeared before the Pangkat but no settlement was reached within the 15/30-day period.
+                                            This is the official <strong>KP Form 20-A</strong> issued by the Pangkat Secretary and attested by the Pangkat Chairman.
+                                        </div>
+                                        <button class="btn btn-sm w-100 fw-bold" style="background:#7c3aed;color:white;" onclick="printCFA20A()">
+                                            <i class="fas fa-print me-1"></i> Print KP Form 20-A (CFA - Pangkat Failed Settlement)
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MINUTES MODAL -->
+<div class="modal fade" id="modal-minutes" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header"><h5>Record Minutes</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <input type="hidden" id="min-idx">
+                <input type="hidden" id="min-type">
+                <label class="form-label">Select Outcome:</label>
+                <select id="min-outcome" class="form-select mb-3" onchange="handleOutcomeChange()">
+                    <option value="">-- Select Outcome --</option>
+                    <option value="resolved">Resolved (Settlement/Arbitration)</option>
+                    <option value="re-schedule">Re-schedule Hearing</option>
+                    <option value="complainant-absent">Complainant Absent</option>
+                    <option value="respondent-absent">Respondent Absent</option>
+                    <option value="both-absent">Both Parties Absent</option>
+                </select>
+                <div id="min-resolved-section" style="display:none;">
+                    <div class="alert alert-info small"><i class="fas fa-info-circle"></i> Settlement terms will appear in the official Settlement Agreement document.</div>
+                    <label class="form-label">Settlement Type:</label>
+                    <select id="min-settlement-type" class="form-select mb-3" onchange="handleSettlementTypeChange()">
+                        <option value="mediation">Mediation Settlement</option>
+                        <option value="conciliation">Conciliation Settlement</option>
+                        <option value="arbitration">Arbitration Award</option>
+                    </select>
+                    <label class="form-label text-danger fw-bold"><i class="fas fa-file-contract"></i> SETTLEMENT TERMS/AGREEMENT: *</label>
+                    <small class="d-block text-muted mb-2">Enter the specific terms agreed upon by both parties.</small>
+                    <textarea id="min-settlement-terms" class="form-control mb-3 border-primary" rows="8" placeholder="Example:&#10;1. Respondent agrees to pay complainant PHP 10,000.00 within 30 days.&#10;2. Both parties agree to maintain peaceful relations." style="background: #fffef0; font-weight: 500;"></textarea>
+                </div>
+                <div id="min-reschedule-section" style="display:none;">
+                    <label class="form-label">New Hearing Date & Time:</label>
+                    <input type="datetime-local" id="min-reschedule-date" class="form-control mb-3">
+                </div>
+                <label class="form-label"><i class="fas fa-pen"></i> Minutes/Narrative of Proceedings:</label>
+                <small class="d-block text-muted mb-2">Describe what happened during the hearing.</small>
+                <textarea id="min-text" class="form-control" rows="6" placeholder="Enter what happened during the hearing..." style="background: #f8f9fa;"></textarea>
+                <div id="min-arbitration-section" style="display:none;" class="mt-3">
+                    <label class="form-label text-primary fw-bold"><i class="fas fa-gavel"></i> Arbitration Decision/Award:</label>
+                    <textarea id="min-arbitration-decision" class="form-control" rows="6" placeholder="DECISION:&#10;&#10;After hearing the parties..." style="background: #f0f9ff;"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-primary" onclick="saveMinutes()"><i class="fas fa-save"></i> Save Minutes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- INCIDENT DETAIL MODAL -->
+<div class="modal fade" id="modal-incident-detail" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title">Incident Report Details</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body" id="incident-detail-content"></div>
+            <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Close</button><button class="btn btn-primary" onclick="printCurrentIncident()"><i class="fas fa-print"></i> Print Report</button></div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const residentDB = JSON.parse(localStorage.getItem('rbi_db')) || [];
+    const rbiSettings = JSON.parse(localStorage.getItem('rbi_settings')) || {};
+    let casesDB = JSON.parse(localStorage.getItem('kp_cases_v2')) || [];
+    let luponDB = JSON.parse(localStorage.getItem('kp_lupon')) || [];
+    let incidentDB = JSON.parse(localStorage.getItem('kp_incidents')) || [];
+    let compCount = 0, respCount = 0, incidentPersonCount = 0, selectedLuponMembers = [], currentIncidentView = null;
+    let blotterPage = 1, blotterSearchTimeout = null, luponPage = 1;
+    const RECORDS_PER_PAGE = 10;
+
+    function showAlert(message, type = 'info', title = '', confirmCallback = null) {
+        const overlay = document.getElementById('customAlertOverlay');
+        const icons = { info: '<i class="fas fa-info-circle"></i>', success: '<i class="fas fa-check-circle"></i>', warning: '<i class="fas fa-exclamation-triangle"></i>', error: '<i class="fas fa-times-circle"></i>' };
+        const titles = { info: 'Information', success: 'Success', warning: 'Warning', error: 'Error' };
+        document.getElementById('customAlertIcon').className = 'custom-alert-icon ' + type;
+        document.getElementById('customAlertIcon').innerHTML = icons[type];
+        document.getElementById('customAlertTitle').textContent = title || titles[type];
+        document.getElementById('customAlertMessage').textContent = message;
+        if (confirmCallback) {
+            document.getElementById('customAlertButtons').innerHTML = '<button class="btn btn-secondary" onclick="closeCustomAlert()">Cancel</button><button class="btn btn-primary" onclick="confirmCustomAlert()">Confirm</button>';
+            window.customAlertCallback = confirmCallback;
+        } else {
+            document.getElementById('customAlertButtons').innerHTML = '<button class="btn btn-primary" onclick="closeCustomAlert()">OK</button>';
+            window.customAlertCallback = null;
+        }
+        overlay.style.display = 'flex';
+    }
+    function closeCustomAlert() { document.getElementById('customAlertOverlay').style.display = 'none'; window.customAlertCallback = null; }
+    function confirmCustomAlert() { if (window.customAlertCallback) window.customAlertCallback(); closeCustomAlert(); }
+
+    function returnToRBIS() {
+        sessionStorage.removeItem('kp_authenticated');
+        sessionStorage.setItem('rbis_bypass_security', 'true');
+        window.location.href = 'index.html';
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        repairDatabase(); genCaseNo(); genIncidentNo();
+        addParty('complainant'); addParty('respondent');
+        addIncidentPerson();
+        document.getElementById('nc-nature').addEventListener('change', function() {
+            document.getElementById('div-reason').style.display = this.value === 'Confrontation' ? 'block' : 'none';
+        });
+    });
+
+    function repairDatabase() {
+        let updated = false;
+        casesDB.forEach(c => {
+            if (!c.history) { c.history = []; updated = true; }
+            if (!c.hearings) { c.hearings = []; updated = true; }
+            if (!c.pangkat) { c.pangkat = { active: false, members: [], chairman: '', secretary: '', hearings: [], noticeDate: '', constitutedDate: '', extendedDate: '' }; updated = true; }
+            if (!c.settlements) { c.settlements = []; updated = true; }
+            if (!c.reSummonCount) { c.reSummonCount = 0; updated = true; }
+            if (!c.reNoticeCount) { c.reNoticeCount = 0; updated = true; }
+        });
+        if(updated) localStorage.setItem('kp_cases_v2', JSON.stringify(casesDB));
+    }
+
+    function showTab(id) {
+        document.querySelectorAll('.content > div').forEach(d => d.classList.add('d-none'));
+        document.getElementById('tab-' + id).classList.remove('d-none');
+        document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+        document.getElementById('nav-' + id).classList.add('active');
+        if(id === 'blotter') { blotterPage = 1; renderBlotter(); }
+        if(id === 'lupon') { luponPage = 1; renderLupon(); }
+        if(id === 'incident') { renderIncidentBlotter(); }
+    }
+
+    function switchModalTab(tabName) {
+        document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content-item').forEach(c => c.classList.remove('active'));
+        if(tabName === 'mediation') {
+            document.querySelector('.modal-tab:nth-child(1)').classList.add('active');
+            document.getElementById('content-mediation').classList.add('active');
+        } else if(tabName === 'pangkat') {
+            document.getElementById('tab-btn-pangkat').classList.add('active');
+            document.getElementById('content-pangkat').classList.add('active');
+        }
+    }
+
+    function genIncidentNo() {
+        const year = new Date().getFullYear();
+        const count = incidentDB.filter(i => i.irNo.startsWith(year.toString())).length + 1;
+        document.getElementById('ir-no').value = `IR-${year}-${String(count).padStart(3, '0')}`;
+    }
+
+    function addIncidentPerson() {
+        const container = document.getElementById('ir-persons-list');
+        const id = `ir-person-${++incidentPersonCount}`;
+        const div = document.createElement('div');
+        div.className = 'party-row';
+        div.innerHTML = `<div style="position:relative; width:100%;"><input type="text" id="${id}" class="form-control" placeholder="Enter name..." autocomplete="off"></div>${container.children.length > 0 ? `<button class="remove-btn" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>` : ''}`;
+        container.appendChild(div);
+    }
+
+    function clearIncidentForm() {
+        ['ir-date','ir-time','ir-location','ir-narrative','ir-reporter'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('ir-type').selectedIndex = 0;
+        document.getElementById('ir-persons-list').innerHTML = '';
+        incidentPersonCount = 0;
+        addIncidentPerson(); genIncidentNo();
+    }
+
+    function saveIncidentReport() {
+        const irNo = document.getElementById('ir-no').value;
+        const date = document.getElementById('ir-date').value;
+        const time = document.getElementById('ir-time').value;
+        const location = document.getElementById('ir-location').value;
+        const type = document.getElementById('ir-type').value;
+        const narrative = document.getElementById('ir-narrative').value;
+        const reporter = document.getElementById('ir-reporter').value;
+        if(!date || !time || !location || !type || !narrative || !reporter) return showAlert('Please fill all required fields', 'warning');
+        const persons = [];
+        document.querySelectorAll('#ir-persons-list input').forEach(input => { if(input.value.trim()) persons.push(input.value.trim()); });
+        if(persons.length === 0) return showAlert('Add at least one person involved', 'warning');
+        incidentDB.push({ id: Date.now().toString(), irNo, date, time, location, type, narrative, reporter, persons, createdAt: new Date().toISOString() });
+        localStorage.setItem('kp_incidents', JSON.stringify(incidentDB));
+        showAlert('Incident Report saved successfully!', 'success');
+        clearIncidentForm(); renderIncidentBlotter();
+    }
+
+    function renderIncidentBlotter() {
+        const searchTerm = document.getElementById('search-incident').value.toLowerCase();
+        const tbody = document.getElementById('tbl-incident-blotter');
+        const filtered = incidentDB.filter(i => i.irNo.toLowerCase().includes(searchTerm) || i.type.toLowerCase().includes(searchTerm) || i.location.toLowerCase().includes(searchTerm) || i.persons.some(p => p.toLowerCase().includes(searchTerm))).reverse();
+        tbody.innerHTML = filtered.map(i => `<tr><td class="fw-bold">${i.irNo}</td><td>${new Date(i.date).toLocaleDateString()}</td><td>${i.type}</td><td>${i.location}</td><td>${i.persons.slice(0,2).join(', ')}${i.persons.length>2?'...':''}}</td><td><button class="btn btn-sm btn-primary" onclick="viewIncidentDetail('${i.id}')">View</button> <button class="btn btn-sm btn-success" onclick="printIncident('${i.id}')">Print</button></td></tr>`).join('');
+    }
+
+    function viewIncidentDetail(id) {
+        const incident = incidentDB.find(i => i.id === id);
+        if(!incident) return showAlert('Incident not found', 'error');
+        currentIncidentView = incident;
+        document.getElementById('incident-detail-content').innerHTML = `<div class="row g-3"><div class="col-md-6"><strong>IR Number:</strong> ${incident.irNo}</div><div class="col-md-6"><strong>Date:</strong> ${new Date(incident.date).toLocaleDateString()}</div><div class="col-md-6"><strong>Time:</strong> ${incident.time}</div><div class="col-md-6"><strong>Type:</strong> ${incident.type}</div><div class="col-12"><strong>Location:</strong> ${incident.location}</div><div class="col-12"><strong>Persons Involved:</strong><ul>${incident.persons.map(p=>`<li>${p}</li>`).join('')}</ul></div><div class="col-12"><strong>Narrative:</strong><p style="white-space:pre-wrap;background:#f9fafb;padding:15px;border-radius:8px;">${incident.narrative}</p></div><div class="col-12"><strong>Reported By:</strong> ${incident.reporter}</div></div>`;
+        new bootstrap.Modal(document.getElementById('modal-incident-detail')).show();
+    }
+
+    function printCurrentIncident() { if(currentIncidentView) printIncident(currentIncidentView.id); }
+
+    function printIncident(id) {
+        const incident = incidentDB.find(i => i.id === id);
+        if(!incident) return showAlert('Not found', 'error');
+        const provinceOrCity = rbiSettings.city ? `City of ${rbiSettings.city}` : `Province of ${rbiSettings.province || '________'}`;
+        const content = `<div style="text-align:center;margin-bottom:30px;">Republic of the Philippines<br>${provinceOrCity}<br>Municipality of ${rbiSettings.municipality||'________'}<br><strong>Barangay ${rbiSettings.barangay||'________'}</strong><br><br><strong>OFFICE OF THE LUPONG TAGAPAMAYAPA</strong></div><h3 style="text-align:center;text-decoration:underline;margin:30px 0;">INCIDENT REPORT</h3><table width="100%" style="margin-bottom:20px;"><tr><td width="30%"><strong>IR Number:</strong></td><td>${incident.irNo}</td></tr><tr><td><strong>Date:</strong></td><td>${new Date(incident.date).toLocaleDateString()}</td></tr><tr><td><strong>Time:</strong></td><td>${incident.time}</td></tr><tr><td><strong>Location:</strong></td><td>${incident.location}</td></tr><tr><td><strong>Type:</strong></td><td>${incident.type}</td></tr></table><p><strong>PERSONS INVOLVED:</strong></p><ul>${incident.persons.map(p=>`<li>${p}</li>`).join('')}</ul><p><strong>NARRATIVE:</strong></p><p style="text-align:justify;line-height:1.8;padding:15px;border:1px solid #ccc;background:#f9f9f9;white-space:pre-wrap;">${incident.narrative}</p><p><strong>Reported By:</strong> ${incident.reporter}</p><br><br><div style="float:right;text-align:center;width:250px;"><div style="border-bottom:1px solid black;margin-bottom:5px;"></div><strong>${getLuponChairman()}</strong><br>Punong Barangay / Lupon Chairman</div>`;
+        const win = window.open('','','width=850,height=1100');
+        win.document.write(`<html><head><title>IR</title><style>body{font-family:'Times New Roman',serif;padding:40px;line-height:1.5;}</style></head><body>${content}<script>window.onload=()=>window.print();<\/script></body></html>`);
+        win.document.close();
+    }
+
+    function genCaseNo() { document.getElementById('nc-no').value = `${new Date().getFullYear()}-${String(casesDB.length+1).padStart(3,'0')}`; }
+
+    function addParty(type) {
+        const container = document.getElementById(`list-${type}s`);
+        const id = `${type}-${type==='complainant'?++compCount:++respCount}`;
+        const div = document.createElement('div');
+        div.className = 'party-row';
+        div.innerHTML = `<div style="position:relative;width:100%;"><input type="text" id="${id}" class="form-control ${type}-input" placeholder="Search Resident..." onkeyup="searchResident('${id}')" autocomplete="off"><div id="${id}-suggest" class="suggestion-box"></div></div>${container.children.length>0?`<button class="remove-btn" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>`:''}`;
+        container.appendChild(div);
+    }
+
+    function searchResident(inputId) {
+        const input = document.getElementById(inputId);
+        const box = document.getElementById(inputId + '-suggest');
+        const val = input.value.toLowerCase();
+        if(val.length < 2) { box.style.display = 'none'; return; }
+        const matches = residentDB.filter(r => !r.isDead && (r.last + ' ' + r.first).toLowerCase().includes(val)).slice(0,5);
+        box.innerHTML = '';
+        if(matches.length === 0) { box.style.display = 'none'; }
+        else { matches.forEach(m => { const item = document.createElement('div'); item.className = 'suggestion-item'; item.innerHTML = `<strong>${m.last}, ${m.first}</strong> <small>(${m.address||''})</small>`; item.onclick = () => { input.value = `${m.last}, ${m.first}`; box.style.display = 'none'; }; box.appendChild(item); }); box.style.display = 'block'; }
+    }
+
+    function checkDuplicateParties(comps, resps) {
+        const nc = comps.map(n => n.trim().toUpperCase());
+        const nr = resps.map(n => n.trim().toUpperCase());
+        for(let c of nc) { if(nr.includes(c)) return c; }
+        return null;
+    }
+
+    function saveCase() {
+        const date = document.getElementById('nc-date').value;
+        const nature = document.getElementById('nc-nature').value;
+        let comps = []; document.querySelectorAll('.complainant-input').forEach(i => { if(i.value) comps.push(i.value); });
+        let resps = []; document.querySelectorAll('.respondent-input').forEach(i => { if(i.value) resps.push(i.value); });
+        if(!date || !nature) return showAlert('Please fill Date and Nature', 'warning');
+        if(comps.length === 0 || resps.length === 0) return showAlert('Add at least 1 Complainant and 1 Respondent', 'warning');
+        const duplicate = checkDuplicateParties(comps, resps);
+        if(duplicate) return showAlert(`VALIDATION ERROR: ${duplicate} cannot be both Complainant and Respondent`, 'error');
+        if(!nature.includes('Land Dispute')) {
+            const validResidents = new Set(residentDB.map(r => `${r.last}, ${r.first}`.toUpperCase()));
+            if(!resps.some(n => validResidents.has(n.toUpperCase()))) return showAlert('VALIDATION FAILED: At least one Respondent must be a resident.', 'error');
+        }
+        const newCase = {
+            id: Date.now().toString(), caseNo: document.getElementById('nc-no').value, date, time: document.getElementById('nc-time').value,
+            nature, reason: document.getElementById('nc-reason').value, location: document.getElementById('nc-loc').value,
+            complainants: comps, respondents: resps, complaint: document.getElementById('nc-complaint').value, prayer: document.getElementById('nc-prayer').value,
+            status: 'Mediation', history: [{ date: new Date().toLocaleString(), title: 'Case Filed', desc: 'Case received and recorded.' }],
+            hearings: [], pangkat: { active: false, members: [], chairman: '', secretary: '', hearings: [], noticeDate: '', constitutedDate: '', extendedDate: '' },
+            settlements: [], reSummonCount: 0, reNoticeCount: 0
+        };
+        casesDB.push(newCase);
+        localStorage.setItem('kp_cases_v2', JSON.stringify(casesDB));
+        showAlert('Case Saved Successfully!', 'success');
+        clearForm(); showTab('blotter');
+    }
+
+    function clearForm() {
+        ['nc-date','nc-time','nc-loc','nc-complaint','nc-prayer'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('nc-nature').selectedIndex = 0;
+        document.getElementById('list-complainants').innerHTML = ''; document.getElementById('list-respondents').innerHTML = '';
+        compCount = 0; respCount = 0; addParty('complainant'); addParty('respondent'); genCaseNo();
+    }
+
+    function handleBlotterSearch() {
+        if(blotterSearchTimeout) clearTimeout(blotterSearchTimeout);
+        blotterSearchTimeout = setTimeout(() => { blotterPage = 1; renderBlotter(); }, 300);
+    }
+
+    function changeBlotterPage(direction) {
+        const q = document.getElementById('search-blotter').value.toLowerCase();
+        const filtered = casesDB.filter(c => c.caseNo.toLowerCase().includes(q) || c.nature.toLowerCase().includes(q));
+        const totalPages = Math.ceil(filtered.length / RECORDS_PER_PAGE);
+        blotterPage = Math.max(1, Math.min(blotterPage + direction, totalPages));
+        renderBlotter();
+    }
+
+    function renderBlotter() {
+        const q = document.getElementById('search-blotter').value.toLowerCase();
+        const filtered = casesDB.filter(c => c.caseNo.toLowerCase().includes(q) || c.nature.toLowerCase().includes(q)).reverse();
+        const totalPages = Math.ceil(filtered.length / RECORDS_PER_PAGE);
+        const start = (blotterPage - 1) * RECORDS_PER_PAGE;
+        const paginated = filtered.slice(start, start + RECORDS_PER_PAGE);
+        const tbody = document.getElementById('tbl-blotter');
+        tbody.innerHTML = paginated.map(c => {
+            let bc = 'bg-secondary';
+            if(c.status==='Settled') bc='bg-success'; else if(c.status==='Dismissed') bc='bg-danger'; else if(c.status==='Pangkat Conciliation') bc='bg-warning'; else if(c.status==='Mediation') bc='bg-info';
+            return `<tr><td class="fw-bold">${c.caseNo}</td><td>${c.nature}</td><td>${c.complainants[0]}</td><td>${c.respondents[0]}</td><td><span class="badge ${bc}">${c.status}</span></td><td><button class="btn btn-sm btn-primary" onclick="openManage('${c.id}')">Manage</button> <button class="btn btn-sm btn-danger" onclick="deleteCase('${c.id}')"><i class="fas fa-trash"></i></button></td></tr>`;
+        }).join('');
+        document.getElementById('blotter-page-info').textContent = `Page ${blotterPage} of ${totalPages||1}`;
+        document.getElementById('btn-blotter-prev').disabled = blotterPage <= 1;
+        document.getElementById('btn-blotter-next').disabled = blotterPage >= totalPages;
+    }
+
+    function deleteCase(id) {
+        const c = casesDB.find(x => x.id === id);
+        if(!c) return showAlert('Not found', 'error');
+        showAlert(`Delete case ${c.caseNo}? This cannot be undone.`, 'warning', 'Confirm Deletion', () => {
+            casesDB.splice(casesDB.findIndex(x => x.id === id), 1);
+            localStorage.setItem('kp_cases_v2', JSON.stringify(casesDB));
+            showAlert('Case deleted', 'success'); renderBlotter();
+        });
+    }
+
+    function changeLuponPage(direction) {
+        const totalPages = Math.ceil(luponDB.length / RECORDS_PER_PAGE);
+        luponPage = Math.max(1, Math.min(luponPage + direction, totalPages));
+        renderLupon();
+    }
+
+    function renderLupon() {
+        const totalPages = Math.ceil(luponDB.length / RECORDS_PER_PAGE);
+        const start = (luponPage - 1) * RECORDS_PER_PAGE;
+        const paginated = luponDB.slice(start, start + RECORDS_PER_PAGE);
+        document.getElementById('lupon-list').innerHTML = paginated.map((l, i) => `<li class="list-group-item d-flex justify-content-between">${l.name} (${l.pos}) <button class="btn btn-sm btn-danger" onclick="remLupon(${start+i})">X</button></li>`).join('');
+        document.getElementById('lupon-page-info').textContent = `Page ${luponPage} of ${totalPages||1}`;
+        document.getElementById('btn-lupon-prev').disabled = luponPage <= 1;
+        document.getElementById('btn-lupon-next').disabled = luponPage >= totalPages;
+    }
+
+    function autoFillChairman() { if(document.getElementById('lupon-pos').value==='Chairman' && rbiSettings.captain) document.getElementById('lupon-name').value = rbiSettings.captain; }
+    function addLupon() {
+        const name = document.getElementById('lupon-name').value;
+        const pos = document.getElementById('lupon-pos').value;
+        if(!name) return showAlert('Enter name', 'warning');
+        if(luponDB.length >= 20) return showAlert('Maximum 20 Lupon members', 'warning');
+        luponDB.push({name, pos}); localStorage.setItem('kp_lupon', JSON.stringify(luponDB)); renderLupon(); document.getElementById('lupon-name').value = '';
+    }
+    function remLupon(i) { luponDB.splice(i,1); localStorage.setItem('kp_lupon', JSON.stringify(luponDB)); renderLupon(); }
+
+    function openManage(id) {
+        const c = casesDB.find(x => x.id === id);
+        if(!c) return showAlert('Case not found!', 'error');
+        document.getElementById('manage-id').value = id;
+        document.getElementById('m-case-title').innerText = `Manage Case: ${c.caseNo} (${c.nature})`;
+        document.getElementById('set-h-date').value = '';
+        const fileDate = new Date(c.date);
+        const deadline = new Date(fileDate); deadline.setDate(fileDate.getDate() + 15);
+        const daysPassed = Math.floor((new Date() - fileDate) / (1000*60*60*24));
+        document.getElementById('deadline-info').innerText = `Mediation Deadline (15 Days): ${deadline.toDateString()} | Days Passed: ${daysPassed}`;
+        if(daysPassed >= 15) {
+            document.getElementById('tab-btn-pangkat').style.display = 'block';
+            if(!c.pangkat.noticeDate) {
+                c.pangkat.noticeDate = new Date().toISOString();
+                c.history.push({ date: new Date().toLocaleString(), title: 'Notice to Constitute Pangkat', desc: 'Mediation period lapsed. Pangkat may now be constituted.' });
+                localStorage.setItem('kp_cases_v2', JSON.stringify(casesDB));
+            }
+        } else { document.getElementById('tab-btn-pangkat').style.display = 'none'; }
+        if(c.reSummonCount >= 3) { document.getElementById('mediation-cfa-section').style.display = 'block'; document.getElementById('mediation-absence-count').textContent = c.reSummonCount; }
+        else { document.getElementById('mediation-cfa-section').style.display = 'none'; }
+        if(c.reNoticeCount >= 2) { document.getElementById('mediation-dismiss-section').style.display = 'block'; }
+        else { document.getElementById('mediation-dismiss-section').style.display = 'none'; }
+        renderHistory(c); renderHearings(c); renderPangkatUI(c);
+        if(c.pangkat.active) { document.querySelectorAll('#content-mediation button, #content-mediation input, #content-mediation select').forEach(el => el.disabled = true); }
+        else { document.querySelectorAll('#content-mediation button, #content-mediation input, #content-mediation select').forEach(el => el.disabled = false); }
+        new bootstrap.Modal(document.getElementById('modal-manage')).show();
+    }
+
+    function renderHistory(c) {
+        document.getElementById('history-container').innerHTML = (c.history||[]).slice().reverse().map(h => `<div class="timeline-item"><div class="t-date">${h.date}</div><div class="t-action">${h.title}</div><div class="t-desc">${h.desc}</div></div>`).join('');
+    }
+
+    function renderHearings(c) {
+        document.getElementById('tbl-hearings').innerHTML = c.hearings.map((h,i) => {
+            const hasMin = h.minutes && h.minutes.length > 0;
+            let btn = '';
+            if(!hasMin) { btn = `<button class="btn btn-sm btn-warning py-0" onclick="openMinutes(${i})">&#128221; Add Minutes</button>`; }
+            else {
+                btn = `<button class="btn btn-sm btn-outline-dark py-0" onclick="printMinutes(${i})">&#128424; Print</button>`;
+                if(h.settlement) {
+                    const ds = Math.floor((new Date() - new Date(h.settlement.date))/(1000*60*60*24));
+                    if(h.settlement.executed) { btn += ` <button class="btn btn-sm btn-success py-0 ms-1" onclick="printCompliance(${i},'mediation')">&#10003; Complied</button>`; }
+                    else if(ds < 10 && !h.settlement.repudiated) { btn += ` <button class="btn btn-sm btn-danger py-0 ms-1" onclick="repudiateSettlement(${i})">Repudiate</button>`; }
+                    else if(ds >= 10 && !h.settlement.repudiated) { btn += ` <button class="btn btn-sm btn-success py-0 ms-1" onclick="printMotionExecution(${i})">Execution</button> <button class="btn btn-sm btn-info py-0 ms-1" onclick="markExecuted(${i},'mediation')">Mark Executed</button>`; }
+                    if(h.settlement.terms) { btn += ` <button class="btn btn-sm btn-outline-success py-0 ms-1" onclick="printSettlement(${i},'mediation')">&#128196; Settlement</button>`; }
+                }
+            }
+            return `<tr><td>${new Date(h.date).toLocaleString()}</td><td>${h.type}</td><td>${hasMin?'<span class="text-success">&#10003; Recorded</span>':'<span class="text-muted">-</span>'}</td><td>${btn}</td></tr>`;
+        }).join('');
+    }
+
+    function openMinutes(idx) {
+        const id = document.getElementById('manage-id').value;
+        const c = casesDB.find(x => x.id === id);
+        const h = c.hearings[idx];
+        if(!h.servedBy || !h.status || h.status === 'Scheduled') return showAlert('Cannot record minutes.\n\nUpdate Service of Summons first.', 'error');
+        document.getElementById('min-idx').value = idx;
+        document.getElementById('min-type').value = 'mediation';
+        ['min-outcome','min-text','min-settlement-terms','min-arbitration-decision','min-reschedule-date'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('min-settlement-type').value = 'mediation';
+        ['min-resolved-section','min-reschedule-section','min-arbitration-section'].forEach(id => document.getElementById(id).style.display = 'none');
+        new bootstrap.Modal(document.getElementById('modal-minutes')).show();
+    }
+
+    function handleOutcomeChange() {
+        const outcome = document.getElementById('min-outcome').value;
+        document.getElementById('min-resolved-section').style.display = outcome==='resolved' ? 'block' : 'none';
+        document.getElementById('min-reschedule-section').style.display = outcome==='re-schedule' ? 'block' : 'none';
+        if(outcome !== 'resolved') document.getElementById('min-arbitration-section').style.display = 'none';
+    }
+
+    function handleSettlementTypeChange() {
+        document.getElementById('min-arbitration-section').style.display = document.getElementById('min-settlement-type').value==='arbitration' ? 'block' : 'none';
+    }
+
+    function saveMinutes() {
+        const id = document.getElementById('manage-id').value;
+        const c = casesDB.find(x => x.id === id);
+        const idx = parseInt(document.getElementById('min-idx').value);
+        const text = document.getElementById('min-text').value;
+        const type = document.getElementById('min-type').value;
+        const outcome = document.getElementById('min-outcome').value;
+        if(!outcome) return showAlert('Please select an outcome', 'warning');
+        if(!text) return showAlert('Enter minutes narrative', 'warning');
+
+        const hearingArr = type === 'pangkat' ? c.pangkat.hearings : c.hearings;
+        hearingArr[idx].minutes = text;
+        hearingArr[idx].outcome = outcome;
+
+        if(outcome === 'resolved') {
+            const settlementType = document.getElementById('min-settlement-type').value;
+            const settlementTerms = document.getElementById('min-settlement-terms').value;
+            if(!settlementTerms) return showAlert('Settlement terms are REQUIRED when resolved', 'error');
+            hearingArr[idx].settlementType = settlementType;
+            hearingArr[idx].settlement = { date: new Date().toISOString(), terms: settlementTerms, repudiated: false, executed: false };
+            c.status = 'Settled';
+            if(settlementType === 'arbitration') {
+                const decision = document.getElementById('min-arbitration-decision').value;
+                if(!decision) return showAlert('Enter arbitration decision', 'warning');
+                hearingArr[idx].arbitrationDecision = decision;
+            }
+            c.history.push({ date: new Date().toLocaleString(), title: `${type==='pangkat'?'Pangkat ':''}Settlement Recorded`, desc: `${settlementType} settlement reached. Executable in 10 days.` });
+            if(type !== 'pangkat') showAlert('Settlement recorded! Case status: Settled. Executable in 10 days.', 'success');
+        } else if(outcome === 're-schedule') {
+            const newDate = document.getElementById('min-reschedule-date').value;
+            if(!newDate) return showAlert('Enter new hearing date', 'warning');
+            if(type === 'pangkat') c.pangkat.hearings.push({ date: newDate, status: 'Scheduled', minutes: '', outcome: '', settlement: null });
+            else c.hearings.push({ date: newDate, type: c.hearings[idx].type, status: 'Scheduled', servedTo: '', servedBy: '', minutes: '', outcome: '', settlement: null });
+            c.history.push({ date: new Date().toLocaleString(), title: 'Hearing Re-scheduled', desc: `New hearing: ${new Date(newDate).toLocaleString()}` });
+        } else {
+            handleAbsence(c, outcome, type);
+        }
+        c.history.push({ date: new Date().toLocaleString(), title: 'Minutes Recorded', desc: `Proceedings for ${type} hearing recorded.` });
+        localStorage.setItem('kp_cases_v2', JSON.stringify(casesDB));
+        bootstrap.Modal.getInstance(document.getElementById('modal-minutes')).hide();
+        if(type === 'pangkat') { renderPangkatHearings(c); } else { renderHearings(c); }
+        renderHistory(c);
+    }
+
+    function handleAbsence(c, outcome, hearingType) {
+        if(outcome === 'complainant-absent') {
+            c.reNoticeCount++;
+            c.history.push({ date: new Date().toLocaleString(), title: 'Complainant Absent', desc: `Re-Notice count: ${c.reNoticeCount}.${c.reNoticeCount>=2?' Case may be dismissed.':''}` });
+            showAlert(`Complainant absent. Re-Notice count: ${c.reNoticeCount}`, 'warning');
+        } else if(outcome === 'respondent-absent') {
+            c.reSummonCount++;
+            c.history.push({ date: new Date().toLocaleString(), title: 'Respondent Absent', desc: `Re-Summons count: ${c.reSummonCount}.${c.reSummonCount>=3?' CFA eligible.':''}` });
+            showAlert(`Respondent absent. Re-Summons count: ${c.reSummonCount}${c.reSummonCount>=3?'\n\nCFA now available.':''} `, 'warning');
+        } else if(outcome === 'both-absent') {
+            c.reNoticeCount++; c.reSummonCount++;
+            c.history.push({ date: new Date().toLocaleString(), title: 'Both Parties Absent', desc: `Notice: ${c.reNoticeCount}, Summons: ${c.reSummonCount}` });
+            showAlert('Both parties absent. Re-Summons and Re-Notice issued.', 'warning');
+        }
+    }
+
+    function repudiateSettlement(idx) {
+        const id = document.getElementById('manage-id').value;
+        const c = casesDB.find(x => x.id === id);
+        showAlert('Repudiate this settlement?', 'warning', 'Confirm', () => {
+            c.hearings[idx].settlement.repudiated = true;
+            c.history.push({ date: new Date().toLocaleString(), title: 'Settlement Repudiated', desc: 'Repudiated within 10-day period.' });
+            localStorage.setItem('kp_cases_v2', JSON.stringify(casesDB));
+            renderHearings(c); renderHistory(c);
+        });
+    }
+
+    function repudiatePangkatSettlement(idx) {
+        const id = document.getElementById('manage-id').value;
+        const c = casesDB.find(x => x.id === id);
+        showAlert('Repudiate Pangkat settlement?', 'warning', 'Confirm', () => {
+            c.pangkat.hearings[idx].settlement.repudiated = true;
+            c.history.push({ date: new Date().toLocaleString(), title: 'Pangkat Settlement Repudiated', desc: 'Repudiated.' });
+            localStorage.setItem('kp_cases_v2', JSON.stringify(casesDB));
+            renderPangkatHearings(c); renderHistory(c);
+        });
+    }
+
+    function markExecuted(idx, type) {
+        const id = document.getElementById('manage-id').value;
+        const c = casesDB.find(x => x.id === id);
+        showAlert('Mark as executed?', 'info', 'Confirm', () => {
+            if(type === 'mediation') { c.hearings[idx].settlement.executed = true; c.history.push({ date: new Date().toLocaleString(), title: 'Settlement Executed', desc: 'Parties complied.' }); renderHearings(c); }
+            else { c.pangkat.hearings[idx].settlement.executed = true; c.history.push({ date: new Date().toLocaleString(), title: 'Pangkat Settlement Executed', desc: 'Parties complied.' }); renderPangkatHearings(c); }
+            localStorage.setItem('kp_cases_v2', JSON.stringify(casesDB)); renderHistory(c);
+        });
+    }
+
+    function dismissCase() {
+        const id = document.getElementById('manage-id').value;
+        const c = casesDB.find(x => x.id === id);
+        showAlert('Dismiss case (complainant absent)?', 'warning', 'Confirm', () => {
+            c.status = 'Dismissed';
+            c.history.push({ date: new Date().toLocaleString(), title: 'Case Dismissed', desc: 'Dismissed: complainant absence after 2 re-notices.' });
+            localStorage.setItem('kp_cases_v2', JSON.stringify(casesDB));
+            renderHistory(c); showAlert('Case dismissed', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('modal-manage')).hide();
+        });
+    }
+
+    function scheduleHearing() {
+        const id = document.getElementById('manage-id').value;
+        const c = casesDB.find(x => x.id === id);
+        const type = document.getElementById('set-h-type').value;
+        const dateTime = document.getElementById('set-h-date').value;
+        if(!dateTime) return showAlert('Select Date and Time', 'warning');
+        const selDate = new Date(dateTime);
+        const fileDate = new Date(c.date);
+        const maxDate = new Date(fileDate); maxDate.setDate(fileDate.getDate() + 15);
+        if(selDate > maxDate) return showAlert(`INVALID DATE: Hearing cannot be later than ${maxDate.toDateString()} (15-day rule).`, 'error');
+        c.hearings.push({ date: dateTime, type, status: 'Scheduled', servedTo: '', servedBy: '', minutes: '', outcome: '', settlement: null });
+        c.history.push({ date: new Date().toLocaleString(), title: `${type} Hearing Set`, desc: `Scheduled: ${new Date(dateTime).toLocaleString()}` });
+        localStorage.setItem('kp_cases_v2', JSON.stringify(casesDB));
+        renderHistory(c); renderHearings(c); showAlert('Hearing scheduled!', 'success');
+        document.getElementById('set-h-date').value = '';
+    }
+
+    function toggleReissue() {
+        const s = document.getElementById('serv-status').value;
+        document.getElementById('div-served').classList.toggle('d-none', s !== 'Served');
+        document.getElementById('div-reissue').classList.toggle('d-none', s === 'Served' || s === '');
+    }
+
+    function updateService() {
+        const id = document.getElementById('manage-id').value;
+        const c = casesDB.find(x => x.id === id);
+        if(!c.hearings || c.hearings.length === 0) return showAlert('No hearing scheduled', 'warning');
+        const h = c.hearings[c.hearings.length - 1];
+        const s = document.getElementById('serv-status').value;
+        const officer = document.getElementById('serv-officer').value;
+        if(!officer || !officer.trim()) return showAlert('Please enter Serving Officer name', 'error');
+        if(!s) return showAlert('Select Status', 'warning');
+        h.servedBy = officer.trim();
+        if(s === 'Served') {
+            const r = document.getElementById('serv-name').value;
+            if(!r) return showAlert('Who received it?', 'warning');
+            h.status = 'Served'; h.servedTo = r;
+            c.history.push({ date: new Date().toLocaleString(), title: 'Summons Served', desc: `Received by: ${r} | Officer: ${officer}` });
+        } else {
+            const rd = document.getElementById('serv-reissue').value;
+            if(!rd) return showAlert('Set Reissue Date', 'warning');
+            const reDate = new Date(rd); const hDate = new Date(h.date);
+            const limit = new Date(hDate); limit.setDate(hDate.getDate()-1);
+            if(reDate >= limit) return showAlert('Reissue must be at least 1 day before hearing', 'error');
+            h.status = s;
+            c.history.push({ date: new Date().toLocaleString(), title: `Summons ${s}`, desc: `Reissue: ${reDate.toLocaleString()} | Officer: ${officer}` });
+        }
+        localStorage.setItem('kp_cases_v2', JSON.stringify(casesDB));
+        renderHistory(c); showAlert('Status Updated', 'success');
+        ['serv-officer','serv-name','serv-reissue'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('serv-status').value = '';
+    }
+
+    function renderPangkatUI(c) {
+        if(!c.pangkat.active) {
+            document.getElementById('pangkat-selection').style.display = 'block';
+            document.getElementById('pangkat-activated').style.display = 'none';
+            const noticeDate = new Date(c.pangkat.noticeDate);
+            const canConstitute = new Date() >= noticeDate;
+            document.getElementById('pangkat-notice-alert').innerHTML = canConstitute ?
+                '<i class="fas fa-check-circle text-success"></i> Notice period reached. You may now constitute the Pangkat.' :
+                `<i class="fas fa-clock text-warning"></i> Notice issued ${noticeDate.toLocaleDateString()}. Can constitute on or after that date.`;
+            loadLuponMembersList();
+        } else {
+            document.getElementById('pangkat-selection').style.display = 'none';
+            document.getElementById('pangkat-activated').style.display = 'block';
+            document.getElementById('pangkat-members-display').innerHTML = `<p><strong>Members:</strong> ${c.pangkat.members.join(', ')}</p><p><strong>Chairman:</strong> ${c.pangkat.chairman}</p><p><strong>Secretary:</strong> ${c.pangkat.secretary}</p>`;
+            const constitutedDate = new Date(c.pangkat.constitutedDate);
+            const extendedDate = c.pangkat.extendedDate ? new Date(c.pangkat.extendedDate) : null;
+            const deadlineDate = extendedDate ? new Date(constitutedDate.getTime() + 30*24*60*60*1000) : new Date(constitutedDate.getTime() + 15*24*60*60*1000);
+            const daysPassed = Math.floor((new Date() - constitutedDate) / (1000*60*60*24));
+            document.getElementById('pangkat-deadline-alert').innerHTML = `Pangkat Deadline: ${deadlineDate.toDateString()} | Days: ${daysPassed}/${extendedDate?'30':'15'} ${extendedDate?'(Extended)':''} `;
+
+            const periodLapsed = extendedDate ? daysPassed >= 30 : daysPassed >= 15;
+
+            if(daysPassed >= 15 && !extendedDate) {
+                document.getElementById('pangkat-extend-section').style.display = 'block';
+                // Show absence CFA if >= 3 absences
+                if(c.reSummonCount >= 3) { document.getElementById('pangkat-cfa-section').style.display = 'block'; document.getElementById('pangkat-absence-count').textContent = c.reSummonCount; }
+                else { document.getElementById('pangkat-cfa-section').style.display = 'none'; }
+                // Show Form 20-A CFA when period lapsed (parties appeared but no settlement)
+                document.getElementById('pangkat-period-cfa-section').style.display = 'block';
+            } else if(daysPassed >= 30 && extendedDate) {
+                document.getElementById('pangkat-extend-section').style.display = 'none';
+                if(c.reSummonCount >= 3) { document.getElementById('pangkat-cfa-section').style.display = 'block'; document.getElementById('pangkat-absence-count').textContent = c.reSummonCount; }
+                else { document.getElementById('pangkat-cfa-section').style.display = 'none'; }
+                // Show Form 20-A when extended period also lapsed
+                document.getElementById('pangkat-period-cfa-section').style.display = 'block';
+            } else {
+                document.getElementById('pangkat-extend-section').style.display = 'none';
+                document.getElementById('pangkat-cfa-section').style.display = 'none';
+                document.getElementById('pangkat-period-cfa-section').style.display = 'none';
+            }
+            renderPangkatHearings(c);
+        }
+    }
+
+    function loadLuponMembersList() {
+        const container = document.getElementById('lupon-members-list');
+        const members = luponDB.filter(l => l.pos === 'Member');
+        if(members.length < 3) { container.innerHTML = '<div class="alert alert-danger small">Not enough Lupon members. Add at least 3 members.</div>'; return; }
+        selectedLuponMembers = [];
+        container.innerHTML = members.map(m => `<div class="member-card" onclick="toggleMember('${m.name}', this)" data-name="${m.name}"><i class="fas fa-square text-muted me-2"></i> ${m.name}</div>`).join('');
+    }
+
+    function toggleMember(name, el) {
+        const idx = selectedLuponMembers.indexOf(name);
+        if(idx > -1) { selectedLuponMembers.splice(idx,1); el.classList.remove('selected'); el.querySelector('i').className = 'fas fa-square text-muted me-2'; }
+        else { if(selectedLuponMembers.length >= 3) return showAlert('Select only 3 members', 'warning'); selectedLuponMembers.push(name); el.classList.add('selected'); el.querySelector('i').className = 'fas fa-check-square text-primary me-2'; }
+        updateChairmanSecretaryOptions();
+    }
+
+    function updateChairmanSecretaryOptions() {
+        const opts = '<option value="">Select...</option>' + selectedLuponMembers.map(m => `<option value="${m}">${m}</option>`).join('');
+        document.getElementById('pangkat-chairman').innerHTML = opts;
+        document.getElementById('pangkat-secretary').innerHTML = opts;
+    }
+
+    function shufflePangkat() {
+        showAlert('Auto-shuffle: ONLY use when all parties are absent. Proceed?', 'warning', 'Confirm', () => {
+            const members = luponDB.filter(l => l.pos === 'Member');
+            if(members.length < 3) return showAlert('Not enough members', 'error');
+            selectedLuponMembers = members.sort(() => 0.5 - Math.random()).slice(0,3).map(m => m.name);
+            document.querySelectorAll('.member-card').forEach(el => {
+                const name = el.getAttribute('data-name');
+                if(selectedLuponMembers.includes(name)) { el.classList.add('selected'); el.querySelector('i').className = 'fas fa-check-square text-primary me-2'; }
+                else { el.classList.remove('selected'); el.querySelector('i').className = 'fas fa-square text-muted me-2'; }
+            });
+            updateChairmanSecretaryOptions();
+            document.getElementById('pangkat-chairman').value = selectedLuponMembers[0];
+            document.getElementById('pangkat-secretary').value = selectedLuponMembers[1];
+        });
+    }
+
+    function constitutePangkat() {
+        if(selectedLuponMembers.length !== 3) return showAlert('Select exactly 3 members', 'warning');
+        const chairman = document.getElementById('pangkat-chairman').value;
+        const secretary = document.getElementById('pangkat-secretary').value;
+        if(!chairman || !secretary) return showAlert('Select Chairman and Secretary', 'warning');
+        if(chairman === secretary) return showAlert('Chairman and Secretary must be different', 'error');
+        const id = document.getElementById('manage-id').value;
+        const c = casesDB.find(x => x.id === id);
+        c.pangkat.active = true; c.pangkat.members = selectedLuponMembers; c.pangkat.chairman = chairman; c.pangkat.secretary = secretary;
+        c.pangkat.constitutedDate = new Date().toISOString(); c.status = 'Pangkat Conciliation';
+        c.history.push({ date: new Date().toLocaleString(), title: 'Pangkat Constituted', desc: `Members: ${selectedLuponMembers.join(', ')} | Chairman: ${chairman} | Secretary: ${secretary}` });
+        localStorage.setItem('kp_cases_v2', JSON.stringify(casesDB));
+        showAlert('Pangkat constituted!', 'success'); renderPangkatUI(c); renderHistory(c);
+        document.querySelectorAll('#content-mediation button, #content-mediation input, #content-mediation select').forEach(el => el.disabled = true);
+    }
+
+    function schedulePangkatHearing() {
+        const id = document.getElementById('manage-id').value;
+        const c = casesDB.find(x => x.id === id);
+        const dateTime = document.getElementById('pangkat-h-date').value;
+        if(!dateTime) return showAlert('Select date and time', 'warning');
+        c.pangkat.hearings.push({ date: dateTime, status: 'Scheduled', minutes: '', outcome: '', settlement: null });
+        c.history.push({ date: new Date().toLocaleString(), title: 'Pangkat Hearing Scheduled', desc: `${new Date(dateTime).toLocaleString()}` });
+        localStorage.setItem('kp_cases_v2', JSON.stringify(casesDB));
+        renderPangkatHearings(c); renderHistory(c); showAlert('Pangkat hearing scheduled!', 'success');
+        document.getElementById('pangkat-h-date').value = '';
+    }
+
+    function renderPangkatHearings(c) {
+        document.getElementById('tbl-pangkat-hearings').innerHTML = c.pangkat.hearings.map((h,i) => {
+            const hasMin = h.minutes && h.minutes.length > 0;
+            let btn = '';
+            if(!hasMin) { btn = `<button class="btn btn-sm btn-warning py-0" onclick="openPangkatMinutes(${i})">&#128221; Add Minutes</button>`; }
+            else {
+                btn = `<button class="btn btn-sm btn-outline-dark py-0" onclick="printPangkatMinutes(${i})">&#128424; Print</button>`;
+                if(h.settlement) {
+                    const ds = Math.floor((new Date() - new Date(h.settlement.date))/(1000*60*60*24));
+                    if(h.settlement.executed) { btn += ` <button class="btn btn-sm btn-success py-0 ms-1" onclick="printCompliance(${i},'pangkat')">&#10003; Complied</button>`; }
+                    else if(ds < 10 && !h.settlement.repudiated) { btn += ` <button class="btn btn-sm btn-danger py-0 ms-1" onclick="repudiatePangkatSettlement(${i})">Repudiate</button>`; }
+                    else if(ds >= 10 && !h.settlement.repudiated) { btn += ` <button class="btn btn-sm btn-success py-0 ms-1" onclick="printPangkatExecution(${i})">Execution</button> <button class="btn btn-sm btn-info py-0 ms-1" onclick="markExecuted(${i},'pangkat')">Mark Executed</button>`; }
+                    if(h.settlement.terms) { btn += ` <button class="btn btn-sm btn-outline-success py-0 ms-1" onclick="printSettlement(${i},'pangkat')">&#128196; Settlement</button>`; }
+                }
+            }
+            return `<tr><td>${new Date(h.date).toLocaleString()}</td><td>${hasMin?'<span class="text-success">&#10003; Recorded</span>':'<span class="text-muted">-</span>'}</td><td>${btn}</td></tr>`;
+        }).join('');
+    }
+
+    function openPangkatMinutes(idx) {
+        document.getElementById('min-idx').value = idx; document.getElementById('min-type').value = 'pangkat';
+        ['min-outcome','min-text','min-settlement-terms','min-arbitration-decision','min-reschedule-date'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('min-settlement-type').value = 'mediation';
+        ['min-resolved-section','min-reschedule-section','min-arbitration-section'].forEach(id => document.getElementById(id).style.display = 'none');
+        new bootstrap.Modal(document.getElementById('modal-minutes')).show();
+    }
+
+    function extendPangkat() {
+        const id = document.getElementById('manage-id').value;
+        const c = casesDB.find(x => x.id === id);
+        showAlert('Extend Pangkat by 15 days?', 'warning', 'Confirm', () => {
+            c.pangkat.extendedDate = new Date().toISOString();
+            c.history.push({ date: new Date().toLocaleString(), title: 'Pangkat Extended', desc: 'Extended by 15 days (Total: 30 days)' });
+            localStorage.setItem('kp_cases_v2', JSON.stringify(casesDB));
+            renderPangkatUI(c); renderHistory(c); showAlert('Pangkat extended', 'success');
+        });
+    }
+
+    function getLuponChairman() {
+        const chair = luponDB.find(l => l.pos === 'Chairman');
+        return chair ? chair.name : (rbiSettings.captain || '________________');
+    }
+
+    function printHistory() {
+        const c = casesDB.find(x => x.id === document.getElementById('manage-id').value);
+        const rows = c.history.slice().reverse().map(h => `<tr><td>${h.date}</td><td>${h.title}</td><td>${h.desc}</td></tr>`).join('');
+        printPage(`<h3>CASE HISTORY: ${c.caseNo}</h3><table border="1" width="100%" cellpadding="5"><tr><th>Date</th><th>Action</th><th>Details</th></tr>${rows}</table>`);
+    }
+
+    function printSettlement(idx, type) {
+        const c = casesDB.find(x => x.id === document.getElementById('manage-id').value);
+        const h = type === 'mediation' ? c.hearings[idx] : c.pangkat.hearings[idx];
+        const chairman = type === 'mediation' ? getLuponChairman() : c.pangkat.chairman;
+        const pOC = rbiSettings.city ? `City of ${rbiSettings.city}` : `Province of ${rbiSettings.province||'________'}`;
+        const clList = c.complainants.map(n => `<div style="border-bottom:1px solid black;">${n}</div>`).join('');
+        const rlList = c.respondents.map(n => `<div style="border-bottom:1px solid black;">${n}</div>`).join('');
+        const content = `<div style="text-align:center;margin-bottom:20px;">Republic of the Philippines<br>${pOC}<br>Municipality of ${rbiSettings.municipality||'________'}<br><strong>Barangay ${rbiSettings.barangay||'________'}</strong></div><div style="text-align:center;margin-bottom:30px;"><strong>OFFICE OF THE LUPONG TAGAPAMAYAPA</strong></div><table width="100%" style="margin-bottom:20px;"><tr><td width="45%" valign="top">${clList}<div style="text-align:center;font-size:0.85em;margin-top:5px;">Complainant/s</div></td><td width="10%" align="center"></td><td width="45%" valign="top"><strong>Barangay Case No.:</strong> ${c.caseNo}<br><strong>For:</strong> ${c.nature}</td></tr><tr><td colspan="3" align="center" style="padding:10px 0;"><strong>- against -</strong></td></tr><tr><td colspan="3" valign="top">${rlList}<div style="text-align:center;font-size:0.85em;margin-top:5px;">Respondent/s</div></td></tr></table><h3 style="text-align:center;text-decoration:underline;margin:30px 0 20px 0;">AMICABLE SETTLEMENT</h3><p style="text-align:justify;line-height:1.8;">We, complainant/s and respondent/s in the above-captioned case, do hereby agree to settle our dispute as follows:</p><p style="padding:20px;border:1px solid #000;background:#f9f9f9;white-space:pre-wrap;line-height:1.8;text-align:justify;margin:20px 0;">${h.settlement.terms}</p><p style="text-align:justify;line-height:1.8;margin:20px 0;">and bind ourselves to comply honestly and faithfully with the above terms of settlement.</p><p>Entered this ________ day of __________________, 20______.</p><br><br><table width="100%" style="margin:30px 0;"><tr><td width="45%" align="center"><div style="border-bottom:1px solid black;width:200px;margin:0 auto 5px;"></div>Complainant/s</td><td width="10%"></td><td width="45%" align="center"><div style="border-bottom:1px solid black;width:200px;margin:0 auto 5px;"></div>Respondent/s</td></tr></table><br><br><div style="border-top:2px solid black;padding-top:20px;margin-top:40px;"><p style="text-align:center;margin-bottom:30px;"><strong>ATTESTATION</strong></p><p style="text-align:justify;line-height:1.8;">Duly noted and voluntarily submitted this settlement for my approval and I hereby make it part of the official records.</p><br><br><div style="text-align:center;"><div style="border-bottom:1px solid black;width:250px;margin:0 auto 5px;font-weight:bold;">${chairman}</div>Punong Barangay/Lupon Chairman</div></div>`;
+        const win = window.open('','','width=850,height=1100');
+        win.document.write(`<html><head><title>Settlement</title><style>@page{margin:1in;}body{font-family:'Times New Roman',serif;padding:0;margin:0;line-height:1.5;font-size:12pt;}</style></head><body>${content}<script>window.onload=()=>window.print();<\/script></body></html>`);
+        win.document.close();
+    }
+
+    function printCompliance(idx, type) {
+        const c = casesDB.find(x => x.id === document.getElementById('manage-id').value);
+        const h = type === 'mediation' ? c.hearings[idx] : c.pangkat.hearings[idx];
+        const chairman = type === 'mediation' ? getLuponChairman() : c.pangkat.chairman;
+        const clList = c.complainants.map(n => `<div style="border-bottom:1px solid black;margin-bottom:5px;">${n}</div>`).join('');
+        const rlList = c.respondents.map(n => `<div style="border-bottom:1px solid black;margin-bottom:5px;">${n}</div>`).join('');
+        printTemplate(c, 'CERTIFICATE OF COMPLIANCE', `<p>This certifies that the parties have fully complied with the Settlement Agreement dated <strong>${new Date(h.settlement.date).toLocaleDateString()}</strong>.</p><p><strong>COMPLAINANT/S:</strong></p>${clList}<p><strong>RESPONDENT/S:</strong></p>${rlList}<p>Both parties have fulfilled their obligations. The case is hereby considered <strong>CLOSED AND TERMINATED</strong>.</p><p>Given this _____ day of __________, 20___.</p>`, '', `<div style="margin-top:50px;text-align:center"><div style="border-bottom:1px solid black;width:250px;font-weight:bold;margin:0 auto 5px;">${chairman}</div><strong>${type==='mediation'?'Lupon Chairman':'Pangkat Chairman'}</strong></div>`);
+    }
+
+    function printMinutes(idx) {
+        const c = casesDB.find(x => x.id === document.getElementById('manage-id').value);
+        const h = c.hearings[idx];
+        let content = `<center><h3>MINUTES OF ${h.type.toUpperCase()} PROCEEDINGS</h3></center><p><strong>Case:</strong> ${c.caseNo} (${c.nature})</p><p><strong>Date:</strong> ${new Date(h.date).toLocaleString()}</p><p><strong>Complainant/s:</strong> ${c.complainants.join(', ')}</p><p><strong>Respondent/s:</strong> ${c.respondents.join(', ')}</p><hr><h4>NARRATIVE:</h4><p style="white-space:pre-wrap;line-height:1.6">${h.minutes}</p>`;
+        if(h.settlementType==='arbitration'&&h.arbitrationDecision) content += `<hr><h4>ARBITRATION DECISION:</h4><p style="white-space:pre-wrap;line-height:1.6">${h.arbitrationDecision}</p>`;
+        content += `<br><br><p>Certified Correct:</p><p>__________________________<br>Lupon Secretary</p><p>Attested:</p><p>__________________________<br>${getLuponChairman()}<br>Lupon Chairman</p>`;
+        printPage(content);
+    }
+
+    function printPangkatMinutes(idx) {
+        const c = casesDB.find(x => x.id === document.getElementById('manage-id').value);
+        const h = c.pangkat.hearings[idx];
+        let content = `<center><h3>MINUTES OF PANGKAT PROCEEDINGS</h3></center><p><strong>Case:</strong> ${c.caseNo} (${c.nature})</p><p><strong>Date:</strong> ${new Date(h.date).toLocaleString()}</p><p><strong>Complainant/s:</strong> ${c.complainants.join(', ')}</p><p><strong>Respondent/s:</strong> ${c.respondents.join(', ')}</p><p><strong>Pangkat Members:</strong> ${c.pangkat.members.join(', ')}</p><p><strong>Chairman:</strong> ${c.pangkat.chairman}</p><p><strong>Secretary:</strong> ${c.pangkat.secretary}</p><hr><h4>NARRATIVE:</h4><p style="white-space:pre-wrap;line-height:1.6">${h.minutes}</p>`;
+        if(h.settlementType==='arbitration'&&h.arbitrationDecision) content += `<hr><h4>ARBITRATION AWARD:</h4><p style="white-space:pre-wrap;line-height:1.6">${h.arbitrationDecision}</p>`;
+        content += `<br><br><p>Certified Correct:</p><p>__________________________<br>${c.pangkat.secretary}<br>Pangkat Secretary</p><p>Attested:</p><p>__________________________<br>${c.pangkat.chairman}<br>Pangkat Chairman</p>`;
+        printPage(content);
+    }
+
+    function printMotionExecution(idx) {
+        const c = casesDB.find(x => x.id === document.getElementById('manage-id').value);
+        const h = c.hearings[idx];
+        printTemplate(c, 'MOTION FOR EXECUTION OF SETTLEMENT', `<p>The undersigned moves for execution of the Settlement Agreement dated <strong>${new Date(h.settlement.date).toLocaleDateString()}</strong>.</p><p>The ten (10) day repudiation period has lapsed.</p><p><strong>SETTLEMENT TERMS:</strong></p><p style="padding:15px;border:1px solid #ccc;white-space:pre-wrap;">${h.settlement.terms}</p><p><strong>WHEREFORE</strong>, it is prayed that execution be issued to enforce the terms.</p>`, '', `<div style="margin-top:50px;float:right;text-align:center"><div style="border-bottom:1px solid black;width:200px;font-weight:bold">${getLuponChairman()}</div><strong>Lupon Chairman</strong></div>`);
+    }
+
+    function printPangkatExecution(idx) {
+        const c = casesDB.find(x => x.id === document.getElementById('manage-id').value);
+        const h = c.pangkat.hearings[idx];
+        printTemplate(c, 'MOTION FOR EXECUTION OF PANGKAT SETTLEMENT', `<p>The undersigned moves for execution of the Settlement Agreement before the Pangkat ng Tagapagkasundo dated <strong>${new Date(h.settlement.date).toLocaleDateString()}</strong>.</p><p>The ten (10) day repudiation period has lapsed.</p><p><strong>PANGKAT MEMBERS:</strong> ${c.pangkat.members.join(', ')}</p><p><strong>SETTLEMENT TERMS:</strong></p><p style="padding:15px;border:1px solid #ccc;white-space:pre-wrap;">${h.settlement.terms}</p><p><strong>WHEREFORE</strong>, it is prayed that execution be issued.</p>`, '', `<div style="margin-top:50px;float:right;text-align:center"><div style="border-bottom:1px solid black;width:200px;font-weight:bold">${c.pangkat.chairman}</div><strong>Pangkat Chairman</strong></div>`);
+    }
+
+    function printForm7() {
+        const c = casesDB.find(x => x.id === document.getElementById('manage-id').value);
+        const clList = c.complainants.map(n => `<div style="border-bottom:1px solid black">${n}</div>`).join('');
+        const rlList = c.respondents.map(n => `<div style="border-bottom:1px solid black">${n}</div>`).join('');
+        printTemplateCustomParties(c, clList, rlList, 'KP FORM 7: COMPLAINT', `<p>I/WE hereby complain against above named respondent/s:</p><p style="padding:10px;border:1px dashed #ccc;background:#f9f9f9;white-space:pre-wrap;">${c.complaint}</p><p>THEREFORE, I/WE pray:</p><p style="padding:10px;border:1px dashed #ccc;background:#f9f9f9;white-space:pre-wrap;">${c.prayer}</p><p>Made this ${new Date(c.date).toLocaleDateString()}.</p>`, '', `<div style="border-top:1px solid black;margin-top:20px;padding-top:5px;">Received and filed this ________ day of __________, 20__.<br><br><div style="float:right;text-align:center;"><div style="border-bottom:1px solid black;width:200px;font-weight:bold;">${getLuponChairman()}</div><strong>Punong Barangay / Lupon Chairman</strong></div></div>`);
+    }
+
+    function printSummons() {
+        const c = casesDB.find(x => x.id === document.getElementById('manage-id').value);
+        if(!c.hearings.length) return showAlert('Schedule a hearing first', 'warning');
+        const h = c.hearings[c.hearings.length-1];
+        const clList = c.complainants.map(n => `<div style="border-bottom:1px solid black">${n}</div>`).join('');
+        const rlList = c.respondents.map(n => `<div style="border-bottom:1px solid black">${n}</div>`).join('');
+        const pOC = rbiSettings.city ? `City of ${rbiSettings.city}` : `Province of ${rbiSettings.province||'________'}`;
+        const body = `<p>You are hereby summoned to appear before me in person, together with your witnesses, on <strong>${new Date(h.date).toLocaleString()}</strong> at the Barangay Hall, to answer a complaint made against you.</p><p>You are warned: if you refuse or willfully fail to appear, you may be barred from filing any counterclaim.</p>`;
+        const returnService = `<br><br><div style="page-break-before:always;font-family:'Times New Roman',serif;"><div style="text-align:center;">Republic of the Philippines<br>${pOC}<br>Municipality of ${rbiSettings.municipality||'________'}<br><strong>Barangay ${rbiSettings.barangay||'________'}</strong></div><br><h3 style="text-align:center;text-decoration:underline;">OFFICER'S RETURN</h3><br><p>I served this summons upon respondent/s on the ______ day of ______________, 20____, by:</p><br><table width="100%" cellpadding="5"><tr><td width="30%" style="border-bottom:1px solid black;"></td><td width="5%">1.</td><td>handing to him/them said summons in person, or</td></tr><tr><td style="border-bottom:1px solid black;"></td><td>2.</td><td>handing to him/them and he/they refused to receive it, or</td></tr><tr><td style="border-bottom:1px solid black;"></td><td>3.</td><td>leaving at dwelling with __________________________ a person of suitable age, or</td></tr><tr><td style="border-bottom:1px solid black;"></td><td>4.</td><td>leaving at office with __________________________ a competent person in charge.</td></tr></table><br><div style="float:right;width:200px;text-align:center;"><div style="border-bottom:1px solid black;margin-bottom:5px;"></div>Officer</div><div style="clear:both;"></div></div>`;
+        printTemplateCustomParties(c, clList, rlList, 'KP FORM 9: SUMMONS', body, returnService, `<div style="margin-top:50px;float:right;text-align:center"><div style="border-bottom:1px solid black;width:200px;font-weight:bold">${getLuponChairman()}</div><strong>Punong Barangay / Lupon Chairman</strong></div>`);
+    }
+
+    function printNotice() {
+        const c = casesDB.find(x => x.id === document.getElementById('manage-id').value);
+        if(!c.hearings.length) return showAlert('Schedule a hearing first', 'warning');
+        const h = c.hearings[c.hearings.length-1];
+        printTemplate(c, 'KP FORM 8: NOTICE OF HEARING', `<p>You are hereby required to appear before me on <strong>${new Date(h.date).toLocaleString()}</strong> at the Barangay Hall for the hearing of your complaint.</p>`, '', `<div style="margin-top:50px;float:right;text-align:center"><div style="border-bottom:1px solid black;width:200px;font-weight:bold">${getLuponChairman()}</div><strong>Punong Barangay / Lupon Chairman</strong></div>`);
+    }
+
+    function printForm10() {
+        const c = casesDB.find(x => x.id === document.getElementById('manage-id').value);
+        printTemplate(c, 'KP FORM 10: NOTICE TO CONSTITUTE PANGKAT', '<p>You are hereby notified that since no settlement has been reached in mediation/conciliation before the Punong Barangay within fifteen (15) days, a Pangkat ng Tagapagkasundo is being constituted to hear/facilitate further conciliation/arbitration.</p><p>This notice is given pursuant to Section 410 of the Local Government Code of 1991.</p>', '', `<div style="margin-top:50px;float:right;text-align:center"><div style="border-bottom:1px solid black;width:200px;font-weight:bold">${getLuponChairman()}</div><strong>Punong Barangay / Lupon Chairman</strong></div>`);
+    }
+
+    function printForm11() {
+        const c = casesDB.find(x => x.id === document.getElementById('manage-id').value);
+        if(!c.pangkat.hearings.length) return showAlert('Schedule a Pangkat hearing first', 'warning');
+        const h = c.pangkat.hearings[c.pangkat.hearings.length-1];
+        printTemplate(c, 'KP FORM 11: SUMMONS (FOR THE PANGKAT)', `<p>You are required to appear before the Pangkat ng Tagapagkasundo on <strong>${new Date(h.date).toLocaleString()}</strong> at the Barangay Hall.</p><p><strong>PANGKAT MEMBERS:</strong></p><p>${c.pangkat.members.map(m=>`&#8226; ${m}`).join('<br>')}</p><p><strong>Chairman:</strong> ${c.pangkat.chairman}<br><strong>Secretary:</strong> ${c.pangkat.secretary}</p><p>Warning: Refusal to appear will be deemed waiver of right to participate in conciliation proceedings.</p>`, '', `<div style="margin-top:50px;float:right;text-align:center"><div style="border-bottom:1px solid black;width:200px;font-weight:bold">${c.pangkat.chairman}</div><strong>Pangkat Chairman</strong></div>`);
+    }
+
+    function printForm14() {
+        const c = casesDB.find(x => x.id === document.getElementById('manage-id').value);
+        const clList = c.complainants.map(n => `<div style="border-bottom:1px solid black;width:250px;margin:0 auto 5px;">${n}</div>`).join('');
+        const rlList = c.respondents.map(n => `<div style="border-bottom:1px solid black;width:250px;margin:0 auto 5px;">${n}</div>`).join('');
+        printTemplate(c, 'KP FORM 14: ARBITRATION AGREEMENT', `<p>WE, the undersigned parties, agree to submit our dispute to ARBITRATION by the Pangkat ng Tagapagkasundo under the Katarungang Pambarangay Law.</p><p>We agree to abide by the decision/award rendered by the Pangkat and to have such decision entered as a judgment of the appropriate court should either party fail to comply.</p><br><table width="100%" style="margin-top:30px;"><tr><td width="45%" style="text-align:center"><strong>COMPLAINANT/S:</strong><br><br>${clList}<small>Date: _________________</small></td><td width="10%"></td><td width="45%" style="text-align:center"><strong>RESPONDENT/S:</strong><br><br>${rlList}<small>Date: _________________</small></td></tr></table>`, '', `<div style="margin-top:50px;float:right;text-align:center"><div style="border-bottom:1px solid black;width:200px;font-weight:bold">${c.pangkat.chairman}</div><strong>Pangkat Chairman</strong></div>`);
+    }
+
+    // ============================================================
+    // KP FORM 20-A: OFFICIAL CFA when Pangkat period lapsed
+    // Both parties appeared but no settlement reached
+    // ============================================================
+    function printCFA20A() {
+        const c = casesDB.find(x => x.id === document.getElementById('manage-id').value);
+        const pOC = rbiSettings.city ? `City of ${rbiSettings.city}` : `Province of ${rbiSettings.province||'________'}`;
+        const clList = c.complainants.map(n => `<div style="border-bottom:1px solid black;margin-bottom:3px;">${n}</div>`).join('');
+        const rlList = c.respondents.map(n => `<div style="border-bottom:1px solid black;margin-bottom:3px;">${n}</div>`).join('');
+        const constitutedDate = c.pangkat.constitutedDate ? new Date(c.pangkat.constitutedDate) : new Date();
+        const extendedDate = c.pangkat.extendedDate ? new Date(c.pangkat.extendedDate) : null;
+        const deadlineDays = extendedDate ? 30 : 15;
+        const deadlineDate = new Date(constitutedDate.getTime() + deadlineDays*24*60*60*1000);
+        const win = window.open('','','width=850,height=1100');
+        win.document.write(`
+<html><head><title>KP Form 20-A - ${c.caseNo}</title>
+<style>
+  @page { margin: 1in; }
+  body { font-family: 'Times New Roman', serif; margin: 0; padding: 0; line-height: 1.6; font-size: 12pt; }
+  .center { text-align: center; }
+  table { width: 100%; }
+  .sig-line { border-bottom: 1px solid black; width: 220px; margin: 0 auto 4px; }
+  .small-label { font-size: 10pt; text-align: center; }
+  .divider { border-top: 1px solid black; margin: 20px 0; }
+</style>
+</head>
+<body>
+<div class="center" style="margin-bottom:15px;">
+  Republic of the Philippines<br>
+  ${pOC}<br>
+  Municipality of ${rbiSettings.municipality||'________'}<br>
+  <strong>Barangay ${rbiSettings.barangay||'________'}</strong>
+</div>
+<div class="center" style="margin-bottom:20px;"><strong>OFFICE OF THE LUPONG TAGAPAMAYAPA</strong></div>
+
+<table style="margin-bottom:20px;">
+  <tr>
+    <td width="45%" valign="top">
+      ${clList}
+      <div class="small-label">Complainant/s</div>
+      <br><div class="center">- against -</div><br>
+      ${rlList}
+      <div class="small-label">Respondent/s</div>
+    </td>
+    <td width="10%"></td>
+    <td width="45%" valign="top">
+      <strong>Barangay Case No.:</strong> ${c.caseNo}<br>
+      <strong>For:</strong> ${c.nature}
+    </td>
+  </tr>
+</table>
+
+<h3 class="center" style="text-decoration:underline; margin: 25px 0 10px 0; font-size:14pt; letter-spacing:0.5px;">
+  KP FORM NO. 20-A<br>CERTIFICATION TO FILE ACTION
+</h3>
+
+<p style="text-align:justify; line-height:1.8; margin: 15px 0;"><strong>THIS IS TO CERTIFY THAT:</strong></p>
+
+<ol style="line-height:2.0; margin: 0 0 20px 0;">
+  <li style="margin-bottom:10px;">
+    There was a personal confrontation between the parties before the Punong Barangay, but <strong>mediation failed</strong>;
+  </li>
+  <li style="margin-bottom:10px;">
+    The Pangkat ng Tagapagkasundo, composed of:<br>
+    <div style="padding:10px 20px; border:1px solid #ccc; margin:8px 0; background:#f9f9f9;">
+      <strong>Members:</strong> ${c.pangkat.members.join(', ')}<br>
+      <strong>Pangkat Chairman:</strong> ${c.pangkat.chairman}<br>
+      <strong>Pangkat Secretary:</strong> ${c.pangkat.secretary}
+    </div>
+    was duly constituted on <strong>${constitutedDate.toLocaleDateString('en-PH', {day:'numeric', month:'long', year:'numeric'})}</strong>;
+  </li>
+  <li style="margin-bottom:10px;">
+    The personal confrontation between the parties before the Pangkat ng Tagapagkasundo <strong>did not result in a settlement</strong> within the prescribed period${extendedDate ? ' (including extended period)' : ''}, which expired on <strong>${deadlineDate.toLocaleDateString('en-PH', {day:'numeric', month:'long', year:'numeric'})}</strong>; and
+  </li>
+  <li>
+    <strong>Therefore</strong>, the corresponding complaint for the dispute may now be filed in court or with the appropriate government office pursuant to Section 412(b) of Republic Act No. 7160 (Local Government Code of 1991).
+  </li>
+</ol>
+
+<p style="text-align:justify; line-height:1.8; margin: 20px 0;">
+  Issued pursuant to Section 412(b) of the Local Government Code of 1991, this <strong>_____ day of __________________, 20______</strong>, at Barangay ${rbiSettings.barangay||'________'}.
+</p>
+
+<br><br>
+<table style="margin-top: 40px;">
+  <tr>
+    <td width="45%" align="center">
+      <div class="sig-line"></div>
+      <strong>${c.pangkat.secretary}</strong><br>
+      <span style="font-size:11pt;">Pangkat Secretary</span>
+    </td>
+    <td width="10%"></td>
+    <td width="45%" align="center">
+      <div class="sig-line"></div>
+      <strong>${c.pangkat.chairman}</strong><br>
+      <span style="font-size:11pt;">Pangkat Chairman</span>
+    </td>
+  </tr>
+</table>
+
+<div class="divider"></div>
+
+<p class="center" style="font-size:11pt; margin-bottom:15px;"><strong>NOTED BY:</strong></p>
+<table>
+  <tr>
+    <td width="100%" align="center">
+      <div class="sig-line"></div>
+      <strong>${getLuponChairman()}</strong><br>
+      <span style="font-size:11pt;">Punong Barangay / Lupon Chairman</span>
+    </td>
+  </tr>
+</table>
+
+<script>window.onload=()=>window.print();<\/script>
+</body></html>`);
+        win.document.close();
+    }
+
+    function printCertBarCounterclaim() {
+        const c = casesDB.find(x => x.id === document.getElementById('manage-id').value);
+        const rlList = c.respondents.map(n => `&#8226; ${n}`).join('<br>');
+        printTemplate(c, 'CERTIFICATION TO BAR COUNTERCLAIM', `<p>This certifies that the respondent/s:</p><p>${rlList}</p><p>in the above-captioned case has/have deliberately failed to appear before the Lupon despite due notice and summons.</p><p>The respondent/s has been issued <strong>${c.reSummonCount}</strong> Re-Summons but repeatedly failed to appear without justifiable cause.</p><p>Pursuant to Section 415 of the Local Government Code, the respondent/s is/are hereby <strong>BARRED from filing any counterclaim</strong> arising from the complainant's claim.</p><p>This certification is issued this _____ day of __________, 20___.</p>`, '', `<div style="margin-top:50px;float:right;text-align:center"><div style="border-bottom:1px solid black;width:200px;font-weight:bold">${getLuponChairman()}</div><strong>Punong Barangay / Lupon Chairman</strong></div>`);
+    }
+
+    function printCertBarCounterclaimPangkat() {
+        const c = casesDB.find(x => x.id === document.getElementById('manage-id').value);
+        const rlList = c.respondents.map(n => `&#8226; ${n}`).join('<br>');
+        printTemplate(c, 'CERTIFICATION TO BAR COUNTERCLAIM (PANGKAT)', `<p>This certifies that the respondent/s:</p><p>${rlList}</p><p>deliberately failed to appear before the Pangkat ng Tagapagkasundo despite due notice and summons, having been issued <strong>${c.reSummonCount}</strong> Re-Summons.</p><p><strong>Pangkat Members:</strong> ${c.pangkat.members.join(', ')}<br><strong>Chairman:</strong> ${c.pangkat.chairman}</p><p>Pursuant to Section 415 of the LGC, the respondent/s is/are hereby <strong>BARRED from filing any counterclaim</strong>.</p><p>This certification is issued this _____ day of __________, 20___.</p>`, '', `<div style="margin-top:50px;"><div style="float:left;text-align:center;width:45%"><div style="border-bottom:1px solid black;width:200px;font-weight:bold">${c.pangkat.chairman}</div><strong>Pangkat Chairman</strong></div><div style="float:right;text-align:center;width:45%"><div style="border-bottom:1px solid black;width:200px;font-weight:bold">${getLuponChairman()}</div><strong>Punong Barangay</strong></div></div>`);
+    }
+
+    function printCFAFailed() {
+        const c = casesDB.find(x => x.id === document.getElementById('manage-id').value);
+        printTemplate(c, 'CERTIFICATION TO FILE ACTION (Failed Settlement)', '<p>This certifies that the complainant/s personally appeared before the Lupon Tagapamayapa for mediation/conciliation proceedings. Despite earnest efforts, the respondent/s deliberately ignored summonses.</p><p>This certification is issued to enable the complainant to file the appropriate action in court, pursuant to Section 412(a) of the Local Government Code of 1991.</p><p>Given this _____ day of __________, 20___.</p>', '', `<div style="margin-top:50px;float:right;text-align:center"><div style="border-bottom:1px solid black;width:200px;font-weight:bold">${getLuponChairman()}</div><strong>Punong Barangay / Lupon Chairman</strong></div>`);
+    }
+
+    function printCFAPangkat() {
+        const c = casesDB.find(x => x.id === document.getElementById('manage-id').value);
+        printTemplate(c, 'CERTIFICATION TO FILE ACTION (Pangkat - Absence)', `<p>This certifies that the dispute was referred to the Pangkat ng Tagapagkasundo (Members: ${c.pangkat.members.join(', ')}).</p><p>The respondent/s failed to appear before the Pangkat despite repeated summons. The period for conciliation has lapsed without resolution.</p><p>Issued pursuant to Section 412(b), R.A. 7160, this _____ day of __________, 20___.</p>`, '', `<div style="margin-top:50px;"><div style="float:left;text-align:center;width:45%"><div style="border-bottom:1px solid black;width:200px;font-weight:bold">${c.pangkat.chairman}</div><strong>Pangkat Chairman</strong></div><div style="float:right;text-align:center;width:45%"><div style="border-bottom:1px solid black;width:200px;font-weight:bold">${getLuponChairman()}</div><strong>Punong Barangay</strong></div></div>`);
+    }
+
+    function printTemplate(c, title, body, extra, preSig) {
+        const ch = c.complainants.map(n => `<div style="border-bottom:1px solid black">${n}</div>`).join('');
+        const rh = c.respondents.map(n => `<div style="border-bottom:1px solid black">${n}</div>`).join('');
+        printTemplateCustomParties(c, ch, rh, title, body, extra, preSig);
+    }
+
+    function printTemplateCustomParties(c, complainantsHTML, respondentsHTML, title, body, extra, preSig) {
+        const pOC = rbiSettings.city ? `City of ${rbiSettings.city}` : `Province of ${rbiSettings.province||'________'}`;
+        const win = window.open('','','width=850,height=1100');
+        win.document.write(`<html><head><title>${title}</title><style>body{font-family:'Times New Roman',serif;padding:40px;line-height:1.5;}.center{text-align:center;}</style></head><body><div class="center">Republic of the Philippines<br>${pOC}<br>Municipality of ${rbiSettings.municipality||'________'}<br><strong>Barangay ${rbiSettings.barangay||'________'}</strong><br><br><strong>OFFICE OF THE LUPONG TAGAPAMAYAPA</strong></div><br><table width="100%"><tr><td width="45%" valign="top">${complainantsHTML}<div class="center" style="font-size:0.8em">Complainant/s</div><br><div class="center">- against -</div><br>${respondentsHTML}<div class="center" style="font-size:0.8em">Respondent/s</div></td><td width="10%"></td><td width="45%" valign="top"><strong>Case No.:</strong> ${c.caseNo}<br><strong>For:</strong> ${c.nature}</td></tr></table><h3 class="center" style="text-decoration:underline;margin-top:30px;">${title}</h3>${body}${preSig||''}<div style="clear:both;"></div>${extra||''}<script>window.onload=()=>window.print();<\/script></body></html>`);
+        win.document.close();
+    }
+
+    function printPage(c) {
+        const w = window.open('','','width=800,height=900');
+        w.document.write(`<html><head><title>Print</title><style>body{font-family:'Times New Roman',serif;padding:40px;line-height:1.5}</style></head><body>${c}<script>window.onload=()=>window.print();<\/script></body></html>`);
+        w.document.close();
+    }
+</script>
+</body>
+</html>
