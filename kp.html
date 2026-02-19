@@ -454,7 +454,10 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    const residentDB = JSON.parse(localStorage.getItem('rbi_db')) || [];
+    // residentDB reads fresh from localStorage every time — picks up newly added residents
+    function getResidentDB() {
+        try { return JSON.parse(localStorage.getItem('rbi_db')) || []; } catch(e) { return []; }
+    }
     const rbiSettings = JSON.parse(localStorage.getItem('rbi_settings')) || {};
     let casesDB = JSON.parse(localStorage.getItem('kp_cases_v2')) || [];
     let luponDB = JSON.parse(localStorage.getItem('kp_lupon')) || [];
@@ -484,8 +487,8 @@
     function confirmCustomAlert() { if (window.customAlertCallback) window.customAlertCallback(); closeCustomAlert(); }
 
     function returnToRBIS() {
-        sessionStorage.removeItem('kp_authenticated');
         sessionStorage.setItem('rbis_bypass_security', 'true');
+        sessionStorage.setItem('kp_was_licensed', 'true');
         window.location.href = 'index.html';
     }
 
@@ -578,7 +581,7 @@
         const searchTerm = document.getElementById('search-incident').value.toLowerCase();
         const tbody = document.getElementById('tbl-incident-blotter');
         const filtered = incidentDB.filter(i => i.irNo.toLowerCase().includes(searchTerm) || i.type.toLowerCase().includes(searchTerm) || i.location.toLowerCase().includes(searchTerm) || i.persons.some(p => p.toLowerCase().includes(searchTerm))).reverse();
-        tbody.innerHTML = filtered.map(i => `<tr><td class="fw-bold">${i.irNo}</td><td>${new Date(i.date).toLocaleDateString()}</td><td>${i.type}</td><td>${i.location}</td><td>${i.persons.slice(0,2).join(', ')}${i.persons.length>2?'...':''}}</td><td><button class="btn btn-sm btn-primary" onclick="viewIncidentDetail('${i.id}')">View</button> <button class="btn btn-sm btn-success" onclick="printIncident('${i.id}')">Print</button></td></tr>`).join('');
+        tbody.innerHTML = filtered.map(i => `<tr><td class="fw-bold">${i.irNo}</td><td>${new Date(i.date).toLocaleDateString()}</td><td>${i.type}</td><td>${i.location}</td><td>${i.persons.slice(0,2).join(', ')}${i.persons.length>2?'...':''}</td><td><button class="btn btn-sm btn-primary" onclick="viewIncidentDetail('${i.id}')">View</button> <button class="btn btn-sm btn-success" onclick="printIncident('${i.id}')">Print</button></td></tr>`).join('');
     }
 
     function viewIncidentDetail(id) {
@@ -608,20 +611,36 @@
         const id = `${type}-${type==='complainant'?++compCount:++respCount}`;
         const div = document.createElement('div');
         div.className = 'party-row';
-        div.innerHTML = `<div style="position:relative;width:100%;"><input type="text" id="${id}" class="form-control ${type}-input" placeholder="Search Resident..." onkeyup="searchResident('${id}')" autocomplete="off"><div id="${id}-suggest" class="suggestion-box"></div></div>${container.children.length>0?`<button class="remove-btn" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>`:''}`;
+        div.innerHTML = '<div style="position:relative;width:100%;"><input type="text" id="' + id + '" class="form-control ' + type + '-input" placeholder="Search Resident..." onkeyup="debouncedSearchResident(\'' + id + '\')" autocomplete="off"><div id="' + id + '-suggest" class="suggestion-box"></div></div>' + (container.children.length > 0 ? '<button class="remove-btn" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>' : '');
         container.appendChild(div);
+    }
+
+    // Debounce helper
+    function debounce(fn, ms) {
+        let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
     }
 
     function searchResident(inputId) {
         const input = document.getElementById(inputId);
         const box = document.getElementById(inputId + '-suggest');
         const val = input.value.toLowerCase();
-        if(val.length < 2) { box.style.display = 'none'; return; }
-        const matches = residentDB.filter(r => !r.isDead && (r.last + ' ' + r.first).toLowerCase().includes(val)).slice(0,5);
+        if (val.length < 2) { box.style.display = 'none'; return; }
+        const residentDB = getResidentDB(); // always fresh
+        const matches = residentDB.filter(r => !r.isDead && (r.last + ' ' + r.first).toLowerCase().includes(val)).slice(0, 8);
         box.innerHTML = '';
-        if(matches.length === 0) { box.style.display = 'none'; }
-        else { matches.forEach(m => { const item = document.createElement('div'); item.className = 'suggestion-item'; item.innerHTML = `<strong>${m.last}, ${m.first}</strong> <small>(${m.address||''})</small>`; item.onclick = () => { input.value = `${m.last}, ${m.first}`; box.style.display = 'none'; }; box.appendChild(item); }); box.style.display = 'block'; }
+        if (matches.length === 0) { box.style.display = 'none'; }
+        else {
+            matches.forEach(m => {
+                const item = document.createElement('div');
+                item.className = 'suggestion-item';
+                item.innerHTML = `<strong>${m.last}, ${m.first}</strong> <small>${m.hh_name || m.address || ''}</small>`;
+                item.onclick = () => { input.value = `${m.last}, ${m.first}`; box.style.display = 'none'; };
+                box.appendChild(item);
+            });
+            box.style.display = 'block';
+        }
     }
+    const debouncedSearchResident = debounce(searchResident, 250);
 
     function checkDuplicateParties(comps, resps) {
         const nc = comps.map(n => n.trim().toUpperCase());
@@ -640,7 +659,7 @@
         const duplicate = checkDuplicateParties(comps, resps);
         if(duplicate) return showAlert(`VALIDATION ERROR: ${duplicate} cannot be both Complainant and Respondent`, 'error');
         if(!nature.includes('Land Dispute')) {
-            const validResidents = new Set(residentDB.map(r => `${r.last}, ${r.first}`.toUpperCase()));
+            const validResidents = new Set(getResidentDB().map(r => `${r.last}, ${r.first}`.toUpperCase()));
             if(!resps.some(n => validResidents.has(n.toUpperCase()))) return showAlert('VALIDATION FAILED: At least one Respondent must be a resident.', 'error');
         }
         const newCase = {
