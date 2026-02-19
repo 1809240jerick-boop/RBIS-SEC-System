@@ -777,61 +777,63 @@
             return new Promise(resolve => {
                 const over = document.createElement('div');
                 over.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(135deg,#0f172a 0%,#1e293b 50%,#111827 100%);';
-                over.innerHTML = `
-                    <div style="position:absolute;width:600px;height:600px;background:radial-gradient(circle,rgba(37,99,235,0.12) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;"></div>
-                    <div style="background:rgba(30,41,59,0.85);backdrop-filter:blur(20px);padding:44px 40px;border-radius:16px;border:1px solid rgba(255,255,255,0.08);box-shadow:0 25px 50px rgba(0,0,0,0.3);width:460px;max-width:100%;text-align:center;position:relative;z-index:1;color:white;">
-                        <i class="fas fa-shield-alt" style="font-size:2.5rem;color:#60a5fa;margin-bottom:16px;display:block;"></i>
-                        <h3 style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;letter-spacing:-0.5px;margin-bottom:8px;">RBI System</h3>
-                        <p style="color:rgba(255,255,255,0.4);font-size:0.85rem;margin-bottom:32px;">No saved data found on this device.<br><span style="color:#fbbf24;">Existing user?</span> Restore your data from a backup file.</p>
-
-                        <button id="btn-fresh-start" style="width:100%;background:#2563eb;border:none;border-radius:10px;padding:13px;color:white;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:0.95rem;cursor:pointer;margin-bottom:12px;transition:all 0.2s;" onmouseover="this.style.background='#1d4ed8'" onmouseout="this.style.background='#2563eb'">
-                            <i class="fas fa-play me-2"></i>Start Fresh
-                        </button>
-
-                        <div style="position:relative;margin-bottom:12px;">
-                            <div style="border-top:1px solid rgba(255,255,255,0.1);margin:8px 0;"></div>
-                            <span style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:rgba(30,41,59,0.85);padding:0 12px;font-size:0.75rem;color:rgba(255,255,255,0.3);">OR</span>
-                        </div>
-
-                        <button id="btn-restore-backup" style="width:100%;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:13px;color:rgba(255,255,255,0.8);font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;font-size:0.95rem;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.12)'" onmouseout="this.style.background='rgba(255,255,255,0.07)'">
-                            <i class="fas fa-upload me-2"></i>Restore from Backup File (.json)
-                        </button>
-                        <p style="color:rgba(255,255,255,0.2);font-size:0.72rem;margin-top:10px;margin-bottom:0;">Find your backup in Downloads or wherever you last saved it from Import/Export</p>
-                        <input type="file" id="backup-file-input" accept=".json" style="display:none;">
-
-                        <div id="first-run-status" style="margin-top:16px;font-size:0.8rem;color:rgba(255,255,255,0.4);min-height:18px;"></div>
-                    </div>`;
+                const box = document.createElement('div');
+                box.style.cssText = 'background:rgba(30,41,59,0.9);backdrop-filter:blur(20px);padding:36px 32px;border-radius:16px;border:1px solid rgba(255,255,255,0.08);box-shadow:0 25px 50px rgba(0,0,0,0.3);width:480px;max-width:100%;text-align:center;position:relative;z-index:1;color:white;';
+                box.innerHTML = [
+                    '<i class="fas fa-shield-alt" style="font-size:2.5rem;color:#60a5fa;margin-bottom:16px;display:block;"></i>',
+                    '<h3 style="font-family:Plus Jakarta Sans,sans-serif;font-weight:800;margin-bottom:8px;">RBI System</h3>',
+                    '<p style="color:rgba(255,255,255,0.35);font-size:0.85rem;margin-bottom:20px;">No saved data found on this device.</p>',
+                    // Warning box for existing users
+                    '<div style="background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.3);border-radius:10px;padding:14px 16px;margin-bottom:20px;text-align:left;">',
+                    '  <div style="font-size:0.82rem;font-weight:700;color:#fbbf24;margin-bottom:8px;"><i class="fas fa-exclamation-triangle"></i> &nbsp;Existing User?</div>',
+                    '  <div style="font-size:0.78rem;color:rgba(255,255,255,0.5);line-height:1.8;">',
+                    '    Your data is tied to your <strong style="color:rgba(255,255,255,0.75);">old URL or device</strong>.<br>',
+                    '    To recover without a backup:<br>',
+                    '    1. Open your <strong style="color:rgba(255,255,255,0.75);">old URL</strong> in any browser<br>',
+                    '    2. Go to <strong style="color:rgba(255,255,255,0.75);">Import / Export &rarr; Download Backup</strong><br>',
+                    '    3. Come back here and click <strong style="color:rgba(255,255,255,0.75);">Restore from Backup</strong>',
+                    '  </div>',
+                    '</div>',
+                    // Restore button (primary)
+                    '<button id="btn-restore-backup" style="width:100%;background:#2563eb;border:none;border-radius:10px;padding:13px;color:white;font-family:Plus Jakarta Sans,sans-serif;font-weight:700;font-size:0.95rem;cursor:pointer;margin-bottom:10px;transition:all 0.2s;" onmouseover="this.style.background='#1d4ed8'" onmouseout="this.style.background='#2563eb'">',
+                    '  <i class="fas fa-upload me-2"></i>Restore from Backup File (.json)',
+                    '</button>',
+                    '<input type="file" id="backup-file-input" accept=".json" style="display:none;">',
+                    // Start fresh (secondary)
+                    '<button id="btn-fresh-start" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:11px;color:rgba(255,255,255,0.4);font-family:Plus Jakarta Sans,sans-serif;font-weight:600;font-size:0.85rem;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.color='rgba(255,255,255,0.7)'" onmouseout="this.style.color='rgba(255,255,255,0.4)'">',
+                    '  Start Fresh (New Installation)',
+                    '</button>',
+                    '<div id="first-run-status" style="margin-top:14px;font-size:0.8rem;min-height:20px;"></div>'
+                ].join('');
+                over.appendChild(box);
                 document.body.appendChild(over);
 
                 const status = over.querySelector('#first-run-status');
 
-                over.querySelector('#btn-fresh-start').onclick = () => {
-                    over.remove();
-                    resolve();
-                };
-
-                over.querySelector('#btn-restore-backup').onclick = () => {
-                    over.querySelector('#backup-file-input').click();
-                };
-
+                over.querySelector('#btn-fresh-start').onclick = () => { over.remove(); resolve(); };
+                over.querySelector('#btn-restore-backup').onclick = () => over.querySelector('#backup-file-input').click();
                 over.querySelector('#backup-file-input').onchange = async (e) => {
                     const file = e.target.files[0];
                     if (!file) return;
-                    status.innerHTML = '<span style="color:#60a5fa;">Reading file...</span>';
+                    status.style.color = '#60a5fa';
+                    status.textContent = 'Reading file...';
                     try {
                         const text = await file.text();
                         const data = JSON.parse(text);
-                        if (!data.db) throw new Error('Invalid backup file — missing resident data.');
+                        if (!data.db) throw new Error('Invalid backup — missing resident data.');
                         applyPayload(data);
                         await persistData();
-                        status.innerHTML = `<span style="color:#34d399;">✅ Restored ${data.db.length} residents successfully!</span>`;
+                        status.style.color = '#34d399';
+                        status.textContent = '✅ Restored ' + data.db.length + ' residents successfully!';
                         setTimeout(() => { over.remove(); resolve(); }, 1200);
                     } catch(err) {
-                        status.innerHTML = `<span style="color:#f87171;">❌ ${err.message || 'Failed to read file'}</span>`;
+                        status.style.color = '#f87171';
+                        status.textContent = '❌ ' + (err.message || 'Failed to read file');
                     }
                 };
             });
         }
+
 
         // Stubs
         async function loadAllData()      { await initStorage(); }
