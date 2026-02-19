@@ -102,8 +102,6 @@
     .record-card:hover { border-color: var(--accent-blue); box-shadow: var(--shadow-sm); }
     .form-control, .form-select { border-radius: var(--radius-sm); border: 1px solid var(--border-color); padding: 9px 14px; font-size: 0.88rem; transition: all 0.2s; }
     .form-control:focus, .form-select:focus { border-color: var(--accent-blue); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
-    input.form-control:not([type="password"]):not([type="file"]):not([type="date"]):not([type="number"]):not(.no-caps),
-    textarea.form-control:not(.no-caps) { text-transform: uppercase; }
     .form-check-input:checked { background-color: var(--accent-blue); border-color: var(--accent-blue); }
     .btn { border-radius: var(--radius-sm); font-weight: 600; font-size: 0.88rem; padding: 9px 18px; transition: all 0.2s; }
     .btn-primary { background: var(--accent-blue); border-color: var(--accent-blue); }
@@ -123,7 +121,6 @@
     .system-card .system-img { height: 180px; background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #1e293b 100%); display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
     .system-card .system-img::before { content: ''; position: absolute; width: 200px; height: 200px; background: radial-gradient(circle, rgba(37,99,235,0.2) 0%, transparent 70%); top: 50%; left: 50%; transform: translate(-50%,-50%); }
     .system-card .system-img i { font-size: 4rem; color: rgba(255,255,255,0.7); position: relative; z-index: 1; }
-    #kp-card-unlicensed .system-img::before { display: none; }
     .system-card .system-body { padding: 20px; }
     .system-card .system-body h5 { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; }
     .system-card .sale-badge { position: absolute; top: 14px; right: 14px; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 5px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.5px; z-index: 2; box-shadow: 0 2px 8px rgba(217,119,6,0.4); }
@@ -193,8 +190,6 @@
         <div class="sidebar-header">
             <h4><i class="fas fa-users-cog" style="color:#60a5fa;"></i> RBI System</h4>
             <small>Brgy. Data Management</small>
-            <div id="save-status" style="font-size:0.68rem;margin-top:6px;opacity:0;transition:opacity 0.5s;font-weight:600;">💾 Saved</div>
-            <div id="file-status" style="font-size:0.62rem;margin-top:2px;color:rgba(255,255,255,0.3);">🗃 Auto-saved</div>
         </div>
         <span class="nav-label">Main</span>
         <a href="#" onclick="showHome()" class="nav-link active"><i class="fas fa-th-large me-1"></i> Dashboard</a>
@@ -256,10 +251,9 @@
                 <div class="col-md-2 col-6"><div class="mini-stat" onclick="printStatCategory('pwd')" title="Print PWD"><div class="mini-label">PWD</div><div class="mini-value" id="rep-pwd">0</div></div></div>
                 <div class="col-md-2 col-6"><div class="mini-stat" onclick="printStatCategory('solo')" title="Print Solo Parents"><div class="mini-label">Solo Parent</div><div class="mini-value" id="rep-solo">0</div></div></div>
                 <div class="col-md-2 col-6 mt-2"><div class="mini-stat" onclick="printStatCategory('osy')" title="Print OSY"><div class="mini-label">OSY (15-24)</div><div class="mini-value" id="rep-osy">0</div></div></div>
-                <div class="col-md-2 col-6 mt-2"><div class="mini-stat" onclick="printStatCategory('4ps')" title="Print 4P's Beneficiaries" style="border-left:3px solid #e67e22;"><div class="mini-label" style="color:#e67e22;"><i class="fas fa-hand-holding-heart me-1"></i>4P's</div><div class="mini-value" id="rep-4ps" style="color:#e67e22;">0</div></div></div>
             </div>
             <div class="section-bar">
-                <input type="text" id="search-input" class="form-control" style="max-width:400px;" placeholder="Search resident name..." oninput="debouncedRenderList()">
+                <input type="text" id="search-input" class="form-control" style="max-width:400px;" placeholder="Search resident name..." onkeyup="debouncedRenderList()">
                 <div class="d-flex gap-2 flex-wrap">
                     <button class="btn btn-outline-primary" onclick="showAgeRangeModal()"><i class="fas fa-sliders-h me-1"></i> Print by Age Range</button>
                     <button class="btn btn-outline-success" onclick="showBulkFormBModal()"><i class="fas fa-file-alt me-1"></i> Bulk Print Form B</button>
@@ -296,7 +290,7 @@
                     <div class="col-md-4"><label>PhilSys ID</label><input type="text" id="f-philsys" class="form-control"></div>
                     <div class="col-md-12 position-relative">
                         <label class="fw-bold">Mother's Maiden Name</label>
-                        <input type="text" class="form-control mb-1" id="mother-search-input" placeholder="Type to search mother from DB..." oninput="debouncedSearchMother(this.value)">
+                        <input type="text" class="form-control mb-1" id="mother-search-input" placeholder="Type to search mother from DB..." onkeyup="debouncedSearchMother(this.value)">
                         <div id="mother-search-results" class="search-results d-none"></div>
                         <div class="row g-2 mt-1">
                             <div class="col-4"><input type="text" id="f-m-last" class="form-control form-control-sm text-uppercase" placeholder="Mother's Last Name"></div>
@@ -312,7 +306,6 @@
                     <div class="col-md-3"><div class="form-check"><input class="form-check-input" type="checkbox" id="f-osc"><label class="form-check-label">Out of School Child (6-14 y/o)</label></div></div>
                     <div class="col-md-3"><div class="form-check"><input class="form-check-input" type="checkbox" id="f-osy"><label class="form-check-label">Out of School Youth (15-24 y/o)</label></div></div>
                     <div class="col-md-3"><div class="form-check"><input class="form-check-input" type="checkbox" id="f-unemployed"><label class="form-check-label text-warning">Unemployed (Labor Force)</label></div></div>
-                    <div class="col-md-3"><div class="form-check"><input class="form-check-input" type="checkbox" id="f-4ps"><label class="form-check-label" style="color:#e67e22; font-weight:600;"><i class="fas fa-hand-holding-heart me-1" style="color:#e67e22;"></i>4P's Beneficiary</label></div></div>
                     <div class="col-md-3"><div class="form-check"><input class="form-check-input" type="checkbox" id="f-dead" onchange="toggleDeathInput()"><label class="form-check-label text-danger">Deceased</label></div></div>
                     <div class="col-md-4 d-none" id="death-date-container"><label class="text-danger">Date of Death</label><input type="date" id="f-death-date" class="form-control border-danger"></div>
                     <div class="col-md-12 mt-4"><h5 class="text-primary border-bottom pb-2" style="font-family:'Plus Jakarta Sans'; font-weight:700;">III. Contact & Residence</h5></div>
@@ -365,7 +358,7 @@
                 </div>
             </div>
             <div id="hh-list-container">
-                <input type="text" id="hh-search-input" class="form-control mb-3" style="max-width:400px;" placeholder="Search Household..." oninput="debouncedFilterHHList()">
+                <input type="text" id="hh-search-input" class="form-control mb-3" style="max-width:400px;" placeholder="Search Household..." onkeyup="debouncedFilterHHList()">
                 <ul class="list-group" id="hh-list"></ul>
                 <div class="pagination-controls" id="hh-pagination">
                     <button class="btn btn-outline-secondary" id="btn-hh-prev" onclick="hhPrevPage()" disabled><i class="fas fa-chevron-left"></i> Previous</button>
@@ -399,10 +392,8 @@
                         <button class="btn btn-success" onclick="processExport()">Download BIMS Excel</button>
                         <hr>
                         <h4 style="font-family:'Plus Jakarta Sans'; font-weight:700;"><i class="fas fa-database" style="color:var(--accent-blue);"></i> System Backup</h4>
-                        <p class="text-muted">Full backup (JSON) of all residents, households, settings, and KP data. Data auto-saves to browser storage on every change — download a backup file for extra safety.</p>
-                        <div class="d-flex gap-2 flex-wrap">
-                            <button class="btn btn-primary" onclick="backupData()"><i class="fas fa-download me-1"></i> Download Backup</button>
-                        </div>
+                        <p class="text-muted">Full system backup (JSON) including settings and logs.</p>
+                        <button class="btn btn-primary" onclick="backupData()">Download Backup</button>
                     </div>
                 </div>
                 <div class="col-md-6">
@@ -417,26 +408,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- SCAN LOCALSTORAGE CARD -->
-                <div class="col-12">
-                    <div class="card card-custom p-4" style="border:2px dashed var(--accent-amber); background:rgba(217,119,6,0.03);">
-                        <div class="d-flex align-items-start gap-3">
-                            <div style="background:rgba(217,119,6,0.1);border-radius:10px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                                <i class="fas fa-search" style="color:var(--accent-amber);font-size:1.1rem;"></i>
-                            </div>
-                            <div class="flex-grow-1">
-                                <h5 style="font-family:'Plus Jakarta Sans';font-weight:700;margin-bottom:4px;">Scan Browser Storage</h5>
-                                <p class="text-muted small mb-3">If you had data saved on this same browser/URL before, this will find and load it directly — no backup file needed. Use this if you updated the app and your data disappeared.</p>
-                                <button class="btn btn-warning fw-bold" onclick="scanLocalStorage()">
-                                    <i class="fas fa-search me-2"></i>Scan &amp; Recover Data
-                                </button>
-                                <div id="scan-result" class="mt-3" style="display:none;"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
             </div>
         </div>
 
@@ -461,11 +432,10 @@
             <div class="page-title">Other Systems</div>
             <div class="page-subtitle">Additional barangay management modules</div>
             <div class="row g-4 mt-2">
-                <div class="col-md-4" id="kp-card-wrapper">
-                    <!-- KP LICENSED CARD (shown when access code is set) -->
-                    <div class="system-card d-none" id="kp-card-licensed" style="cursor:pointer;" onclick="openKPAccessModal()">
-                        <div class="sale-badge" style="background:linear-gradient(135deg,#059669,#047857);"><i class="fas fa-check-circle me-1"></i> AVAILABLE</div>
-                        <div class="system-img" style="background:linear-gradient(135deg,#0f2027,#1a3a2a,#0d2818);"><i class="fas fa-balance-scale" style="color:#34d399;"></i></div>
+                <div class="col-md-4">
+                    <div class="system-card">
+                        <div class="sale-badge"><i class="fas fa-tag me-1"></i> AVAILABLE SOON</div>
+                        <div class="system-img"><i class="fas fa-balance-scale"></i></div>
                         <div class="system-body">
                             <h5>Katarungang Pambarangay</h5>
                             <p class="text-muted small mb-2">Barangay justice system case management, mediation tracking, and settlement documentation.</p>
@@ -474,70 +444,7 @@
                                 <span class="badge" style="background:rgba(5,150,105,0.1); color:var(--accent-green);">Mediation</span>
                                 <span class="badge" style="background:rgba(124,58,237,0.1); color:var(--accent-purple);">Settlement</span>
                             </div>
-                            <button class="btn btn-success w-100 mt-3" onclick="event.stopPropagation(); openKPAccessModal()"><i class="fas fa-balance-scale me-1"></i> Open KP System</button>
-                        </div>
-                    </div>
-                    <!-- KP UNLICENSED CARD (shown when no access code yet) -->
-                    <div class="system-card d-none" id="kp-card-unlicensed">
-                        <div class="sale-badge" style="background:linear-gradient(135deg,#d97706,#b45309);"><i class="fas fa-tag me-1"></i> FOR SALE</div>
-                        <div class="system-img" style="background:linear-gradient(135deg,#1c1008,#2d1a04,#1c1008);">
-                            <!-- Price Tag -->
-                            <div style="text-align:center; position:relative; z-index:2;">
-                                <div style="display:inline-block;background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:14px;padding:12px 24px;box-shadow:0 6px 28px rgba(245,158,11,0.55);">
-                                    <!-- Sale ribbon -->
-                                    <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:4px;">
-                                        <span style="font-size:0.55rem;color:rgba(0,0,0,0.45);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;text-decoration:line-through;">₱1,000</span>
-                                        <span style="background:#dc2626;color:white;font-size:0.5rem;font-weight:800;padding:1px 6px;border-radius:100px;letter-spacing:0.5px;">30% OFF</span>
-                                    </div>
-                                    <!-- New price -->
-                                    <div style="font-size:2.2rem;font-weight:900;color:#1c1008;font-family:'Plus Jakarta Sans',sans-serif;line-height:1;">₱699</div>
-                                    <div style="font-size:0.6rem;color:rgba(0,0,0,0.5);font-weight:600;margin-top:3px;letter-spacing:0.5px;">one-time access</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="system-body">
-                            <h5>Katarungang Pambarangay</h5>
-                            <p class="text-muted small mb-2">Barangay justice system case management, mediation tracking, and settlement documentation.</p>
-                            <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px;">
-                                <span class="badge" style="background:rgba(37,99,235,0.1); color:var(--accent-blue);">Case Filing</span>
-                                <span class="badge" style="background:rgba(5,150,105,0.1); color:var(--accent-green);">Mediation</span>
-                                <span class="badge" style="background:rgba(124,58,237,0.1); color:var(--accent-purple);">Settlement</span>
-                            </div>
-                            <!-- Avail Info Box -->
-                            <div style="background:linear-gradient(135deg,rgba(245,158,11,0.08),rgba(180,83,9,0.08));border:1px solid rgba(245,158,11,0.3);border-radius:10px;padding:12px;margin-bottom:12px;">
-                                <div style="font-size:0.72rem;font-weight:700;color:#d97706;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;"><i class="fas fa-info-circle me-1"></i> How to Avail KPS</div>
-                                <p style="font-size:0.78rem;color:var(--text-secondary);margin:0 0 8px;">Message <strong style="color:var(--text-primary);">Sec Jerick</strong> on Facebook to get your access code:</p>
-                                <a href="https://www.facebook.com/Secngmasa" target="_blank" onclick="event.stopPropagation();" style="display:flex;align-items:center;gap:8px;background:#1877f2;border-radius:8px;padding:8px 12px;text-decoration:none;color:white;font-size:0.8rem;font-weight:600;transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
-                                    <i class="fab fa-facebook" style="font-size:1rem;"></i>
-                                    <span>facebook.com/Secngmasa</span>
-                                    <i class="fas fa-external-link-alt" style="font-size:0.65rem;margin-left:auto;opacity:0.7;"></i>
-                                </a>
-                            </div>
-                            <button class="btn w-100 fw-bold" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#1c1008;border:none;" onclick="event.stopPropagation(); openKPAccessModal()"><i class="fas fa-unlock me-1"></i> Enter Access Code</button>
-                        </div>
-                    </div>
-                </div>
-                <!-- KP ACCESS CODE MODAL -->
-                <div class="modal fade" id="modal-kp-access" tabindex="-1" data-bs-backdrop="static">
-                    <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content" style="border-radius:16px;overflow:hidden;border:none;">
-                            <div style="background:linear-gradient(135deg,#111827,#1a3a2a);padding:30px 30px 20px;text-align:center;">
-                                <div style="width:64px;height:64px;background:rgba(52,211,153,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;"><i class="fas fa-balance-scale" style="color:#34d399;font-size:1.8rem;"></i></div>
-                                <h5 style="color:white;font-family:'Plus Jakarta Sans';font-weight:800;margin:0 0 6px;">Katarungang Pambarangay</h5>
-                                <small style="color:rgba(255,255,255,0.4);">Enter Dynamic Access Code · Expires every 10 minutes</small>
-                            </div>
-                            <div class="modal-body p-4">
-                                <div id="kp-access-error" class="alert alert-danger d-none py-2 small"></div>
-                                <div class="mb-3">
-                                    <label class="form-label fw-bold small text-muted text-uppercase">Dynamic Access Code</label>
-                                    <input type="password" id="kp-access-input" class="form-control text-center fw-bold" placeholder="KP-..." style="letter-spacing:2px;" onkeydown="if(event.key==='Enter')verifyKPCode()">
-                                    <div class="mt-1" id="kp-server-time" style="font-size:0.72rem;color:#9ca3af;text-align:center;"></div>
-                                </div>
-                                <button class="btn btn-success w-100 fw-bold" onclick="verifyKPCode()"><i class="fas fa-unlock me-2"></i>Access System</button>
-                            </div>
-                            <div class="modal-footer border-0 pt-0 justify-content-center">
-                                <button class="btn btn-link btn-sm text-muted" data-bs-dismiss="modal">Cancel</button>
-                            </div>
+                            <button class="btn btn-outline-secondary w-100 mt-3" disabled><i class="fas fa-lock me-1"></i> Coming Soon</button>
                         </div>
                     </div>
                 </div>
@@ -602,274 +509,12 @@
 
     <div id="print-area"></div>
 
-
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // DUAL PERSISTENCE: IndexedDB (primary) + File (optional backup)
-        // IndexedDB loads instantly on every page load - no clicks, no prompts.
-        // File backup is optional via "Download Backup" button.
-
-        let _fileHandle  = null;
-        let _writing     = false;
-        let _kp_licensed = localStorage.getItem('kp_licensed') === 'true';
-
-        // IndexedDB: primary data store
-        const _DBNAME = 'rbis_main';
-        function _openDB() {
-            return new Promise((res, rej) => {
-                const r = indexedDB.open(_DBNAME, 1);
-                r.onupgradeneeded = e => {
-                    const db = e.target.result;
-                    if (!db.objectStoreNames.contains('data')) db.createObjectStore('data');
-                };
-                r.onsuccess = e => res(e.target.result);
-                r.onerror   = e => rej(e.target.error);
-            });
-        }
-        async function _idbSet(key, val) {
-            try {
-                const db = await _openDB();
-                await new Promise((res, rej) => {
-                    const tx = db.transaction('data', 'readwrite');
-                    tx.objectStore('data').put(val, key);
-                    tx.oncomplete = res; tx.onerror = rej;
-                });
-            } catch(e) { console.warn('IDB write failed', e); }
-        }
-        async function _idbGet(key) {
-            try {
-                const db = await _openDB();
-                return await new Promise((res, rej) => {
-                    const req = db.transaction('data').objectStore('data').get(key);
-                    req.onsuccess = () => res(req.result ?? null);
-                    req.onerror   = () => rej(req.error);
-                });
-            } catch(e) { return null; }
-        }
-
-        // Build / Apply payload
-        function buildPayload() {
-            // Always read freshest license value from both sources
-            const licensed = _kp_licensed || localStorage.getItem('kp_licensed') === 'true';
-            return {
-                db, household_db, settings,
-                kp_licensed:  licensed,
-                kp_cases:     _safeLS('kp_cases_v2', []),
-                kp_lupon:     _safeLS('kp_lupon', []),
-                kp_incidents: _safeLS('kp_incidents', []),
-                savedAt:      new Date().toISOString()
-            };
-        }
-        function _safeLS(k, d) { try { return JSON.parse(localStorage.getItem(k)) || d; } catch(e) { return d; } }
-
-        function applyPayload(p) {
-            if (p.db)           db           = p.db;
-            if (p.household_db) household_db = p.household_db;
-            if (p.settings)     settings     = p.settings;
-            // Never downgrade license — once licensed, always licensed
-            // (localStorage pre-loaded at script start; IDB payload confirms or upgrades)
-            _kp_licensed = p.kp_licensed === true || localStorage.getItem('kp_licensed') === 'true';
-            if (_kp_licensed) localStorage.setItem('kp_licensed', 'true');
-            if (p.kp_cases)     localStorage.setItem('kp_cases_v2', JSON.stringify(p.kp_cases));
-            if (p.kp_lupon)     localStorage.setItem('kp_lupon',    JSON.stringify(p.kp_lupon));
-            if (p.kp_incidents) localStorage.setItem('kp_incidents',JSON.stringify(p.kp_incidents));
-            if (p.db)           localStorage.setItem('rbi_db',      JSON.stringify(p.db));
-            if (p.settings)     localStorage.setItem('rbi_settings',JSON.stringify(p.settings));
-        }
-
-        // Persist: save to IndexedDB instantly, also write to file if linked
-        async function persistData() {
-            const payload = buildPayload();
-            await _idbSet('payload', payload);
-            if (_fileHandle) await _writeFile();
-            // Always keep localStorage in sync so kp.html can read fresh resident data
-            localStorage.setItem('rbi_db', JSON.stringify(db));
-            localStorage.setItem('rbi_settings', JSON.stringify(settings));
-            showSaveStatus(true);
-        }
-
-        // Optional file backup
-        async function _writeFile() {
-            if (!_fileHandle || _writing) return;
-            _writing = true;
-            try {
-                const w = await _fileHandle.createWritable();
-                await w.write(JSON.stringify(buildPayload(), null, 2));
-                await w.close();
-            } catch(e) { console.error('File write error:', e); }
-            _writing = false;
-        }
-        async function _readFile() {
-            if (!_fileHandle) return null;
-            try {
-                const f = await _fileHandle.getFile();
-                const t = await f.text();
-                return t.trim() ? JSON.parse(t) : null;
-            } catch(e) { return null; }
-        }
-
-        // File handle store (for optional file backup feature)
-        const _FH_DB = 'rbis_fh';
-        function _openFHDB() {
-            return new Promise((res, rej) => {
-                const r = indexedDB.open(_FH_DB, 1);
-                r.onupgradeneeded = e => e.target.result.createObjectStore('h');
-                r.onsuccess = e => res(e.target.result);
-                r.onerror   = e => rej(e.target.error);
-            });
-        }
-        async function _saveHandleIDB(h) {
-            try {
-                const db = await _openFHDB();
-                await new Promise((res, rej) => {
-                    const tx = db.transaction('h', 'readwrite');
-                    tx.objectStore('h').put(h, 'fh');
-                    tx.oncomplete = res; tx.onerror = rej;
-                });
-            } catch(e) {}
-        }
-        async function _loadHandleIDB() {
-            try {
-                const db = await _openFHDB();
-                return await new Promise((res, rej) => {
-                    const req = db.transaction('h').objectStore('h').get('fh');
-                    req.onsuccess = () => res(req.result ?? null);
-                    req.onerror   = () => rej(req.error);
-                });
-            } catch(e) { return null; }
-        }
-        async function _clearHandleIDB() {
-            try {
-                const db = await _openFHDB();
-                const tx = db.transaction('h', 'readwrite');
-                tx.objectStore('h').delete('fh');
-            } catch(e) {}
-        }
-
-        // Status indicators
-        function showSaveStatus(ok) {
-            const el = document.getElementById('save-status');
-            if (!el) return;
-            el.textContent = ok ? '💾 Saved' : '⚠ Not saved';
-            el.style.color  = ok ? '#34d399' : '#f87171';
-            el.style.opacity = '1';
-            clearTimeout(el._t);
-            el._t = setTimeout(() => { el.style.opacity = '0'; }, 1800);
-        }
-        function updateFileStatus() {
-            const el = document.getElementById('file-status');
-            if (!el) return;
-            el.textContent = _fileHandle ? ('📂 ' + _fileHandle.name) : '🗃 Auto-saved';
-            el.style.color = _fileHandle ? 'rgba(52,211,153,0.7)' : 'rgba(148,163,184,0.7)';
-        }
-
-        // Main init: load from IndexedDB instantly, no user prompts needed
-        async function initStorage() {
-            // Load from IndexedDB - works instantly every time, no clicks
-            const saved = await _idbGet('payload');
-            if (saved && saved.db) {
-                applyPayload(saved);
-                return;
-            }
-
-            // Check localStorage (same origin legacy data)
-            const old = localStorage.getItem('rbi_db');
-            if (old) {
-                try { db = JSON.parse(old); } catch(e) {}
-                try { household_db = JSON.parse(localStorage.getItem('rbi_hh_db') || '[]'); } catch(e) {}
-                try { settings = JSON.parse(localStorage.getItem('rbi_settings') || '{}'); } catch(e) {}
-                _kp_licensed = localStorage.getItem('kp_licensed') === 'true';
-                await persistData();
-                const toast = document.createElement('div');
-                toast.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:99999;background:#059669;color:white;padding:14px 22px;border-radius:10px;font-weight:600;font-size:0.9rem;box-shadow:0 4px 16px rgba(0,0,0,0.2);';
-                toast.innerHTML = '✅ Existing data loaded successfully!';
-                document.body.appendChild(toast);
-                setTimeout(() => toast.remove(), 3500);
-                return;
-            }
-
-            // No data found anywhere — show first-run screen
-            await _showFirstRunScreen();
-        }
-
-        function _showFirstRunScreen() {
-            return new Promise(resolve => {
-                const over = document.createElement('div');
-                over.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(135deg,#0f172a 0%,#1e293b 50%,#111827 100%);';
-                const box = document.createElement('div');
-                box.style.cssText = 'background:rgba(30,41,59,0.9);backdrop-filter:blur(20px);padding:36px 32px;border-radius:16px;border:1px solid rgba(255,255,255,0.08);box-shadow:0 25px 50px rgba(0,0,0,0.3);width:480px;max-width:100%;text-align:center;position:relative;z-index:1;color:white;';
-                box.innerHTML = [
-                    '<i class="fas fa-shield-alt" style="font-size:2.5rem;color:#60a5fa;margin-bottom:16px;display:block;"></i>',
-                    '<h3 style="font-family:Plus Jakarta Sans,sans-serif;font-weight:800;margin-bottom:8px;">RBI System</h3>',
-                    '<p style="color:rgba(255,255,255,0.35);font-size:0.85rem;margin-bottom:20px;">No saved data found on this device.</p>',
-                    // Warning box for existing users
-                    '<div style="background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.3);border-radius:10px;padding:14px 16px;margin-bottom:20px;text-align:left;">',
-                    '  <div style="font-size:0.82rem;font-weight:700;color:#fbbf24;margin-bottom:8px;"><i class="fas fa-exclamation-triangle"></i> &nbsp;Existing User?</div>',
-                    '  <div style="font-size:0.78rem;color:rgba(255,255,255,0.5);line-height:1.8;">',
-                    '    Your data is tied to your <strong style="color:rgba(255,255,255,0.75);">old URL or device</strong>.<br>',
-                    '    To recover without a backup:<br>',
-                    '    1. Open your <strong style="color:rgba(255,255,255,0.75);">old URL</strong> in any browser<br>',
-                    '    2. Go to <strong style="color:rgba(255,255,255,0.75);">Import / Export &rarr; Download Backup</strong><br>',
-                    '    3. Come back here and click <strong style="color:rgba(255,255,255,0.75);">Restore from Backup</strong>',
-                    '  </div>',
-                    '</div>',
-                    // Restore button (primary)
-                    '<button id="btn-restore-backup" style="width:100%;background:#2563eb;border:none;border-radius:10px;padding:13px;color:white;font-family:Plus Jakarta Sans,sans-serif;font-weight:700;font-size:0.95rem;cursor:pointer;margin-bottom:10px;transition:all 0.2s;" onmouseover="this.style.background='#1d4ed8'" onmouseout="this.style.background='#2563eb'">',
-                    '  <i class="fas fa-upload me-2"></i>Restore from Backup File (.json)',
-                    '</button>',
-                    '<input type="file" id="backup-file-input" accept=".json" style="display:none;">',
-                    // Start fresh (secondary)
-                    '<button id="btn-fresh-start" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:11px;color:rgba(255,255,255,0.4);font-family:Plus Jakarta Sans,sans-serif;font-weight:600;font-size:0.85rem;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.color='rgba(255,255,255,0.7)'" onmouseout="this.style.color='rgba(255,255,255,0.4)'">',
-                    '  Start Fresh (New Installation)',
-                    '</button>',
-                    '<div id="first-run-status" style="margin-top:14px;font-size:0.8rem;min-height:20px;"></div>'
-                ].join('');
-                over.appendChild(box);
-                document.body.appendChild(over);
-
-                const status = over.querySelector('#first-run-status');
-
-                over.querySelector('#btn-fresh-start').onclick = () => { over.remove(); resolve(); };
-                over.querySelector('#btn-restore-backup').onclick = () => over.querySelector('#backup-file-input').click();
-                over.querySelector('#backup-file-input').onchange = async (e) => {
-                    const file = e.target.files[0];
-                    if (!file) return;
-                    status.style.color = '#60a5fa';
-                    status.textContent = 'Reading file...';
-                    try {
-                        const text = await file.text();
-                        const data = JSON.parse(text);
-                        if (!data.db) throw new Error('Invalid backup — missing resident data.');
-                        applyPayload(data);
-                        await persistData();
-                        status.style.color = '#34d399';
-                        status.textContent = '✅ Restored ' + data.db.length + ' residents successfully!';
-                        setTimeout(() => { over.remove(); resolve(); }, 1200);
-                    } catch(err) {
-                        status.style.color = '#f87171';
-                        status.textContent = '❌ ' + (err.message || 'Failed to read file');
-                    }
-                };
-            });
-        }
-
-
-        // Stubs
-        async function loadAllData()      { await initStorage(); }
-        function showRestorePickerModal() { return Promise.resolve(); }
-        async function showAutoBackups()  {
-            alert('Data auto-saves to browser IndexedDB on every change.\nUse "Download Backup" to save a file copy.');
-        }
-        const MAX_BACKUPS = 5;
-
-
-        // ═══════════════════════════════════════════════════════════
-        // GLOBAL STATE
-        // ═══════════════════════════════════════════════════════════
-        let db = [];
-        let household_db = [];
-        let settings = { user_password: null, barangay: '', province: '', municipality: '', secretary: '', region: '', captain: '', lguType: 'MUNICIPALITY' };
+        // --- GLOBAL STATE ---
+        let db = JSON.parse(localStorage.getItem('rbi_db')) || [];
+        let household_db = JSON.parse(localStorage.getItem('rbi_hh_db')) || [];
+        let settings = JSON.parse(localStorage.getItem('rbi_settings')) || { user_password: null, barangay: '', province: '', municipality: '', secretary: '', region: '', captain: '', lguType: 'MUNICIPALITY' };
         let stagingValid = [], stagingInvalid = [], stagingDup = [];
         let printCatData = [], printCatPage = 0, printCatLabel = '';
         let residentPage = 0, residentPerPage = 10, residentFiltered = [];
@@ -877,7 +522,7 @@
         let deathPage = 0, deathPerPage = 10;
         let bulkFormBData = [], bulkFormBPage = 0, bulkFormBPerPage = 200;
 
-        // Debounce
+        // Debounce function (400ms delay)
         function debounce(func, wait) {
             let timeout;
             return function executedFunction(...args) {
@@ -887,43 +532,19 @@
             };
         }
 
-        // Auto-uppercase all text inputs on input (skip search fields)
-        document.addEventListener('input', e => {
-            const el = e.target;
-            const skipIds = ['search-input', 'hh-search-input', 'mother-search-input'];
-            if (skipIds.includes(el.id)) return;
-            if ((el.tagName === 'INPUT' && !['password','file','date','number','email'].includes(el.type) && !el.classList.contains('no-caps')) ||
-                (el.tagName === 'TEXTAREA' && !el.classList.contains('no-caps'))) {
-                const pos = el.selectionStart;
-                el.value = el.value.toUpperCase();
-                try { el.setSelectionRange(pos, pos); } catch(e) {}
-            }
-        });
-        const debouncedRenderList      = debounce(() => { residentPage = 0; renderList(); }, 200);
-        const debouncedSearchMother    = debounce((val) => searchMother(val), 400);
-        const debouncedFilterHHList    = debounce(() => { hhPage = 0; renderHHList(); }, 400);
-        const debouncedSearchMemForHH  = debounce(() => searchMemForHH(), 400);
+        const debouncedRenderList = debounce(() => { residentPage = 0; renderList(); }, 400);
+        const debouncedSearchMother = debounce((val) => searchMother(val), 400);
+        const debouncedFilterHHList = debounce(() => { hhPage = 0; renderHHList(); }, 400);
+        const debouncedSearchMemForHH = debounce(() => searchMemForHH(), 400);
 
-        // DOM is already ready (script is at end of body) — run immediately
-        (async () => {
-            // Load all data from IndexedDB instantly
-            await loadAllData();
-
-            // Bypass security if returning from KP system
-            if(sessionStorage.getItem('rbis_bypass_security') === 'true') {
-                sessionStorage.removeItem('rbis_bypass_security');
-                document.getElementById('security-overlay').classList.add('d-none');
-                document.getElementById('main-container').classList.remove('d-none');
-                document.querySelector('.sidebar').style.display = 'block';
-                updateServerTime(); showOtherSystems(); updateFileStatus();
-                return;
-            }
+        document.addEventListener("DOMContentLoaded", () => {
             if(settings.user_password) { document.getElementById('login-phase-1').classList.add('d-none'); document.getElementById('login-phase-2').classList.add('d-none'); document.getElementById('login-phase-3').classList.remove('d-none'); }
             else { document.getElementById('login-phase-1').classList.remove('d-none'); document.getElementById('login-phase-2').classList.add('d-none'); document.getElementById('login-phase-3').classList.add('d-none'); }
-            updateServerTime(); showHome(); initKPCard(); updateFileStatus();
-        })();
+            updateServerTime(); renderList();
+        });
 
         // --- SECURITY ---
+        function updateServerTime() { const now = new Date(); document.getElementById('server-time-display').innerText = `System Time: ${now.toLocaleString()}`; }
         function getWeekNumber(d) { d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7)); var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1)); return Math.ceil((((d - yearStart) / 86400000) + 1)/7); }
         function numToLetter(num) { let s = ''; while(num > 0) { let t = (num - 1) % 26; s = String.fromCharCode(97 + t) + s; num = Math.floor((num - 1) / 26); } return s; }
         function checkDynamic() {
@@ -938,91 +559,25 @@
         function setCustomPassword() {
             const p1 = document.getElementById('new-custom-pass').value; const p2 = document.getElementById('confirm-custom-pass').value;
             if(!p1 || p1 !== p2) return alert("Passwords do not match or are empty.");
-            settings.user_password = p1; saveDB();
-            alert("Password set successfully!");
-            document.getElementById('security-overlay').classList.add('d-none');
-            document.getElementById('main-container').classList.remove('d-none');
-            document.querySelector('.sidebar').style.display = 'block';
-            showHome(); updateReportUI(); initKPCard(); updateFileStatus();
+            settings.user_password = p1; localStorage.setItem('rbi_settings', JSON.stringify(settings));
+            alert("Password set successfully!"); document.getElementById('security-overlay').classList.add('d-none');
         }
         function verifyCustomPassword() {
             const input = document.getElementById('input-custom-pass').value;
-            if(input === settings.user_password) {
-                document.getElementById('security-overlay').classList.add('d-none');
-                document.getElementById('main-container').classList.remove('d-none');
-                document.querySelector('.sidebar').style.display = 'block';
-                showHome(); updateReportUI(); initKPCard(); updateFileStatus();
-            } else { alert("Incorrect Password."); }
+            if(input === settings.user_password) { document.getElementById('security-overlay').classList.add('d-none'); document.getElementById('main-container').classList.remove('d-none'); document.querySelector('.sidebar').style.display = 'block'; }
+            else { alert("Incorrect Password."); }
         }
         function forgotPassword() { document.getElementById('login-phase-2').classList.add('d-none'); document.getElementById('login-phase-3').classList.add('d-none'); document.getElementById('login-phase-1').classList.remove('d-none'); alert("Please enter the Dynamic Access Code to reset your password."); }
         function logout() { document.getElementById('main-container').classList.add('d-none'); document.querySelector('.sidebar').style.display = 'none'; document.getElementById('security-overlay').classList.remove('d-none'); document.getElementById('login-phase-1').classList.add('d-none'); document.getElementById('login-phase-2').classList.add('d-none'); document.getElementById('login-phase-3').classList.remove('d-none'); document.getElementById('input-custom-pass').value = ''; }
 
         // --- CORE ---
-        async function saveDB() {
-            await persistData();
-            updateReportUI();
-        }
+        function saveDB() { localStorage.setItem('rbi_db', JSON.stringify(db)); localStorage.setItem('rbi_hh_db', JSON.stringify(household_db)); updateReportUI(); }
         function hideAll() { ['section-home','section-add','section-hh','section-import','section-settings','section-deaths','section-other'].forEach(id => { document.getElementById(id).classList.add('d-none'); }); document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active')); }
         function showHome() { hideAll(); document.getElementById('section-home').classList.remove('d-none'); residentPage = 0; renderList(); }
         function showAdd() { hideAll(); document.getElementById('section-add').classList.remove('d-none'); clearForm(); }
         function showHouseholds() { hideAll(); document.getElementById('section-hh').classList.remove('d-none'); hhPage = 0; renderHHList(); }
         function showImport() { hideAll(); document.getElementById('section-import').classList.remove('d-none'); }
-        function showOtherSystems() { hideAll(); document.getElementById('section-other').classList.remove('d-none'); initKPCard(); }
-
-        // --- KP SYSTEM ACCESS ---
-        function initKPCard() {
-            const licensed = _kp_licensed || localStorage.getItem('kp_licensed') === 'true';
-            if (licensed) _kp_licensed = true;
-            document.getElementById('kp-card-licensed').classList.toggle('d-none', !licensed);
-            document.getElementById('kp-card-unlicensed').classList.toggle('d-none', licensed);
-        }
-        
-        function openKPAccessModal() {
-            // Check in-memory flag OR localStorage fallback (set by applyPayload)
-            const licensed = _kp_licensed || localStorage.getItem('kp_licensed') === 'true';
-            if(licensed) { window.location.href = 'kp.html'; return; }
-            if(sessionStorage.getItem('kp_authenticated') === 'true') { window.location.href = 'kp.html'; return; }
-            document.getElementById('kp-access-input').value = '';
-            document.getElementById('kp-access-error').classList.add('d-none');
-            const now = new Date();
-            document.getElementById('kp-server-time').textContent = 'Current Time: ' + now.toLocaleString();
-            new bootstrap.Modal(document.getElementById('modal-kp-access')).show();
-        }
-        function generateKPCode(d) {
-            d = d || new Date();
-            const Y = d.getFullYear(), M = d.getMonth(), D = d.getDate();
-            const H = d.getHours(), slot = Math.floor(d.getMinutes() / 10);
-            const S1='SJKP', S2='Brgy', S3='masa';
-            const numHash = String((Y*31 + M*17 + D*13 + H*7 + slot*3) % 99999).padStart(5,'0');
-            const rot = (H + slot + D) % 26;
-            function rA(s) { return s.split('').map(c => { if(c>='A'&&c<='Z') return String.fromCharCode(((c.charCodeAt(0)-65+rot)%26)+65); if(c>='a'&&c<='z') return String.fromCharCode(((c.charCodeAt(0)-97+rot)%26)+97); return c; }).join(''); }
-            const xorVal = ((D+M+H)^(slot*5+Y%100)).toString(16).toUpperCase().padStart(4,'0');
-            const slotChar = String.fromCharCode(65+slot);
-            const dayCode = ['SN','MN','TU','WD','TH','FR','ST'][d.getDay()];
-            return `KP-${rA(S1)}${rA('1809')}-${numHash}-${xorVal}-${rA(S2)}${slotChar}${rA(S3)}-${dayCode}`;
-        }
-        async function verifyKPCode() {
-            const input = document.getElementById('kp-access-input').value.trim();
-            const code = generateKPCode();
-            if(input === code) {
-                sessionStorage.setItem('kp_authenticated', 'true');
-                _kp_licensed = true;  // Saved to file on next persistData call
-                await persistData();  // Write license to file immediately
-                initKPCard();
-                bootstrap.Modal.getInstance(document.getElementById('modal-kp-access')).hide();
-                window.location.href = 'kp.html';
-            } else {
-                const errEl = document.getElementById('kp-access-error');
-                const now = new Date();
-                const slot = Math.floor(now.getMinutes()/10);
-                const nextExpiry = new Date(now); nextExpiry.setMinutes((slot+1)*10,0,0);
-                const minsLeft = Math.ceil((nextExpiry - now)/60000);
-                errEl.textContent = `Invalid access code. Code expires in ${minsLeft} min — please re-check.`;
-                errEl.classList.remove('d-none');
-                document.getElementById('kp-access-input').value = '';
-                document.getElementById('kp-access-input').focus();
-            }
-        }
+        function showOtherSystems() { hideAll(); document.getElementById('section-other').classList.remove('d-none'); }
         function showSettings() { hideAll(); document.getElementById('section-settings').classList.remove('d-none'); document.getElementById('set-lgu-type').value = settings.lguType || 'MUNICIPALITY'; document.getElementById('set-region').value = settings.region || ''; document.getElementById('set-prov').value = settings.province || ''; document.getElementById('set-muni').value = settings.municipality || ''; document.getElementById('set-brgy').value = settings.barangay || ''; document.getElementById('set-captain').value = settings.captain || ''; document.getElementById('set-sec').value = settings.secretary || ''; }
         function showDeaths() { hideAll(); document.getElementById('section-deaths').classList.remove('d-none'); deathPage = 0; renderDeathList(); }
         function calculateAgeDetailed(bdate) { if(!bdate) return { y: 0, m: 0, d: 0, totalMonths: 0 }; const birth = new Date(bdate); const now = new Date(); let years = now.getFullYear() - birth.getFullYear(); let months = now.getMonth() - birth.getMonth(); let days = now.getDate() - birth.getDate(); if (days < 0) { months--; days += 30; } if (months < 0) { years--; months += 12; } return { y: years, m: months, d: days, totalMonths: (years * 12) + months }; }
@@ -1034,14 +589,14 @@
             if(!last || !first || !bdate) return alert('Last Name, First Name, and Birthdate are required.');
             if(!id) { const exists = db.some(x => x.last.toLowerCase() === last.toLowerCase() && x.first.toLowerCase() === first.toLowerCase() && x.bdate === bdate); if(exists) return alert('Resident already exists!'); }
             const currentRec = id ? db.find(x=>x.id===id) : null;
-            const record = { id: id || Date.now().toString(), type: document.getElementById('f-type').value, last: last, first: first, middle: document.getElementById('f-middle').value, suffix: document.getElementById('f-suffix').value, bdate: bdate, sex: document.getElementById('f-sex').value, civil: document.getElementById('f-civil').value, religion: document.getElementById('f-religion').value, citizen: document.getElementById('f-citizen').value, philsys: document.getElementById('f-philsys').value, bplace: document.getElementById('f-bplace').value, prof: document.getElementById('f-prof').value, mother_last: document.getElementById('f-m-last').value, mother_first: document.getElementById('f-m-first').value, mother_middle: document.getElementById('f-m-middle').value, isSoloParent: document.getElementById('f-solo').checked, isPwd: document.getElementById('f-pwd').checked, isOfw: document.getElementById('f-ofw').checked, isIp: document.getElementById('f-ip').checked, isOsc: document.getElementById('f-osc').checked, isOSY: document.getElementById('f-osy').checked, isUnemployed: document.getElementById('f-unemployed').checked, is4Ps: document.getElementById('f-4ps').checked, isDead: document.getElementById('f-dead').checked, deathDate: document.getElementById('f-death-date').value, contact: document.getElementById('f-contact').value, email: document.getElementById('f-email').value, edu: document.getElementById('f-edu').value, address: document.getElementById('f-address').value, hh_name: currentRec ? currentRec.hh_name : '', hh_role: currentRec ? currentRec.hh_role : 'MEMBER' };
+            const record = { id: id || Date.now().toString(), type: document.getElementById('f-type').value, last: last, first: first, middle: document.getElementById('f-middle').value, suffix: document.getElementById('f-suffix').value, bdate: bdate, sex: document.getElementById('f-sex').value, civil: document.getElementById('f-civil').value, religion: document.getElementById('f-religion').value, citizen: document.getElementById('f-citizen').value, philsys: document.getElementById('f-philsys').value, bplace: document.getElementById('f-bplace').value, prof: document.getElementById('f-prof').value, mother_last: document.getElementById('f-m-last').value, mother_first: document.getElementById('f-m-first').value, mother_middle: document.getElementById('f-m-middle').value, isSoloParent: document.getElementById('f-solo').checked, isPwd: document.getElementById('f-pwd').checked, isOfw: document.getElementById('f-ofw').checked, isIp: document.getElementById('f-ip').checked, isOsc: document.getElementById('f-osc').checked, isOSY: document.getElementById('f-osy').checked, isUnemployed: document.getElementById('f-unemployed').checked, isDead: document.getElementById('f-dead').checked, deathDate: document.getElementById('f-death-date').value, contact: document.getElementById('f-contact').value, email: document.getElementById('f-email').value, edu: document.getElementById('f-edu').value, address: document.getElementById('f-address').value, hh_name: currentRec ? currentRec.hh_name : '', hh_role: currentRec ? currentRec.hh_role : 'MEMBER' };
             if(id) { const index = db.findIndex(x => x.id === id); db[index] = record; } else { db.push(record); }
             saveDB(); alert('Saved'); if(record.isDead) showDeaths(); else showHome();
         }
 
         function loadRecord(id) {
             const r = db.find(x => x.id === id); if(!r) return; showAdd();
-            document.getElementById('rec-id').value = r.id; document.getElementById('f-type').value = r.type; document.getElementById('f-last').value = r.last; document.getElementById('f-first').value = r.first; document.getElementById('f-middle').value = r.middle; document.getElementById('f-suffix').value = r.suffix; document.getElementById('f-bdate').value = r.bdate; document.getElementById('f-sex').value = r.sex; document.getElementById('f-civil').value = r.civil; document.getElementById('f-religion').value = r.religion || ''; document.getElementById('f-citizen').value = r.citizen || 'FILIPINO'; document.getElementById('f-philsys').value = r.philsys || ''; document.getElementById('f-bplace').value = r.bplace || ''; document.getElementById('f-prof').value = r.prof || ''; document.getElementById('f-m-last').value = r.mother_last || ''; document.getElementById('f-m-first').value = r.mother_first || ''; document.getElementById('f-m-middle').value = r.mother_middle || ''; document.getElementById('f-solo').checked = r.isSoloParent || false; document.getElementById('f-pwd').checked = r.isPwd || false; document.getElementById('f-ofw').checked = r.isOfw || false; document.getElementById('f-ip').checked = r.isIp || false; document.getElementById('f-osc').checked = r.isOsc || false; document.getElementById('f-osy').checked = r.isOSY || false; document.getElementById('f-unemployed').checked = r.isUnemployed || false; document.getElementById('f-4ps').checked = r.is4Ps || false; document.getElementById('f-dead').checked = r.isDead || false; document.getElementById('f-death-date').value = r.deathDate || ''; toggleDeathInput(); document.getElementById('f-contact').value = r.contact || ''; document.getElementById('f-email').value = r.email || ''; document.getElementById('f-edu').value = r.edu || ''; document.getElementById('f-address').value = r.address || '';
+            document.getElementById('rec-id').value = r.id; document.getElementById('f-type').value = r.type; document.getElementById('f-last').value = r.last; document.getElementById('f-first').value = r.first; document.getElementById('f-middle').value = r.middle; document.getElementById('f-suffix').value = r.suffix; document.getElementById('f-bdate').value = r.bdate; document.getElementById('f-sex').value = r.sex; document.getElementById('f-civil').value = r.civil; document.getElementById('f-religion').value = r.religion || ''; document.getElementById('f-citizen').value = r.citizen || 'FILIPINO'; document.getElementById('f-philsys').value = r.philsys || ''; document.getElementById('f-bplace').value = r.bplace || ''; document.getElementById('f-prof').value = r.prof || ''; document.getElementById('f-m-last').value = r.mother_last || ''; document.getElementById('f-m-first').value = r.mother_first || ''; document.getElementById('f-m-middle').value = r.mother_middle || ''; document.getElementById('f-solo').checked = r.isSoloParent || false; document.getElementById('f-pwd').checked = r.isPwd || false; document.getElementById('f-ofw').checked = r.isOfw || false; document.getElementById('f-ip').checked = r.isIp || false; document.getElementById('f-osc').checked = r.isOsc || false; document.getElementById('f-osy').checked = r.isOSY || false; document.getElementById('f-unemployed').checked = r.isUnemployed || false; document.getElementById('f-dead').checked = r.isDead || false; document.getElementById('f-death-date').value = r.deathDate || ''; toggleDeathInput(); document.getElementById('f-contact').value = r.contact || ''; document.getElementById('f-email').value = r.email || ''; document.getElementById('f-edu').value = r.edu || ''; document.getElementById('f-address').value = r.address || '';
             let hhTxt = r.hh_name ? r.hh_name : 'No Household Assigned'; if(r.hh_name && r.hh_role) hhTxt += ` (${r.hh_role})`; document.getElementById('f-hh-display').innerText = hhTxt; document.getElementById('btn-del').style.display = 'inline-block';
         }
 
@@ -1287,16 +842,16 @@
 
         // --- REPORTING ---
         function updateReportUI() {
-            const living = db.filter(r => !r.isDead); const stats = { male: 0, female: 0, adults: 0, children: 0, solo: 0, pwd: 0, senior: 0, osy: 0, fourPs: 0, total: living.length };
+            const living = db.filter(r => !r.isDead); const stats = { male: 0, female: 0, adults: 0, children: 0, solo: 0, pwd: 0, senior: 0, osy: 0, total: living.length };
             const totalFamilies = living.filter(r => r.hh_role === 'HEAD').length; const uniqueHH = new Set(living.map(r => r.hh_name).filter(n => n && n.trim() !== '')); const totalHH = uniqueHH.size;
-            living.forEach(r => { if(r.sex === 'MALE') stats.male++; else if(r.sex === 'FEMALE') stats.female++; const age = calculateAgeDetailed(r.bdate).y; if(age < 18) stats.children++; else if(age >= 60) stats.senior++; else stats.adults++; if(r.isPwd) stats.pwd++; if(r.isSoloParent) stats.solo++; if(r.isOSY) stats.osy++; if(r.is4Ps) stats.fourPs++; });
-            document.getElementById('rep-male').innerText = stats.male; document.getElementById('rep-female').innerText = stats.female; document.getElementById('rep-total').innerText = stats.total; document.getElementById('rep-child').innerText = stats.children; document.getElementById('rep-adult').innerText = stats.adults; document.getElementById('rep-senior').innerText = stats.senior; document.getElementById('rep-pwd').innerText = stats.pwd; document.getElementById('rep-solo').innerText = stats.solo; document.getElementById('rep-osy').innerText = stats.osy; document.getElementById('rep-4ps').innerText = stats.fourPs; document.getElementById('rep-hh-total').innerText = totalHH; document.getElementById('rep-family-total').innerText = totalFamilies;
+            living.forEach(r => { if(r.sex === 'MALE') stats.male++; else if(r.sex === 'FEMALE') stats.female++; const age = calculateAgeDetailed(r.bdate).y; if(age < 18) stats.children++; else if(age >= 60) stats.senior++; else stats.adults++; if(r.isPwd) stats.pwd++; if(r.isSoloParent) stats.solo++; if(r.isOSY) stats.osy++; });
+            document.getElementById('rep-male').innerText = stats.male; document.getElementById('rep-female').innerText = stats.female; document.getElementById('rep-total').innerText = stats.total; document.getElementById('rep-child').innerText = stats.children; document.getElementById('rep-adult').innerText = stats.adults; document.getElementById('rep-senior').innerText = stats.senior; document.getElementById('rep-pwd').innerText = stats.pwd; document.getElementById('rep-solo').innerText = stats.solo; document.getElementById('rep-osy').innerText = stats.osy; document.getElementById('rep-hh-total').innerText = totalHH; document.getElementById('rep-family-total').innerText = totalFamilies;
         }
 
         // --- PRINT STAT CATEGORY ---
         function printStatCategory(category) {
             const living = db.filter(r => !r.isDead); let filtered = []; let label = '';
-            switch(category) { case 'total': filtered = living; label = 'ALL RESIDENTS'; break; case 'male': filtered = living.filter(r => r.sex === 'MALE'); label = 'MALE RESIDENTS'; break; case 'female': filtered = living.filter(r => r.sex === 'FEMALE'); label = 'FEMALE RESIDENTS'; break; case 'children': filtered = living.filter(r => calculateAgeDetailed(r.bdate).y < 18); label = 'CHILDREN (Below 18)'; break; case 'adults': filtered = living.filter(r => { const a = calculateAgeDetailed(r.bdate).y; return a >= 18 && a < 60; }); label = 'ADULTS (18-59)'; break; case 'seniors': filtered = living.filter(r => calculateAgeDetailed(r.bdate).y >= 60); label = 'SENIOR CITIZENS (60+)'; break; case 'pwd': filtered = living.filter(r => r.isPwd); label = 'PERSONS WITH DISABILITY (PWD)'; break; case 'solo': filtered = living.filter(r => r.isSoloParent); label = 'SOLO PARENTS'; break; case 'osy': filtered = living.filter(r => r.isOSY); label = 'OUT OF SCHOOL YOUTH (OSY)'; break; case '4ps': filtered = living.filter(r => r.is4Ps); label = "4P'S BENEFICIARIES"; break; case 'households': printHHHeads(); return; case 'families': filtered = living.filter(r => r.hh_role === 'HEAD'); label = 'HEAD OF FAMILIES'; break; default: filtered = living; label = 'ALL RESIDENTS'; }
+            switch(category) { case 'total': filtered = living; label = 'ALL RESIDENTS'; break; case 'male': filtered = living.filter(r => r.sex === 'MALE'); label = 'MALE RESIDENTS'; break; case 'female': filtered = living.filter(r => r.sex === 'FEMALE'); label = 'FEMALE RESIDENTS'; break; case 'children': filtered = living.filter(r => calculateAgeDetailed(r.bdate).y < 18); label = 'CHILDREN (Below 18)'; break; case 'adults': filtered = living.filter(r => { const a = calculateAgeDetailed(r.bdate).y; return a >= 18 && a < 60; }); label = 'ADULTS (18-59)'; break; case 'seniors': filtered = living.filter(r => calculateAgeDetailed(r.bdate).y >= 60); label = 'SENIOR CITIZENS (60+)'; break; case 'pwd': filtered = living.filter(r => r.isPwd); label = 'PERSONS WITH DISABILITY (PWD)'; break; case 'solo': filtered = living.filter(r => r.isSoloParent); label = 'SOLO PARENTS'; break; case 'osy': filtered = living.filter(r => r.isOSY); label = 'OUT OF SCHOOL YOUTH (OSY)'; break; case 'households': printHHHeads(); return; case 'families': filtered = living.filter(r => r.hh_role === 'HEAD'); label = 'HEAD OF FAMILIES'; break; default: filtered = living; label = 'ALL RESIDENTS'; }
             filtered.sort((a,b) => a.last.localeCompare(b.last)); printCatData = filtered; printCatPage = 0; printCatLabel = label; renderPrintCatModal(); new bootstrap.Modal(document.getElementById('modal-print-category')).show();
         }
         function renderPrintCatModal() {
@@ -1357,169 +912,13 @@
             const wb = XLSX.utils.book_new(); const wsInstr = XLSX.utils.aoa_to_sheet([instrHeader, ...instrData]); XLSX.utils.book_append_sheet(wb, wsInstr, "INSTRUCTIONS"); const wsData = XLSX.utils.aoa_to_sheet([dataHeader, ...dataRows]); XLSX.utils.book_append_sheet(wb, wsData, "DATA"); XLSX.writeFile(wb, "RBI_Export_BIMS.xlsx");
         }
 
-        async function scanLocalStorage() {
-            const result = document.getElementById('scan-result');
-            result.style.display = 'block';
-            result.innerHTML = '<div class="text-muted small"><i class="fas fa-spinner fa-spin me-2"></i>Scanning browser storage...</div>';
-
-            // Check all known keys from all versions of the app
-            const rawDB       = localStorage.getItem('rbi_db');
-            const rawHH       = localStorage.getItem('rbi_hh_db');
-            const rawSettings = localStorage.getItem('rbi_settings');
-            const rawKPLic    = localStorage.getItem('kp_licensed');
-            const rawKPCases  = localStorage.getItem('kp_cases_v2');
-            const rawKPLupon  = localStorage.getItem('kp_lupon');
-            const rawKPInc    = localStorage.getItem('kp_incidents');
-
-            if (!rawDB) {
-                result.innerHTML = `
-                    <div class="alert alert-warning mb-0 small">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        <strong>No data found in this browser's storage.</strong><br>
-                        This means your data was saved on a different URL or device. You will need a backup file to restore it.
-                    </div>`;
-                return;
-            }
-
-            try {
-                const foundDB  = JSON.parse(rawDB) || [];
-                const foundHH  = rawHH ? JSON.parse(rawHH) : [];
-                const foundSet = rawSettings ? JSON.parse(rawSettings) : {};
-
-                // Show what was found and ask to load
-                result.innerHTML = `
-                    <div class="alert alert-success mb-2 small">
-                        <i class="fas fa-check-circle me-2"></i>
-                        <strong>Data found!</strong> ${foundDB.length} residents, ${foundHH.length} households
-                        ${foundSet.barangay ? ' · Brgy. ' + foundSet.barangay : ''}
-                    </div>
-                    <button class="btn btn-success btn-sm fw-bold" id="btn-load-scanned">
-                        <i class="fas fa-download me-2"></i>Load This Data Now
-                    </button>`;
-
-                document.getElementById('btn-load-scanned').onclick = async () => {
-                    db           = foundDB;
-                    household_db = foundHH;
-                    settings     = foundSet;
-                    _kp_licensed = rawKPLic === 'true';
-                    if (rawKPCases)  localStorage.setItem('kp_cases_v2',  rawKPCases);
-                    if (rawKPLupon)  localStorage.setItem('kp_lupon',     rawKPLupon);
-                    if (rawKPInc)    localStorage.setItem('kp_incidents', rawKPInc);
-                    if (_kp_licensed) localStorage.setItem('kp_licensed', 'true');
-                    await persistData();
-                    result.innerHTML = `<div class="alert alert-success mb-0 small"><i class="fas fa-check-circle me-2"></i><strong>✅ Loaded ${foundDB.length} residents successfully!</strong> Redirecting to dashboard...</div>`;
-                    setTimeout(() => showHome(), 1500);
-                };
-
-            } catch(e) {
-                result.innerHTML = `<div class="alert alert-danger mb-0 small"><i class="fas fa-times-circle me-2"></i>Found data but could not read it: ${e.message}</div>`;
-            }
-        }
-
-        function backupData() {
-            const payload = buildPayload();
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(payload, null, 2));
-            const a = document.createElement('a');
-            a.href = dataStr;
-            const now = new Date();
-            const stamp = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
-            a.download = `RBIS_Backup_${stamp}.json`;
-            a.click();
-        }
-
+        function backupData() { const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({db, settings, household_db})); const a = document.createElement('a'); a.href = dataStr; a.download = "RBI_Backup.json"; a.click(); }
 
         function restoreData(event) {
             const file = event.target.files[0]; if (!file) return;
             const reader = new FileReader();
-            reader.onload = async function(e) {
-                try {
-                    const imported = JSON.parse(e.target.result);
-                    if (!imported.db) { alert('Invalid backup file.'); return; }
-                    // Require dynamic code before restoring — prevents illegal use
-                    _showRestoreAuthModal(imported);
-                } catch(err) { alert('Error reading backup file.'); }
-            };
+            reader.onload = function(e) { try { const imported = JSON.parse(e.target.result); if(imported.db) { db = imported.db; if(imported.settings) settings = imported.settings; if(imported.household_db) household_db = imported.household_db; saveDB(); localStorage.setItem('rbi_settings', JSON.stringify(settings)); alert("Restored!"); location.reload(); } } catch(err) { alert("Error reading file"); } };
             reader.readAsText(file);
-            // Reset input so same file can be picked again
-            event.target.value = '';
-        }
-
-        function _showRestoreAuthModal(importedData) {
-            const now = new Date();
-            const existing = document.getElementById('modal-restore-auth');
-            if (existing) existing.remove();
-
-            const modal = document.createElement('div');
-            modal.id = 'modal-restore-auth';
-            modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
-            modal.innerHTML = `
-                <div style="background:rgba(15,23,42,0.98);backdrop-filter:blur(20px);
-                    border:1px solid rgba(255,255,255,0.1);border-radius:16px;
-                    padding:36px 32px;width:400px;max-width:100%;text-align:center;color:white;
-                    box-shadow:0 25px 50px rgba(0,0,0,0.5);">
-                    <i class="fas fa-shield-alt" style="font-size:2rem;color:#f59e0b;margin-bottom:14px;display:block;"></i>
-                    <h5 style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;margin-bottom:6px;">Restore Verification</h5>
-                    <p style="color:rgba(255,255,255,0.4);font-size:0.8rem;margin-bottom:4px;">
-                        Enter the <strong style="color:rgba(255,255,255,0.7);">Dynamic Access Code</strong> to restore this backup.
-                    </p>
-                    <p style="color:rgba(255,255,255,0.25);font-size:0.72rem;margin-bottom:20px;">
-                        Backup contains <strong style="color:rgba(255,255,255,0.5);">${importedData.db.length}</strong> residents
-                        ${importedData.settings?.barangay ? '· ' + importedData.settings.barangay : ''}
-                    </p>
-                    <input type="password" id="restore-auth-input" placeholder="Enter Dynamic Access Code"
-                        style="width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);
-                        color:white;border-radius:10px;padding:11px 14px;font-size:0.9rem;
-                        text-align:center;letter-spacing:1px;margin-bottom:8px;outline:none;"
-                        onkeydown="if(event.key==='Enter')window._confirmRestoreAuth()">
-                    <div id="restore-auth-error" style="color:#f87171;font-size:0.78rem;min-height:18px;margin-bottom:12px;"></div>
-                    <div style="display:flex;gap:8px;">
-                        <button onclick="window._confirmRestoreAuth()"
-                            style="flex:1;background:#d97706;border:none;border-radius:10px;padding:11px;
-                            color:white;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;cursor:pointer;">
-                            <i class="fas fa-unlock me-1"></i>Verify & Restore
-                        </button>
-                        <button onclick="document.getElementById('modal-restore-auth').remove();delete window._confirmRestoreAuth;"
-                            style="padding:11px 16px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
-                            border-radius:10px;color:rgba(255,255,255,0.5);cursor:pointer;">
-                            Cancel
-                        </button>
-                    </div>
-                    <div style="margin-top:12px;font-size:0.7rem;color:rgba(255,255,255,0.2);">
-                        ${now.toLocaleString('en-PH')}
-                    </div>
-                </div>`;
-            document.body.appendChild(modal);
-            setTimeout(() => document.getElementById('restore-auth-input')?.focus(), 100);
-
-            window._confirmRestoreAuth = async () => {
-                const input = document.getElementById('restore-auth-input').value.trim();
-                const errEl = document.getElementById('restore-auth-error');
-
-                // Verify dynamic code
-                const n = new Date(); const month = n.getMonth(); const day = n.getDate(); const year = n.getFullYear();
-                const week = getWeekNumber(n) * 2; const dayLetter = numToLetter(day); const hours = n.getHours();
-                const ampm = hours >= 12 ? 'mp' : 'ma'; const hourLetter = String.fromCharCode(97 + hours);
-                const code = `RBI-${month}${day}${year}${week}${dayLetter}${ampm}${hourLetter}`;
-
-                if (input !== code) {
-                    errEl.textContent = 'Invalid access code. Please check and try again.';
-                    document.getElementById('restore-auth-input').value = '';
-                    document.getElementById('restore-auth-input').focus();
-                    return;
-                }
-
-                // Code verified — apply data but CLEAR the password so they must set a new one
-                applyPayload(importedData);
-                settings.user_password = null; // Force new password setup
-                await persistData();
-
-                modal.remove();
-                delete window._confirmRestoreAuth;
-
-                const hasKP = importedData.kp_cases?.length || importedData.kp_lupon?.length || importedData.kp_incidents?.length;
-                alert('✅ Backup verified and restored!' + (hasKP ? '\n\nKP System data also restored.' : '') + '\n\nPlease set a new password to continue.');
-                location.reload();
-            };
         }
 
         function previewImport() {
@@ -1556,7 +955,7 @@
             const sec = document.getElementById('set-sec').value; const brgy = document.getElementById('set-brgy').value; const prov = document.getElementById('set-prov').value; const muni = document.getElementById('set-muni').value; const lguType = document.getElementById('set-lgu-type').value; const region = document.getElementById('set-region').value; const captain = document.getElementById('set-captain').value;
             if(!sec || !brgy) return alert("Please fill in Barangay and Secretary name.");
             settings.secretary = sec.toUpperCase(); settings.barangay = brgy.toUpperCase(); settings.province = prov ? prov.toUpperCase() : ''; settings.municipality = muni ? muni.toUpperCase() : ''; settings.lguType = lguType; settings.region = region ? region.toUpperCase() : ''; settings.captain = captain ? captain.toUpperCase() : '';
-            saveDB(); alert('Configuration Saved!');
+            localStorage.setItem('rbi_settings', JSON.stringify(settings)); alert('Configuration Saved!');
         }
     </script>
 </body>
