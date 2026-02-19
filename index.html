@@ -194,7 +194,7 @@
             <h4><i class="fas fa-users-cog" style="color:#60a5fa;"></i> RBI System</h4>
             <small>Brgy. Data Management</small>
             <div id="save-status" style="font-size:0.68rem;margin-top:6px;opacity:0;transition:opacity 0.5s;font-weight:600;">💾 Saved</div>
-            <div id="file-status" style="font-size:0.62rem;margin-top:2px;color:rgba(255,255,255,0.3);">📂 No file linked</div>
+            <div id="file-status" style="font-size:0.62rem;margin-top:2px;color:rgba(255,255,255,0.3);">🗃 Auto-saved</div>
         </div>
         <span class="nav-label">Main</span>
         <a href="#" onclick="showHome()" class="nav-link active"><i class="fas fa-th-large me-1"></i> Dashboard</a>
@@ -210,6 +210,7 @@
     </div>
 
     <div class="content" id="main-container">
+        <!-- DASHBOARD -->
         <div id="section-home">
             <div class="page-title">Dashboard Overview</div>
             <div class="page-subtitle">Real-time barangay population summary</div>
@@ -273,6 +274,7 @@
             </div>
         </div>
 
+        <!-- ADD RESIDENT -->
         <div id="section-add" class="d-none">
             <div class="page-title">Resident Information Sheet</div>
             <div class="page-subtitle">Add or edit an individual resident record</div>
@@ -329,6 +331,7 @@
             </div>
         </div>
 
+        <!-- HOUSEHOLDS -->
         <div id="section-hh" class="d-none">
             <div class="section-bar">
                 <div><div class="page-title">Household Management</div><div class="page-subtitle">Manage household groups and members</div></div>
@@ -372,6 +375,7 @@
             </div>
         </div>
 
+        <!-- DEATHS -->
         <div id="section-deaths" class="d-none">
              <div class="page-title" style="color:var(--accent-red);">Death Registry <span class="badge bg-danger rounded-pill" id="death-total" style="font-size:0.9rem;">0</span></div>
              <div class="page-subtitle">List of deceased barangay residents</div>
@@ -383,6 +387,7 @@
             </div>
         </div>
 
+        <!-- IMPORT/EXPORT -->
         <div id="section-import" class="d-none">
             <div class="page-title">Data Import / Export</div>
             <div class="page-subtitle">Backup, restore, or export data in BIMS format</div>
@@ -394,7 +399,7 @@
                         <button class="btn btn-success" onclick="processExport()">Download BIMS Excel</button>
                         <hr>
                         <h4 style="font-family:'Plus Jakarta Sans'; font-weight:700;"><i class="fas fa-database" style="color:var(--accent-blue);"></i> System Backup</h4>
-                        <p class="text-muted">Full backup (JSON) of all residents, households, settings, and KP data. Data auto-saves to <strong>RBIS_Data.json</strong> on your PC on every change.</p>
+                        <p class="text-muted">Full backup (JSON) of all residents, households, settings, and KP data. Data auto-saves to browser storage on every change — download a backup file for extra safety.</p>
                         <div class="d-flex gap-2 flex-wrap">
                             <button class="btn btn-primary" onclick="backupData()"><i class="fas fa-download me-1"></i> Download Backup</button>
                         </div>
@@ -415,6 +420,7 @@
             </div>
         </div>
 
+        <!-- SETTINGS -->
         <div id="section-settings" class="d-none">
             <div class="page-title">System Configuration</div>
             <div class="page-subtitle">Configure barangay details and signatories</div>
@@ -430,11 +436,13 @@
             </div>
         </div>
 
+        <!-- OTHER SYSTEMS -->
         <div id="section-other" class="d-none">
             <div class="page-title">Other Systems</div>
             <div class="page-subtitle">Additional barangay management modules</div>
             <div class="row g-4 mt-2">
                 <div class="col-md-4" id="kp-card-wrapper">
+                    <!-- KP LICENSED CARD (shown when access code is set) -->
                     <div class="system-card d-none" id="kp-card-licensed" style="cursor:pointer;" onclick="openKPAccessModal()">
                         <div class="sale-badge" style="background:linear-gradient(135deg,#059669,#047857);"><i class="fas fa-check-circle me-1"></i> AVAILABLE</div>
                         <div class="system-img" style="background:linear-gradient(135deg,#0f2027,#1a3a2a,#0d2818);"><i class="fas fa-balance-scale" style="color:#34d399;"></i></div>
@@ -449,15 +457,19 @@
                             <button class="btn btn-success w-100 mt-3" onclick="event.stopPropagation(); openKPAccessModal()"><i class="fas fa-balance-scale me-1"></i> Open KP System</button>
                         </div>
                     </div>
-                    <div class="system-card" id="kp-card-unlicensed">
+                    <!-- KP UNLICENSED CARD (shown when no access code yet) -->
+                    <div class="system-card d-none" id="kp-card-unlicensed">
                         <div class="sale-badge" style="background:linear-gradient(135deg,#d97706,#b45309);"><i class="fas fa-tag me-1"></i> FOR SALE</div>
                         <div class="system-img" style="background:linear-gradient(135deg,#1c1008,#2d1a04,#1c1008);">
+                            <!-- Price Tag -->
                             <div style="text-align:center; position:relative; z-index:2;">
                                 <div style="display:inline-block;background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:14px;padding:12px 24px;box-shadow:0 6px 28px rgba(245,158,11,0.55);">
+                                    <!-- Sale ribbon -->
                                     <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:4px;">
                                         <span style="font-size:0.55rem;color:rgba(0,0,0,0.45);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;text-decoration:line-through;">₱1,000</span>
                                         <span style="background:#dc2626;color:white;font-size:0.5rem;font-weight:800;padding:1px 6px;border-radius:100px;letter-spacing:0.5px;">30% OFF</span>
                                     </div>
+                                    <!-- New price -->
                                     <div style="font-size:2.2rem;font-weight:900;color:#1c1008;font-family:'Plus Jakarta Sans',sans-serif;line-height:1;">₱699</div>
                                     <div style="font-size:0.6rem;color:rgba(0,0,0,0.5);font-weight:600;margin-top:3px;letter-spacing:0.5px;">one-time access</div>
                                 </div>
@@ -471,6 +483,7 @@
                                 <span class="badge" style="background:rgba(5,150,105,0.1); color:var(--accent-green);">Mediation</span>
                                 <span class="badge" style="background:rgba(124,58,237,0.1); color:var(--accent-purple);">Settlement</span>
                             </div>
+                            <!-- Avail Info Box -->
                             <div style="background:linear-gradient(135deg,rgba(245,158,11,0.08),rgba(180,83,9,0.08));border:1px solid rgba(245,158,11,0.3);border-radius:10px;padding:12px;margin-bottom:12px;">
                                 <div style="font-size:0.72rem;font-weight:700;color:#d97706;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;"><i class="fas fa-info-circle me-1"></i> How to Avail KPS</div>
                                 <p style="font-size:0.78rem;color:var(--text-secondary);margin:0 0 8px;">Message <strong style="color:var(--text-primary);">Sec Jerick</strong> on Facebook to get your access code:</p>
@@ -484,6 +497,7 @@
                         </div>
                     </div>
                 </div>
+                <!-- KP ACCESS CODE MODAL -->
                 <div class="modal fade" id="modal-kp-access" tabindex="-1" data-bs-backdrop="static">
                     <div class="modal-dialog modal-dialog-centered">
                         <div class="modal-content" style="border-radius:16px;overflow:hidden;border:none;">
@@ -511,6 +525,7 @@
         </div>
     </div>
 
+    <!-- MODALS -->
     <div class="modal fade" id="modal-new-hh" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5>Create New Household</h5></div><div class="modal-body"><label>Household Name (Family Name)</label><input type="text" id="new-hh-name" class="form-control text-uppercase mb-2"><label>Purok</label><input type="text" id="new-hh-purok" class="form-control text-uppercase mb-2"><label>House Number</label><input type="text" id="new-hh-num" class="form-control text-uppercase"></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button><button type="button" class="btn btn-primary" onclick="createHH()">Create</button></div></div></div></div>
 
     <div class="modal fade" id="modal-edit-hh" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5>Edit Household Details</h5></div><div class="modal-body"><input type="hidden" id="edit-hh-old-name"><label>Household Name (Family Name)</label><input type="text" id="edit-hh-name" class="form-control text-uppercase mb-2"><label>Purok</label><input type="text" id="edit-hh-purok" class="form-control text-uppercase mb-2"><label>House Number</label><input type="text" id="edit-hh-num" class="form-control text-uppercase"></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button><button type="button" class="btn btn-success" onclick="saveEditedHH()">Save Changes</button></div></div></div></div>
@@ -521,6 +536,7 @@
 
     <div class="modal" id="modal-import" tabindex="-1" style="background:rgba(0,0,0,0.5);"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5>Import Preview</h5></div><div class="modal-body"><ul class="nav nav-tabs mb-3"><li class="nav-item"><a class="nav-link active" onclick="showImportTab('valid')" href="#">Valid (<span id="count-valid">0</span>)</a></li><li class="nav-item"><a class="nav-link text-warning" onclick="showImportTab('dup')" href="#">Duplicates (<span id="count-dup">0</span>)</a></li><li class="nav-item"><a class="nav-link text-danger" onclick="showImportTab('invalid')" href="#">Invalid (<span id="count-invalid">0</span>)</a></li></ul><div id="view-valid" class="import-view" style="max-height:300px; overflow-y:auto;"><p class="text-success">Ready to import <span id="lbl-valid-count">0</span> records.</p></div><div id="view-dup" class="import-view d-none" style="max-height:300px; overflow-y:auto;"><div id="list-dup" class="text-warning small"></div></div><div id="view-invalid" class="import-view d-none" style="max-height:300px; overflow-y:auto;"><div id="list-invalid" class="text-danger small"></div></div></div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeImportModal()">Cancel</button><button class="btn btn-success" id="btn-commit-import" onclick="commitImport()" disabled>Import Valid Records</button></div></div></div></div>
 
+    <!-- AGE RANGE PRINT MODAL -->
     <div class="modal fade" id="modal-age-range" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
         <div class="modal-header"><h5 style="font-family:'Plus Jakarta Sans'; font-weight:700;"><i class="fas fa-sliders-h me-2" style="color:var(--accent-blue);"></i>Print by Age Range</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
         <div class="modal-body">
@@ -537,6 +553,7 @@
         <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary" onclick="printAgeRange()"><i class="fas fa-print me-1"></i> Print</button></div>
     </div></div></div>
 
+    <!-- PRINT CATEGORY MODAL -->
     <div class="modal fade" id="modal-print-category" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content">
         <div class="modal-header"><h5 style="font-family:'Plus Jakarta Sans'; font-weight:700;" id="print-cat-title"><i class="fas fa-print me-2" style="color:var(--accent-blue);"></i>Print Records</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
         <div class="modal-body">
@@ -549,6 +566,7 @@
         <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Close</button><button class="btn btn-primary" onclick="executePrintCategory()"><i class="fas fa-print me-1"></i> Print This Page (100 max)</button></div>
     </div></div></div>
 
+    <!-- BULK FORM B MODAL -->
     <div class="modal fade" id="modal-bulk-formb" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content">
         <div class="modal-header"><h5 style="font-family:'Plus Jakarta Sans'; font-weight:700;"><i class="fas fa-file-alt me-2" style="color:var(--accent-green);"></i>Bulk Print RBI Form B</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
         <div class="modal-body">
@@ -568,60 +586,55 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // ═══════════════════════════════════════════════════════════
-        // REAL FILE PERSISTENCE — survives ALL browser clears
-        // File handle stored in IndexedDB so picker appears ONCE.
-        // On every restart, handle is restored and loads instantly.
-        // KP license lives inside the file — never in localStorage.
-        // ═══════════════════════════════════════════════════════════
+        // DUAL PERSISTENCE: IndexedDB (primary) + File (optional backup)
+        // IndexedDB loads instantly on every page load - no clicks, no prompts.
+        // File backup is optional via "Download Backup" button.
 
         let _fileHandle  = null;
         let _writing     = false;
-        let _kp_licensed = false;
+        let _kp_licensed = localStorage.getItem('kp_licensed') === 'true';
 
-        // ── IndexedDB: remember the file handle between sessions ──
-        const _HDB = 'rbis_fh';
-        function _openHDB() {
+        // IndexedDB: primary data store
+        const _DBNAME = 'rbis_main';
+        function _openDB() {
             return new Promise((res, rej) => {
-                const r = indexedDB.open(_HDB, 1);
-                r.onupgradeneeded = e => e.target.result.createObjectStore('h');
+                const r = indexedDB.open(_DBNAME, 1);
+                r.onupgradeneeded = e => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains('data')) db.createObjectStore('data');
+                };
                 r.onsuccess = e => res(e.target.result);
                 r.onerror   = e => rej(e.target.error);
             });
         }
-        async function _saveHandleIDB(h) {
+        async function _idbSet(key, val) {
             try {
-                const d = await _openHDB();
+                const db = await _openDB();
                 await new Promise((res, rej) => {
-                    const tx = d.transaction('h', 'readwrite');
-                    tx.objectStore('h').put(h, 'fh');
+                    const tx = db.transaction('data', 'readwrite');
+                    tx.objectStore('data').put(val, key);
                     tx.oncomplete = res; tx.onerror = rej;
                 });
-            } catch(e) { console.warn('Handle save failed', e); }
+            } catch(e) { console.warn('IDB write failed', e); }
         }
-        async function _loadHandleIDB() {
+        async function _idbGet(key) {
             try {
-                const d = await _openHDB();
+                const db = await _openDB();
                 return await new Promise((res, rej) => {
-                    const req = d.transaction('h').objectStore('h').get('fh');
+                    const req = db.transaction('data').objectStore('data').get(key);
                     req.onsuccess = () => res(req.result ?? null);
                     req.onerror   = () => rej(req.error);
                 });
             } catch(e) { return null; }
         }
-        async function _clearHandleIDB() {
-            try {
-                const d = await _openHDB();
-                const tx = d.transaction('h', 'readwrite');
-                tx.objectStore('h').delete('fh');
-            } catch(e) {}
-        }
 
-        // ── Build payload ──
+        // Build / Apply payload
         function buildPayload() {
+            // Always read freshest license value from both sources
+            const licensed = _kp_licensed || localStorage.getItem('kp_licensed') === 'true';
             return {
                 db, household_db, settings,
-                kp_licensed:  _kp_licensed,
+                kp_licensed:  licensed,
                 kp_cases:     _safeLS('kp_cases_v2', []),
                 kp_lupon:     _safeLS('kp_lupon', []),
                 kp_incidents: _safeLS('kp_incidents', []),
@@ -630,18 +643,33 @@
         }
         function _safeLS(k, d) { try { return JSON.parse(localStorage.getItem(k)) || d; } catch(e) { return d; } }
 
-        // ── Apply payload to memory ──
         function applyPayload(p) {
-            if (p.db)            db            = p.db;
+            if (p.db)           db           = p.db;
             if (p.household_db) household_db = p.household_db;
-            if (p.settings)      settings      = p.settings;
-            _kp_licensed = p.kp_licensed === true;
+            if (p.settings)     settings     = p.settings;
+            // Never downgrade license — once licensed, always licensed
+            // (localStorage pre-loaded at script start; IDB payload confirms or upgrades)
+            _kp_licensed = p.kp_licensed === true || localStorage.getItem('kp_licensed') === 'true';
+            if (_kp_licensed) localStorage.setItem('kp_licensed', 'true');
             if (p.kp_cases)     localStorage.setItem('kp_cases_v2', JSON.stringify(p.kp_cases));
             if (p.kp_lupon)     localStorage.setItem('kp_lupon',    JSON.stringify(p.kp_lupon));
             if (p.kp_incidents) localStorage.setItem('kp_incidents',JSON.stringify(p.kp_incidents));
+            if (p.db)           localStorage.setItem('rbi_db',      JSON.stringify(p.db));
+            if (p.settings)     localStorage.setItem('rbi_settings',JSON.stringify(p.settings));
         }
 
-        // ── Write to file ──
+        // Persist: save to IndexedDB instantly, also write to file if linked
+        async function persistData() {
+            const payload = buildPayload();
+            await _idbSet('payload', payload);
+            if (_fileHandle) await _writeFile();
+            // Always keep localStorage in sync so kp.html can read fresh resident data
+            localStorage.setItem('rbi_db', JSON.stringify(db));
+            localStorage.setItem('rbi_settings', JSON.stringify(settings));
+            showSaveStatus(true);
+        }
+
+        // Optional file backup
         async function _writeFile() {
             if (!_fileHandle || _writing) return;
             _writing = true;
@@ -649,11 +677,9 @@
                 const w = await _fileHandle.createWritable();
                 await w.write(JSON.stringify(buildPayload(), null, 2));
                 await w.close();
-            } catch(e) { console.error('Write error:', e); }
+            } catch(e) { console.error('File write error:', e); }
             _writing = false;
         }
-
-        // ── Read from file ──
         async function _readFile() {
             if (!_fileHandle) return null;
             try {
@@ -663,307 +689,49 @@
             } catch(e) { return null; }
         }
 
-        // ── Persist ──
-        async function persistData() {
-            await _writeFile();
-            showSaveStatus(!!_fileHandle);
-        }
-
-        // ── Main init: try remembered handle first, picker only if needed ──
-        async function initStorage() {
-            const saved = await _loadHandleIDB();
-
-            if (saved) {
-                // Handle remembered — one-click resume
-                await _showResumeScreen(saved);
-            } else {
-                // Check for legacy localStorage data (existing user updating)
-                const hasLegacy = !!localStorage.getItem('rbi_db');
-                if (hasLegacy) {
-                    await _showLegacyMigrationScreen();
-                } else {
-                    // Brand new install — full file picker
-                    await _showFilePicker();
-                }
-            }
-
-            // Load data from file
-            if (_fileHandle) {
-                const data = await _readFile();
-                if (data && data.db) {
-                    applyPayload(data);
-                }
-                // (legacy migration already loaded data before writing)
-            }
-        }
-
-        // ── Resume screen: one click to re-grant permission on remembered file ──
-        function _showResumeScreen(savedHandle) {
-            return new Promise(resolve => {
-                const over = document.createElement('div');
-                over.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(135deg,#0f172a 0%,#1e293b 50%,#111827 100%);';
-                over.innerHTML = `
-                    <div style="position:absolute;width:600px;height:600px;background:radial-gradient(circle,rgba(37,99,235,0.12) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;"></div>
-                    <div style="background:rgba(30,41,59,0.8);backdrop-filter:blur(20px);padding:44px 40px;
-                        border-radius:16px;border:1px solid rgba(255,255,255,0.08);
-                        box-shadow:0 25px 50px rgba(0,0,0,0.3);width:420px;max-width:100%;
-                        text-align:center;position:relative;z-index:1;color:white;">
-                        <i class="fas fa-shield-alt" style="font-size:2.5rem;color:#60a5fa;margin-bottom:16px;display:block;"></i>
-                        <h3 style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;letter-spacing:-0.5px;margin-bottom:6px;">
-                            RBI SECURE
-                        </h3>
-                        <p style="color:rgba(255,255,255,0.35);font-size:0.8rem;margin-bottom:32px;">
-                            <i class="fas fa-file-alt me-1" style="color:#60a5fa;"></i>
-                            <code style="background:rgba(255,255,255,0.07);padding:2px 8px;border-radius:5px;color:#93c5fd;">${savedHandle.name}</code>
-                        </p>
-                        <button id="btn-resume"
-                            style="width:100%;background:#2563eb;border:none;border-radius:10px;
-                            padding:14px;color:white;font-family:'Plus Jakarta Sans',sans-serif;
-                            font-weight:700;font-size:1rem;cursor:pointer;transition:all 0.2s;
-                            box-shadow:0 4px 16px rgba(37,99,235,0.35);"
-                            onmouseover="this.style.background='#1d4ed8';this.style.transform='translateY(-1px)'"
-                            onmouseout="this.style.background='#2563eb';this.style.transform=''">
-                            <i class="fas fa-play me-2"></i>Open RBIS
-                        </button>
-                        <div style="margin-top:14px;">
-                            <button id="btn-change-file" style="background:none;border:none;color:rgba(255,255,255,0.25);
-                                font-size:0.75rem;cursor:pointer;text-decoration:underline;font-family:'Plus Jakarta Sans',sans-serif;">
-                                Use a different file
-                            </button>
-                        </div>
-                        <div id="resume-status" style="margin-top:14px;font-size:0.8rem;color:rgba(255,255,255,0.3);min-height:18px;"></div>
-                    </div>`;
-                document.body.appendChild(over);
-
-                const status = over.querySelector('#resume-status');
-
-                over.querySelector('#btn-resume').onclick = async () => {
-                    status.textContent = 'Loading...';
-                    try {
-                        let perm = await savedHandle.queryPermission({ mode: 'readwrite' });
-                        if (perm !== 'granted') {
-                            perm = await savedHandle.requestPermission({ mode: 'readwrite' });
-                        }
-                        if (perm === 'granted') {
-                            _fileHandle = savedHandle;
-                            status.innerHTML = `<span style="color:#34d399;"><i class="fas fa-check-circle me-1"></i>Loaded</span>`;
-                            setTimeout(() => { over.remove(); resolve(); }, 400);
-                        } else {
-                            status.innerHTML = `<span style="color:#f87171;">Permission denied. Try "Use a different file".</span>`;
-                        }
-                    } catch(e) {
-                        status.innerHTML = `<span style="color:#f87171;">Error — try "Use a different file".</span>`;
-                    }
-                };
-
-                over.querySelector('#btn-change-file').onclick = async () => {
-                    await _clearHandleIDB();
-                    over.remove();
-                    await _showFilePicker();
-                    resolve();
-                };
+        // File handle store (for optional file backup feature)
+        const _FH_DB = 'rbis_fh';
+        function _openFHDB() {
+            return new Promise((res, rej) => {
+                const r = indexedDB.open(_FH_DB, 1);
+                r.onupgradeneeded = e => e.target.result.createObjectStore('h');
+                r.onsuccess = e => res(e.target.result);
+                r.onerror   = e => rej(e.target.error);
             });
         }
-
-        // ── Legacy migration: existing user updating from old version ──
-        // They already have data in localStorage — no dynamic code needed.
-        // Just ask them to save a backup file to continue.
-        function _showLegacyMigrationScreen() {
-            return new Promise(resolve => {
-                // Load legacy data into memory first
-                try { db = JSON.parse(localStorage.getItem('rbi_db') || '[]'); } catch(e) {}
-                try { household_db = JSON.parse(localStorage.getItem('rbi_hh_db') || '[]'); } catch(e) {}
-                try { settings = JSON.parse(localStorage.getItem('rbi_settings') || '{}'); } catch(e) {}
-                _kp_licensed = localStorage.getItem('kp_licensed') === 'true';
-
-                const count = db.length;
-                const brgy = settings.barangay || 'your barangay';
-
-                const over = document.createElement('div');
-                over.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(135deg,#0f172a 0%,#1e293b 50%,#111827 100%);';
-                over.innerHTML = `
-                    <div style="position:absolute;width:600px;height:600px;background:radial-gradient(circle,rgba(5,150,105,0.1) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;"></div>
-                    <div style="background:rgba(30,41,59,0.8);backdrop-filter:blur(20px);padding:44px 40px;
-                        border-radius:16px;border:1px solid rgba(255,255,255,0.08);
-                        box-shadow:0 25px 50px rgba(0,0,0,0.3);width:440px;max-width:100%;
-                        text-align:center;position:relative;z-index:1;color:white;">
-                        <i class="fas fa-database" style="font-size:2.5rem;color:#34d399;margin-bottom:16px;display:block;"></i>
-                        <h3 style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;letter-spacing:-0.5px;margin-bottom:8px;">
-                            Welcome Back!
-                        </h3>
-                        <p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin-bottom:4px;">
-                            We found your existing data:
-                        </p>
-                        <div style="background:rgba(5,150,105,0.12);border:1px solid rgba(52,211,153,0.2);
-                            border-radius:10px;padding:14px;margin-bottom:24px;">
-                            <div style="font-size:1.4rem;font-weight:800;color:#34d399;font-family:'Plus Jakarta Sans',sans-serif;">${count}</div>
-                            <div style="font-size:0.78rem;color:rgba(255,255,255,0.45);">residents · ${brgy}</div>
-                        </div>
-                        <p style="color:rgba(255,255,255,0.4);font-size:0.8rem;margin-bottom:24px;line-height:1.6;">
-                            Save your data to a file on your PC to continue.<br>
-                            Your password stays the same — no access code needed.
-                        </p>
-                        <button id="btn-save-backup"
-                            style="width:100%;background:linear-gradient(135deg,#059669,#047857);border:none;border-radius:10px;
-                            padding:14px;color:white;font-family:'Plus Jakarta Sans',sans-serif;
-                            font-weight:700;font-size:1rem;cursor:pointer;transition:all 0.2s;
-                            box-shadow:0 4px 16px rgba(5,150,105,0.35);"
-                            onmouseover="this.style.transform='translateY(-1px)'"
-                            onmouseout="this.style.transform=''">
-                            <i class="fas fa-save me-2"></i>Save Backup & Continue
-                        </button>
-                        <div id="legacy-status" style="margin-top:14px;font-size:0.8rem;color:rgba(255,255,255,0.3);min-height:18px;"></div>
-                    </div>`;
-                document.body.appendChild(over);
-
-                const status = over.querySelector('#legacy-status');
-
-                over.querySelector('#btn-save-backup').onclick = async () => {
-                    status.textContent = 'Choose where to save...';
-                    try {
-                        _fileHandle = await window.showSaveFilePicker({
-                            suggestedName: 'RBIS_Data.json',
-                            types: [{ description: 'RBIS Data', accept: { 'application/json': ['.json'] } }]
-                        });
-                        await _saveHandleIDB(_fileHandle);
-                        await persistData();
-                        status.innerHTML = `<span style="color:#34d399;"><i class="fas fa-check-circle me-1"></i>Saved! Loading your data...</span>`;
-                        setTimeout(() => { over.remove(); resolve(); }, 800);
-                    } catch(e) { status.innerHTML = `<span style="color:rgba(255,255,255,0.3);">Cancelled — please try again.</span>`; }
-                };
-            });
+        async function _saveHandleIDB(h) {
+            try {
+                const db = await _openFHDB();
+                await new Promise((res, rej) => {
+                    const tx = db.transaction('h', 'readwrite');
+                    tx.objectStore('h').put(h, 'fh');
+                    tx.oncomplete = res; tx.onerror = rej;
+                });
+            } catch(e) {}
+        }
+        async function _loadHandleIDB() {
+            try {
+                const db = await _openFHDB();
+                return await new Promise((res, rej) => {
+                    const req = db.transaction('h').objectStore('h').get('fh');
+                    req.onsuccess = () => res(req.result ?? null);
+                    req.onerror   = () => rej(req.error);
+                });
+            } catch(e) { return null; }
+        }
+        async function _clearHandleIDB() {
+            try {
+                const db = await _openFHDB();
+                const tx = db.transaction('h', 'readwrite');
+                tx.objectStore('h').delete('fh');
+            } catch(e) {}
         }
 
-        // ── File picker (shown ONLY on first run or if handle lost) ──
-        function _showFilePicker() {
-            return new Promise(resolve => {
-                const over = document.createElement('div');
-                over.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(135deg,#0f172a 0%,#1e293b 50%,#111827 100%);';
-                over.innerHTML = `
-                    <div style="position:absolute;width:600px;height:600px;background:radial-gradient(circle,rgba(37,99,235,0.12) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;"></div>
-                    <div style="background:rgba(30,41,59,0.8);backdrop-filter:blur(20px);padding:44px 40px;
-                        border-radius:16px;border:1px solid rgba(255,255,255,0.08);
-                        box-shadow:0 25px 50px rgba(0,0,0,0.3);width:420px;max-width:100%;
-                        text-align:center;position:relative;z-index:1;color:white;">
-                        <i class="fas fa-folder-open" style="font-size:2.5rem;color:#60a5fa;margin-bottom:16px;display:block;"></i>
-                        <h3 style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;letter-spacing:-0.5px;margin-bottom:8px;">
-                            <i class="fas fa-shield-alt" style="color:#60a5fa;"></i> RBI SECURE
-                        </h3>
-                        <p style="color:rgba(255,255,255,0.45);font-size:0.85rem;margin-bottom:6px;">
-                            Link your <code style="background:rgba(255,255,255,0.08);padding:2px 8px;border-radius:6px;color:#93c5fd;">RBIS_Data.json</code> file.
-                            This only happens <strong style="color:#e2e8f0;">once</strong> — it will be remembered.
-                        </p>
-                        <p style="color:rgba(255,255,255,0.3);font-size:0.78rem;margin-bottom:28px;">
-                            Open your existing file, or create a new one for first-time setup.
-                        </p>
-                        <button id="btn-open-file"
-                            style="width:100%;background:#2563eb;border:none;border-radius:10px;
-                            padding:12px;color:white;font-family:'Plus Jakarta Sans',sans-serif;
-                            font-weight:600;font-size:0.95rem;cursor:pointer;transition:all 0.2s;margin-bottom:10px;"
-                            onmouseover="this.style.background='#1d4ed8';this.style.transform='translateY(-1px)'"
-                            onmouseout="this.style.background='#2563eb';this.style.transform=''">
-                            <i class="fas fa-folder-open me-2"></i>Open Existing File
-                        </button>
-                        <button id="btn-new-file"
-                            style="width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);
-                            border-radius:10px;padding:12px;color:rgba(255,255,255,0.6);
-                            font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;
-                            font-size:0.95rem;cursor:pointer;transition:all 0.2s;"
-                            onmouseover="this.style.background='rgba(255,255,255,0.1)'"
-                            onmouseout="this.style.background='rgba(255,255,255,0.06)'">
-                            <i class="fas fa-plus-circle me-2"></i>Create New File
-                        </button>
-                        <div id="startup-status" style="margin-top:16px;font-size:0.8rem;color:rgba(255,255,255,0.3);min-height:20px;"></div>
-                    </div>`;
-                document.body.appendChild(over);
-
-                const status = over.querySelector('#startup-status');
-                const done = async (handle) => {
-                    _fileHandle = handle;
-                    await _saveHandleIDB(handle);
-                    status.innerHTML = `<span style="color:#34d399;"><i class="fas fa-check-circle me-1"></i><strong>${handle.name}</strong> linked — won't ask again</span>`;
-                    setTimeout(() => { over.remove(); resolve(); }, 900);
-                };
-
-                over.querySelector('#btn-open-file').onclick = async () => {
-                    status.textContent = 'Opening...';
-                    try {
-                        const [h] = await window.showOpenFilePicker({
-                            types: [{ description: 'RBIS Data', accept: { 'application/json': ['.json'] } }]
-                        });
-
-                        // Read file to check for data
-                        const f = await h.getFile();
-                        const text = await f.text();
-                        let parsed = null;
-                        try { parsed = JSON.parse(text); } catch(e) {}
-
-                        // If DB exists, require access code
-                        if (parsed && parsed.db && parsed.db.length > 0) {
-                            over.innerHTML = `
-                                <div style="position:absolute;width:600px;height:600px;background:radial-gradient(circle,rgba(245,158,11,0.15) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;"></div>
-                                <div style="background:rgba(30,41,59,0.95);backdrop-filter:blur(20px);padding:44px 40px;
-                                    border-radius:16px;border:1px solid rgba(255,255,255,0.08);
-                                    box-shadow:0 25px 50px rgba(0,0,0,0.5);width:420px;max-width:100%;
-                                    text-align:center;position:relative;z-index:1;color:white;">
-                                    <i class="fas fa-file-shield" style="font-size:2.5rem;color:#f59e0b;margin-bottom:16px;display:block;"></i>
-                                    <h3 style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;letter-spacing:-0.5px;margin-bottom:8px;">
-                                        Security Verification
-                                    </h3>
-                                    <p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin-bottom:20px;">
-                                        You are linking an existing database (<strong style="color:white;">${parsed.db.length}</strong> records).<br>
-                                        Please enter the Dynamic Access Code to authorize.
-                                    </p>
-                                    <input type="password" id="auth-existing-code" class="form-control mb-3 text-center fw-bold" placeholder="Enter Access Code" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:white;letter-spacing:1px;" onkeydown="if(event.key==='Enter')document.getElementById('btn-verify-open').click()">
-                                    <button id="btn-verify-open" style="width:100%;background:#d97706;border:none;border-radius:10px;padding:12px;color:white;font-weight:700;margin-bottom:10px;cursor:pointer;"><i class="fas fa-unlock me-2"></i>Verify & Open</button>
-                                    <button id="btn-cancel-open" style="width:100%;background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:10px;color:rgba(255,255,255,0.5);font-weight:600;cursor:pointer;">Cancel</button>
-                                    <div id="auth-status" style="margin-top:10px;font-size:0.8rem;color:#f87171;min-height:20px;"></div>
-                                </div>
-                            `;
-
-                            document.getElementById('btn-verify-open').onclick = async () => {
-                                const input = document.getElementById('auth-existing-code').value.trim();
-                                const n = new Date(); const month = n.getMonth(); const day = n.getDate(); const year = n.getFullYear();
-                                const week = getWeekNumber(n) * 2; const dayLetter = numToLetter(day); const hours = n.getHours();
-                                const ampm = hours >= 12 ? 'mp' : 'ma'; const hourLetter = String.fromCharCode(97 + hours);
-                                const expectedCode = `RBI-${month}${day}${year}${week}${dayLetter}${ampm}${hourLetter}`;
-
-                                if (input === expectedCode) {
-                                    document.getElementById('auth-status').innerHTML = `<span style="color:#34d399;">Verified! Linking file...</span>`;
-                                    setTimeout(() => done(h), 500);
-                                } else {
-                                    document.getElementById('auth-status').textContent = 'Invalid Access Code. Please try again.';
-                                }
-                            };
-
-                            document.getElementById('btn-cancel-open').onclick = () => {
-                                location.reload();
-                            };
-                        } else {
-                            // Empty or new file, no security needed
-                            await done(h);
-                        }
-                    } catch(e) { status.innerHTML = `<span style="color:rgba(255,255,255,0.3);">Cancelled — please try again.</span>`; }
-                };
-
-                over.querySelector('#btn-new-file').onclick = async () => {
-                    status.textContent = 'Creating...';
-                    try {
-                        const h = await window.showSaveFilePicker({
-                            suggestedName: 'RBIS_Data.json',
-                            types: [{ description: 'RBIS Data', accept: { 'application/json': ['.json'] } }]
-                        });
-                        await done(h);
-                    } catch(e) { status.innerHTML = `<span style="color:rgba(255,255,255,0.3);">Cancelled — please try again.</span>`; }
-                };
-            });
-        }
-
-        // ── Status ──
+        // Status indicators
         function showSaveStatus(ok) {
             const el = document.getElementById('save-status');
             if (!el) return;
-            el.textContent  = ok ? '\u{1F4BE} Saved' : '\u26A0 No file';
+            el.textContent = ok ? '💾 Saved' : '⚠ Not saved';
             el.style.color  = ok ? '#34d399' : '#f87171';
             el.style.opacity = '1';
             clearTimeout(el._t);
@@ -972,17 +740,121 @@
         function updateFileStatus() {
             const el = document.getElementById('file-status');
             if (!el) return;
-            el.textContent = _fileHandle ? ('\u{1F4C2} ' + _fileHandle.name) : '\u26A0 No file linked';
-            el.style.color = _fileHandle ? 'rgba(52,211,153,0.7)' : 'rgba(251,191,36,0.8)';
+            el.textContent = _fileHandle ? ('📂 ' + _fileHandle.name) : '🗃 Auto-saved';
+            el.style.color = _fileHandle ? 'rgba(52,211,153,0.7)' : 'rgba(148,163,184,0.7)';
         }
 
-        // ── Stubs ──
+        // Main init: load from IndexedDB instantly, no user prompts needed
+        async function initStorage() {
+            // Load from IndexedDB - works instantly every time, no clicks
+            const saved = await _idbGet('payload');
+            if (saved && saved.db) {
+                applyPayload(saved);
+                return;
+            }
+
+            // Check localStorage (same origin legacy data)
+            const old = localStorage.getItem('rbi_db');
+            if (old) {
+                try { db = JSON.parse(old); } catch(e) {}
+                try { household_db = JSON.parse(localStorage.getItem('rbi_hh_db') || '[]'); } catch(e) {}
+                try { settings = JSON.parse(localStorage.getItem('rbi_settings') || '{}'); } catch(e) {}
+                _kp_licensed = localStorage.getItem('kp_licensed') === 'true';
+                await persistData();
+                const toast = document.createElement('div');
+                toast.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:99999;background:#059669;color:white;padding:14px 22px;border-radius:10px;font-weight:600;font-size:0.9rem;box-shadow:0 4px 16px rgba(0,0,0,0.2);';
+                toast.innerHTML = '✅ Existing data loaded successfully!';
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 3500);
+                return;
+            }
+
+            // No data found anywhere — show first-run screen
+            await _showFirstRunScreen();
+        }
+
+        function _showFirstRunScreen() {
+            return new Promise(resolve => {
+                const over = document.createElement('div');
+                over.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(135deg,#0f172a 0%,#1e293b 50%,#111827 100%);';
+                over.innerHTML = `
+                    <div style="position:absolute;width:600px;height:600px;background:radial-gradient(circle,rgba(37,99,235,0.12) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;"></div>
+                    <div style="background:rgba(30,41,59,0.85);backdrop-filter:blur(20px);padding:44px 40px;border-radius:16px;border:1px solid rgba(255,255,255,0.08);box-shadow:0 25px 50px rgba(0,0,0,0.3);width:460px;max-width:100%;text-align:center;position:relative;z-index:1;color:white;">
+                        <i class="fas fa-shield-alt" style="font-size:2.5rem;color:#60a5fa;margin-bottom:16px;display:block;"></i>
+                        <h3 style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;letter-spacing:-0.5px;margin-bottom:8px;">RBI System</h3>
+                        <p style="color:rgba(255,255,255,0.4);font-size:0.85rem;margin-bottom:32px;">No saved data found on this browser.<br>Start fresh or restore from a backup file.</p>
+
+                        <button id="btn-fresh-start" style="width:100%;background:#2563eb;border:none;border-radius:10px;padding:13px;color:white;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:0.95rem;cursor:pointer;margin-bottom:12px;transition:all 0.2s;" onmouseover="this.style.background='#1d4ed8'" onmouseout="this.style.background='#2563eb'">
+                            <i class="fas fa-play me-2"></i>Start Fresh
+                        </button>
+
+                        <div style="position:relative;margin-bottom:12px;">
+                            <div style="border-top:1px solid rgba(255,255,255,0.1);margin:8px 0;"></div>
+                            <span style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:rgba(30,41,59,0.85);padding:0 12px;font-size:0.75rem;color:rgba(255,255,255,0.3);">OR</span>
+                        </div>
+
+                        <button id="btn-restore-backup" style="width:100%;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:13px;color:rgba(255,255,255,0.8);font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;font-size:0.95rem;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.12)'" onmouseout="this.style.background='rgba(255,255,255,0.07)'">
+                            <i class="fas fa-upload me-2"></i>Restore from Backup File
+                        </button>
+                        <input type="file" id="backup-file-input" accept=".json" style="display:none;">
+
+                        <div id="first-run-status" style="margin-top:16px;font-size:0.8rem;color:rgba(255,255,255,0.4);min-height:18px;"></div>
+                    </div>`;
+                document.body.appendChild(over);
+
+                const status = over.querySelector('#first-run-status');
+
+                over.querySelector('#btn-fresh-start').onclick = () => {
+                    over.remove();
+                    resolve();
+                };
+
+                over.querySelector('#btn-restore-backup').onclick = () => {
+                    over.querySelector('#backup-file-input').click();
+                };
+
+                over.querySelector('#backup-file-input').onchange = async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    status.innerHTML = '<span style="color:#60a5fa;">Reading file...</span>';
+                    try {
+                        const text = await file.text();
+                        const data = JSON.parse(text);
+                        if (!data.db) throw new Error('Invalid backup file');
+
+                        // Verify dynamic code before restoring
+                        const now = new Date();
+                        const week = getWeekNumber(now) * 2;
+                        const dayLetter = numToLetter(now.getDate());
+                        const ampm = now.getHours() >= 12 ? 'mp' : 'ma';
+                        const hourLetter = String.fromCharCode(97 + now.getHours());
+                        const code = `RBI-${now.getMonth()}${now.getDate()}${now.getFullYear()}${week}${dayLetter}${ampm}${hourLetter}`;
+
+                        const entered = prompt(`Backup contains ${data.db.length} residents.\nEnter today's Access Code to restore:`);
+                        if (entered !== code) {
+                            status.innerHTML = '<span style="color:#f87171;">❌ Incorrect access code. Restore cancelled.</span>';
+                            return;
+                        }
+
+                        applyPayload(data);
+                        await persistData();
+                        status.innerHTML = '<span style="color:#34d399;">✅ Restored successfully!</span>';
+                        setTimeout(() => { over.remove(); resolve(); }, 1200);
+                    } catch(err) {
+                        status.innerHTML = `<span style="color:#f87171;">❌ ${err.message || 'Failed to read file'}</span>`;
+                    }
+                };
+            });
+        }
+
+        // Stubs
         async function loadAllData()      { await initStorage(); }
         function showRestorePickerModal() { return Promise.resolve(); }
         async function showAutoBackups()  {
-            alert('Your data is saved in RBIS_Data.json on your PC.\nUse "Download Backup" to save a dated copy.');
+            alert('Data auto-saves to browser IndexedDB on every change.\nUse "Download Backup" to save a file copy.');
         }
         const MAX_BACKUPS = 5;
+
 
         // ═══════════════════════════════════════════════════════════
         // GLOBAL STATE
@@ -1010,7 +882,7 @@
         // Auto-uppercase all text inputs on input (skip search fields)
         document.addEventListener('input', e => {
             const el = e.target;
-            const skipIds = ['search-input', 'hh-search-input', 'mother-search-input', 'restore-auth-input', 'auth-existing-code', 'dynamic-code'];
+            const skipIds = ['search-input', 'hh-search-input', 'mother-search-input'];
             if (skipIds.includes(el.id)) return;
             if ((el.tagName === 'INPUT' && !['password','file','date','number','email'].includes(el.type) && !el.classList.contains('no-caps')) ||
                 (el.tagName === 'TEXTAREA' && !el.classList.contains('no-caps'))) {
@@ -1024,7 +896,8 @@
         const debouncedFilterHHList    = debounce(() => { hhPage = 0; renderHHList(); }, 400);
         const debouncedSearchMemForHH  = debounce(() => searchMemForHH(), 400);
 
-        document.addEventListener("DOMContentLoaded", async () => {
+        // DOM is already ready (script is at end of body) — run immediately
+        (async () => {
             // Load all data from IndexedDB instantly
             await loadAllData();
 
@@ -1034,38 +907,23 @@
                 document.getElementById('security-overlay').classList.add('d-none');
                 document.getElementById('main-container').classList.remove('d-none');
                 document.querySelector('.sidebar').style.display = 'block';
-                updateServerTime(); renderList(); initKPCard(); updateFileStatus();
+                updateServerTime(); showOtherSystems(); updateFileStatus();
                 return;
             }
             if(settings.user_password) { document.getElementById('login-phase-1').classList.add('d-none'); document.getElementById('login-phase-2').classList.add('d-none'); document.getElementById('login-phase-3').classList.remove('d-none'); }
             else { document.getElementById('login-phase-1').classList.remove('d-none'); document.getElementById('login-phase-2').classList.add('d-none'); document.getElementById('login-phase-3').classList.add('d-none'); }
-            updateServerTime(); renderList(); initKPCard(); updateFileStatus();
-        });
-
-        function updateServerTime() {
-            const display = document.getElementById('server-time-display');
-            if(display) {
-                // Run once immediately, then update every second
-                display.innerText = "System Time: " + new Date().toLocaleString('en-PH');
-                setInterval(() => {
-                    display.innerText = "System Time: " + new Date().toLocaleString('en-PH');
-                }, 1000);
-            }
-        }
+            updateServerTime(); showHome(); initKPCard(); updateFileStatus();
+        })();
 
         // --- SECURITY ---
         function getWeekNumber(d) { d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7)); var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1)); return Math.ceil((((d - yearStart) / 86400000) + 1)/7); }
         function numToLetter(num) { let s = ''; while(num > 0) { let t = (num - 1) % 26; s = String.fromCharCode(97 + t) + s; num = Math.floor((num - 1) / 26); } return s; }
-        
         function checkDynamic() {
-            const input = document.getElementById('dynamic-code').value.trim();
+            const input = document.getElementById('dynamic-code').value;
             const now = new Date(); const month = now.getMonth(); const day = now.getDate(); const year = now.getFullYear();
             const week = getWeekNumber(now) * 2; const dayLetter = numToLetter(day); const hours = now.getHours();
             const ampm = hours >= 12 ? 'mp' : 'ma'; const hourLetter = String.fromCharCode(97 + hours);
             const code = `RBI-${month}${day}${year}${week}${dayLetter}${ampm}${hourLetter}`;
-            
-            console.log("EXPECTED CODE:", code); // Debugging help
-            
             if(input === code) { document.getElementById('login-phase-1').classList.add('d-none'); document.getElementById('login-phase-2').classList.remove('d-none'); }
             else { alert("Incorrect Access Code."); }
         }
@@ -1077,7 +935,7 @@
             document.getElementById('security-overlay').classList.add('d-none');
             document.getElementById('main-container').classList.remove('d-none');
             document.querySelector('.sidebar').style.display = 'block';
-            renderList(); updateReportUI(); initKPCard(); updateFileStatus();
+            showHome(); updateReportUI(); initKPCard(); updateFileStatus();
         }
         function verifyCustomPassword() {
             const input = document.getElementById('input-custom-pass').value;
@@ -1085,7 +943,7 @@
                 document.getElementById('security-overlay').classList.add('d-none');
                 document.getElementById('main-container').classList.remove('d-none');
                 document.querySelector('.sidebar').style.display = 'block';
-                renderList(); updateReportUI(); initKPCard(); updateFileStatus();
+                showHome(); updateReportUI(); initKPCard(); updateFileStatus();
             } else { alert("Incorrect Password."); }
         }
         function forgotPassword() { document.getElementById('login-phase-2').classList.add('d-none'); document.getElementById('login-phase-3').classList.add('d-none'); document.getElementById('login-phase-1').classList.remove('d-none'); alert("Please enter the Dynamic Access Code to reset your password."); }
@@ -1101,15 +959,20 @@
         function showAdd() { hideAll(); document.getElementById('section-add').classList.remove('d-none'); clearForm(); }
         function showHouseholds() { hideAll(); document.getElementById('section-hh').classList.remove('d-none'); hhPage = 0; renderHHList(); }
         function showImport() { hideAll(); document.getElementById('section-import').classList.remove('d-none'); }
-        function showOtherSystems() { hideAll(); document.getElementById('section-other').classList.remove('d-none'); }
+        function showOtherSystems() { hideAll(); document.getElementById('section-other').classList.remove('d-none'); initKPCard(); }
 
         // --- KP SYSTEM ACCESS ---
         function initKPCard() {
-            document.getElementById('kp-card-licensed').classList.toggle('d-none', !_kp_licensed);
-            document.getElementById('kp-card-unlicensed').classList.toggle('d-none', _kp_licensed);
+            const licensed = _kp_licensed || localStorage.getItem('kp_licensed') === 'true';
+            if (licensed) _kp_licensed = true;
+            document.getElementById('kp-card-licensed').classList.toggle('d-none', !licensed);
+            document.getElementById('kp-card-unlicensed').classList.toggle('d-none', licensed);
         }
+        
         function openKPAccessModal() {
-            if(_kp_licensed) { window.location.href = 'kp.html'; return; }
+            // Check in-memory flag OR localStorage fallback (set by applyPayload)
+            const licensed = _kp_licensed || localStorage.getItem('kp_licensed') === 'true';
+            if(licensed) { window.location.href = 'kp.html'; return; }
             if(sessionStorage.getItem('kp_authenticated') === 'true') { window.location.href = 'kp.html'; return; }
             document.getElementById('kp-access-input').value = '';
             document.getElementById('kp-access-error').classList.add('d-none');
