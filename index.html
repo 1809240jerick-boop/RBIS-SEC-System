@@ -465,10 +465,10 @@
                 <div class="col-md-7">
                     <div class="card card-custom p-4">
                         <h5 class="mb-3" style="font-family:'Plus Jakarta Sans'; font-weight:700; color:var(--accent-blue);"><i class="fas fa-map-marker-alt me-2"></i>Barangay Information</h5>
-                        <div class="mb-3"><label>LGU Type</label><select id="set-lgu-type" class="form-select"><option value="MUNICIPALITY">MUNICIPALITY</option><option value="CITY">CITY</option></select></div>
+                        <div class="mb-3"><label>LGU Type</label><select id="set-lgu-type" class="form-select" onchange="onLguTypeChange()"><option value="MUNICIPALITY">MUNICIPALITY</option><option value="CITY">CITY</option></select></div>
                         <div class="mb-3"><label>Region</label><input type="text" id="set-region" class="form-control text-uppercase" placeholder="e.g. REGION II"></div>
-                        <div class="mb-3"><label>Province</label><input type="text" id="set-prov" class="form-control text-uppercase"></div>
-                        <div class="mb-3"><label>Municipality/City</label><input type="text" id="set-muni" class="form-control text-uppercase"></div>
+                        <div class="mb-3" id="prov-field"><label>Province</label><input type="text" id="set-prov" class="form-control text-uppercase"></div>
+                        <div class="mb-3"><label id="muni-label">Municipality/City</label><input type="text" id="set-muni" class="form-control text-uppercase"></div>
                         <div class="mb-3"><label>Barangay</label><input type="text" id="set-brgy" class="form-control text-uppercase"></div>
                         <div class="mb-3"><label>Punong Barangay (Signatory)</label><input type="text" id="set-captain" class="form-control text-uppercase" placeholder="Full Name of Captain"></div>
                         <div class="mb-3"><label>Barangay Secretary (Signatory)</label><input type="text" id="set-sec" class="form-control text-uppercase" placeholder="Full Name of Secretary"></div>
@@ -730,6 +730,7 @@
             document.getElementById('set-captain').value = settings.captain || '';
             document.getElementById('set-sec').value = settings.secretary || '';
             renderCustomFilterList();
+            onLguTypeChange();
         }
         function showDeaths() { hideAll(); document.getElementById('section-deaths').classList.remove('d-none'); deathPage = 0; renderDeathList(); }
 
@@ -1481,6 +1482,12 @@
             await iDB.residents.bulkPut(stagingValid);
             await refreshData();
             closeImportModal(); showSystemAlert(`Imported ${stagingValid.length} records.`); showHome(); 
+        }
+
+        function onLguTypeChange() {
+            const isCity = document.getElementById('set-lgu-type').value === 'CITY';
+            document.getElementById('prov-field').style.display = isCity ? 'none' : '';
+            document.getElementById('muni-label').textContent = isCity ? 'City' : 'Municipality/City';
         }
 
         function saveSettings() {
