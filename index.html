@@ -171,7 +171,6 @@
     </style>
 </head>
 <body>
-    <!-- RBI Security Overlay -->
     <div id="security-overlay" class="overlay">
         <div class="login-box">
             <h3 class="mb-4"><i class="fas fa-shield-alt" style="color:#60a5fa;"></i> RBI SECURE</h3>
@@ -197,7 +196,6 @@
         </div>
     </div>
 
-    <!-- KP Access Modal Overlay -->
     <div id="kp-modal-overlay">
         <div class="kp-login-box">
             <h3 class="mb-2"><i class="fas fa-balance-scale" style="color:#34d399;"></i> KP System Access</h3>
@@ -237,7 +235,6 @@
     </div>
 
     <div class="content" id="main-container">
-        <!-- DASHBOARD -->
         <div id="section-home">
             <div class="page-title">Dashboard Overview</div>
             <div class="page-subtitle">Real-time barangay population summary (IndexedDB Powered)</div>
@@ -289,11 +286,9 @@
             <div class="section-bar">
                 <div class="d-flex gap-2 align-items-center flex-wrap" style="flex:1;">
                     <input type="text" id="search-input" class="form-control" style="max-width:320px;" placeholder="Search resident name..." onkeyup="debouncedRenderList()">
-                    <!-- Per Purok Filter -->
                     <select id="purok-filter" class="form-select" style="max-width:170px;" onchange="debouncedRenderList()">
                         <option value="">All Purok</option>
                     </select>
-                    <!-- Custom Filter -->
                     <select id="custom-filter" class="form-select" style="max-width:180px;" onchange="debouncedRenderList()">
                         <option value="">No Custom Filter</option>
                     </select>
@@ -312,7 +307,6 @@
             </div>
         </div>
 
-        <!-- ADD RESIDENT -->
         <div id="section-add" class="d-none">
             <div class="page-title">Resident Information Sheet</div>
             <div class="page-subtitle">Add or edit an individual resident record</div>
@@ -370,7 +364,6 @@
             </div>
         </div>
 
-        <!-- HOUSEHOLDS -->
         <div id="section-hh" class="d-none">
             <div class="section-bar">
                 <div><div class="page-title">Household Management</div><div class="page-subtitle">Manage household groups and members</div></div>
@@ -414,7 +407,6 @@
             </div>
         </div>
 
-        <!-- DEATH REGISTRY -->
         <div id="section-deaths" class="d-none">
              <div class="page-title" style="color:var(--accent-red);">Death Registry <span class="badge bg-danger rounded-pill" id="death-total" style="font-size:0.9rem;">0</span></div>
              <div class="page-subtitle">List of deceased barangay residents</div>
@@ -426,7 +418,6 @@
             </div>
         </div>
 
-        <!-- IMPORT / EXPORT -->
         <div id="section-import" class="d-none">
             <div class="page-title">Data Import / Export</div>
             <div class="page-subtitle">Backup, restore, or export data in BIMS format</div>
@@ -445,10 +436,13 @@
                 <div class="col-md-6">
                     <div class="card card-custom p-4 h-100">
                         <h4 style="font-family:'Plus Jakarta Sans'; font-weight:700;"><i class="fas fa-upload" style="color:var(--accent-amber);"></i> Import Data</h4>
-                        <p class="text-muted">Restore from Backup or Import BIMS Excel.</p>
+                        <p class="text-muted">Restore from Backup or Import BIMS / Households Excel.</p>
                         <input type="file" id="import-file" class="form-control mb-3">
-                        <div class="d-flex gap-2">
+                        <div class="d-flex gap-2 flex-wrap mb-2">
                             <button class="btn btn-warning" onclick="previewImport()">Process BIMS Excel</button>
+                            <button class="btn btn-info text-white" onclick="previewHouseholdImport()">Process Households Excel</button>
+                        </div>
+                        <div class="d-flex gap-2">
                             <input type="file" id="restore-file" class="d-none" onchange="restoreData(event)">
                             <button class="btn btn-secondary" onclick="document.getElementById('restore-file').click()">Restore JSON Backup</button>
                         </div>
@@ -457,7 +451,6 @@
             </div>
         </div>
 
-        <!-- SETTINGS -->
         <div id="section-settings" class="d-none">
             <div class="page-title">System Configuration</div>
             <div class="page-subtitle">Configure barangay details, signatories, and data tools</div>
@@ -476,7 +469,6 @@
                     </div>
                 </div>
                 <div class="col-md-5">
-                    <!-- Custom Filters Management -->
                     <div class="card card-custom p-4 mb-4">
                         <h5 class="mb-3" style="font-family:'Plus Jakarta Sans'; font-weight:700; color:var(--accent-purple);"><i class="fas fa-filter me-2"></i>Custom Resident Filters</h5>
                         <p class="text-muted small">Add custom filters that search through resident records on the dashboard. Filters match against name, address, religion, occupation, and other fields.</p>
@@ -487,7 +479,6 @@
                         </div>
                         <ul class="list-group" id="custom-filter-list" style="max-height:200px; overflow-y:auto;"></ul>
                     </div>
-                    <!-- Detect & Delete Duplicates -->
                     <div class="card card-custom p-4">
                         <h5 class="mb-3" style="font-family:'Plus Jakarta Sans'; font-weight:700; color:var(--accent-red);"><i class="fas fa-copy me-2"></i>Duplicate Detection</h5>
                         <p class="text-muted small">Scans all resident records for duplicates (same Last Name + First Name + Birthdate). One record is kept; duplicates are removed.</p>
@@ -498,17 +489,14 @@
             </div>
         </div>
 
-        <!-- OTHER SYSTEMS -->
         <div id="section-other" class="d-none">
             <div class="page-title">Other Systems</div>
             <div class="page-subtitle">Additional barangay management modules</div>
             <div class="row g-4 mt-2">
-                <!-- KP System Card -->
                 <div class="col-md-4">
                     <div class="system-card" id="kp-system-card">
                         <div id="kp-badge-container">
-                            <!-- Badge set dynamically -->
-                        </div>
+                            </div>
                         <div class="system-img" style="background: linear-gradient(135deg, #0f172a 0%, #1e3a2f 50%, #0f172a 100%);">
                             <i class="fas fa-balance-scale" style="color:#34d399;"></i>
                         </div>
@@ -533,7 +521,6 @@
         </div>
     </div>
 
-    <!-- ========== MODALS ========== -->
     <div class="modal fade" id="modal-new-hh" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5>Create New Household</h5></div><div class="modal-body"><label>Household Name (Family Name)</label><input type="text" id="new-hh-name" class="form-control text-uppercase mb-2"><label>Purok</label><input type="text" id="new-hh-purok" class="form-control text-uppercase mb-2"><label>House Number</label><input type="text" id="new-hh-num" class="form-control text-uppercase"></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button><button type="button" class="btn btn-primary" onclick="createHH()">Create</button></div></div></div></div>
 
     <div class="modal fade" id="modal-edit-hh" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5>Edit Household Details</h5></div><div class="modal-body"><input type="hidden" id="edit-hh-old-name"><label>Household Name (Family Name)</label><input type="text" id="edit-hh-name" class="form-control text-uppercase mb-2"><label>Purok</label><input type="text" id="edit-hh-purok" class="form-control text-uppercase mb-2"><label>House Number</label><input type="text" id="edit-hh-num" class="form-control text-uppercase"></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button><button type="button" class="btn btn-success" onclick="saveEditedHH()">Save Changes</button></div></div></div></div>
@@ -542,7 +529,7 @@
 
     <div class="modal fade" id="modal-select-role" tabindex="-1"><div class="modal-dialog modal-sm"><div class="modal-content"><div class="modal-header"><h5>Select Role</h5></div><div class="modal-body"><input type="hidden" id="temp-mem-id"><select id="select-role-input" class="form-select"><option value="HEAD">HEAD OF FAMILY</option><option value="SPOUSE">SPOUSE</option><option value="SON">SON</option><option value="DAUGHTER">DAUGHTER</option><option value="MEMBER">MEMBER (Other)</option></select></div><div class="modal-footer"><button type="button" class="btn btn-primary w-100" onclick="confirmAddToHH()">Add</button></div></div></div></div>
 
-    <div class="modal" id="modal-import" tabindex="-1" style="background:rgba(0,0,0,0.5);"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5>Import Preview</h5></div><div class="modal-body"><ul class="nav nav-tabs mb-3"><li class="nav-item"><a class="nav-link active" onclick="showImportTab('valid')" href="#">Valid (<span id="count-valid">0</span>)</a></li><li class="nav-item"><a class="nav-link text-warning" onclick="showImportTab('dup')" href="#">Duplicates (<span id="count-dup">0</span>)</a></li><li class="nav-item"><a class="nav-link text-danger" onclick="showImportTab('invalid')" href="#">Invalid (<span id="count-invalid">0</span>)</a></li></ul><div id="view-valid" class="import-view" style="max-height:300px; overflow-y:auto;"><p class="text-success">Ready to import <span id="lbl-valid-count">0</span> records.</p></div><div id="view-dup" class="import-view d-none" style="max-height:300px; overflow-y:auto;"><div id="list-dup" class="text-warning small"></div></div><div id="view-invalid" class="import-view d-none" style="max-height:300px; overflow-y:auto;"><div id="list-invalid" class="text-danger small"></div></div></div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeImportModal()">Cancel</button><button class="btn btn-success" id="btn-commit-import" onclick="commitImport()" disabled>Import Valid Records</button></div></div></div></div>
+    <div class="modal" id="modal-import" tabindex="-1" style="background:rgba(0,0,0,0.5);"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 id="import-modal-title">Import Preview</h5></div><div class="modal-body"><ul class="nav nav-tabs mb-3"><li class="nav-item"><a class="nav-link active" onclick="showImportTab('valid')" href="#">Valid (<span id="count-valid">0</span>)</a></li><li class="nav-item"><a class="nav-link text-warning" onclick="showImportTab('dup')" href="#">Duplicates / Skipped (<span id="count-dup">0</span>)</a></li><li class="nav-item"><a class="nav-link text-danger" onclick="showImportTab('invalid')" href="#">Invalid / Not Found (<span id="count-invalid">0</span>)</a></li></ul><div id="view-valid" class="import-view" style="max-height:300px; overflow-y:auto;"><p class="text-success">Ready to import <span id="lbl-valid-count">0</span> records.</p></div><div id="view-dup" class="import-view d-none" style="max-height:300px; overflow-y:auto;"><div id="list-dup" class="text-warning small"></div></div><div id="view-invalid" class="import-view d-none" style="max-height:300px; overflow-y:auto;"><div id="list-invalid" class="text-danger small"></div></div></div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeImportModal()">Cancel</button><button class="btn btn-success" id="btn-commit-import" onclick="commitImport()" disabled>Import Valid Records</button></div></div></div></div>
 
     <div class="modal fade" id="modal-age-range" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
         <div class="modal-header"><h5 style="font-family:'Plus Jakarta Sans'; font-weight:700;"><i class="fas fa-sliders-h me-2" style="color:var(--accent-blue);"></i>Print by Age Range</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
@@ -596,7 +583,6 @@
         <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Close</button><button class="btn btn-success" onclick="executeBulkFormBPrint()"><i class="fas fa-print me-1"></i> Print This Batch (200 max)</button></div>
     </div></div></div>
 
-    <!-- Duplicate Results Modal -->
     <div class="modal fade" id="modal-duplicates" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content">
         <div class="modal-header"><h5 style="font-family:'Plus Jakarta Sans'; font-weight:700; color:var(--accent-red);"><i class="fas fa-copy me-2"></i>Duplicate Records Found</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
         <div class="modal-body">
@@ -632,6 +618,7 @@
         let deathPage = 0, deathPerPage = 10;
         let bulkFormBData = [], bulkFormBPage = 0, bulkFormBPerPage = 200;
         let duplicateGroups = [];
+        let importMode = 'residents';
 
         // KP System state
         let kpUnlocked = localStorage.getItem('kp_unlocked') === '1';
@@ -1451,25 +1438,158 @@
         }
 
         function previewImport() {
-            const file = document.getElementById('import-file').files[0]; if(!file) return;
+            const file = document.getElementById('import-file').files[0]; 
+            if(!file) {
+                showSystemAlert("Please select an Excel/CSV file first.");
+                return;
+            }
             const reader = new FileReader();
             reader.onload = function(e) {
-                const workbook = XLSX.read(e.target.result, {type: 'binary'}); let sheetName = "DATA"; if(!workbook.Sheets[sheetName]) sheetName = workbook.SheetNames[1] || workbook.SheetNames[0];
-                const json = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {header: 1}); stagingValid = []; stagingInvalid = []; stagingDup = [];
-                const startRow = (json[0] && json[0][0] === "INHABITANT TYPE") ? 1 : 0;
-                for(let i=startRow; i<json.length; i++) {
-                    const row = json[i]; if(!row || row.length === 0) continue;
-                    const tempRec = { type: row[0], last: row[1], first: row[2], middle: row[3] || '', suffix: row[4] || '', bplace: row[5] || '', bdate: row[6], sex: row[7], civil: row[8], citizen: row[9] || 'FILIPINO', prof: row[10] || '', contact: row[11] || '', email: row[12] || '', edu: row[13] || '', mother_first: row[14] || '', mother_middle: row[15] || '', mother_last: row[16] || '', address: (row[18] || '') + ' ' + (row[17] ? 'Purok ' + row[17] : ''), religion: row[19] || '', isOSY: (row[20] && row[20].toString().toUpperCase() === 'YES'), isPwd: (row[21] && row[21].toString().toUpperCase() === 'YES'), isIp: (row[23] && row[23].toString().toUpperCase() === 'YES'), isSoloParent: (row[24] && row[24].toString().toUpperCase() === 'YES'), isOfw: (row[26] && row[26].toString().toUpperCase() === 'YES'), isVoter: false, isDead: false, hh_name: '', hh_role: 'MEMBER' };
-                    if(!tempRec.last || !tempRec.first || !tempRec.bdate) { stagingInvalid.push({ line: i+1, data: tempRec }); continue; }
+                const workbook = XLSX.read(e.target.result, {type: 'binary'}); 
+                let sheetName = "DATA"; 
+                if(!workbook.Sheets[sheetName]) sheetName = workbook.SheetNames[1] || workbook.SheetNames[0];
+                
+                const json = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {defval: ""}); 
+                stagingValid = []; stagingInvalid = []; stagingDup = [];
+                
+                for(let i=0; i<json.length; i++) {
+                    const row = json[i]; 
+                    if(!row || Object.keys(row).length === 0) continue;
+                    
+                    // Flexible header matching
+                    const type = (row['INHABITANT TYPE'] || "NON-MIGRANT").toString().toUpperCase();
+                    const philsys = (row['PHYLSYS ID NUMBER'] || row['Phylsys ID Number'] || row['PhilSys ID'] || '').toString().trim();
+                    const last = (row['LAST NAME'] || row['Last Name'] || '').toString().toUpperCase().trim();
+                    const first = (row['FIRST NAME'] || row['First Name'] || '').toString().toUpperCase().trim();
+                    const middle = (row['MIDDLE NAME'] || row['Middle Name'] || '').toString().toUpperCase().trim();
+                    const suffix = (row['SUFFIX'] || row['Suffix'] || '').toString().toUpperCase().trim();
+                    const bplace = (row['BIRTH PLACE'] || row['Birth Place'] || '').toString().toUpperCase().trim();
+                    const bdate = (row['BIRTHDATE (YYYY-MM-DD)'] || row['Birthdate'] || row['BIRTHDATE'] || '').toString().trim();
+                    const sex = (row['SEX'] || row['Sex'] || '').toString().toUpperCase().trim();
+                    const civil = (row['CIVIL STATUS'] || row['Civil Status'] || '').toString().toUpperCase().trim();
+                    const citizen = (row['CITIZENSHIP'] || row['Citizenship'] || 'FILIPINO').toString().toUpperCase().trim();
+                    const prof = (row['PROFESSION/ OCCUPATION'] || row['PROFESSION/OCCUPATION'] || row['Profession'] || '').toString().toUpperCase().trim();
+                    const contact = (row['CONTACT NUMBER'] || row['Contact Number'] || '').toString().trim();
+                    const email = (row['EMAIL ADDRESS'] || row['Email Address'] || '').toString().trim();
+                    const edu = (row['HIGHEST EDUCATIONAL ATTAINMENT'] || row['Educational Attainment'] || '').toString().toUpperCase().trim();
+                    const mFirst = (row["MOTHER'S FIRST NAME"] || row["Mother's First Name"] || '').toString().toUpperCase().trim();
+                    const mMiddle = (row["MOTHER'S MIDDLE NAME"] || row["Mother's Middle Name"] || '').toString().toUpperCase().trim();
+                    const mLast = (row["MOTHER'S LAST NAME"] || row["Mother's Last Name"] || '').toString().toUpperCase().trim();
+                    
+                    const purok = (row['PUROK/SITIO'] || row['Purok/Sitio'] || '').toString().toUpperCase().trim();
+                    const addAdd = (row['ADDITIONAL ADDRESS'] || row['Additional Address'] || '').toString().toUpperCase().trim();
+                    let address = '';
+                    if(purok && addAdd) address = `${addAdd} PUROK ${purok.replace(/^PUROK\s*/i, '')}`;
+                    else if (purok) address = `PUROK ${purok.replace(/^PUROK\s*/i, '')}`;
+                    else if (addAdd) address = addAdd;
+                    
+                    const religion = (row['RELIGION'] || row['Religion'] || '').toString().toUpperCase().trim();
+                    const isOSY = (row['IS OSY'] || '').toString().toUpperCase() === 'YES';
+                    const isPwd = (row['IS PWD'] || '').toString().toUpperCase() === 'YES';
+                    const is4Ps = (row['IS 4Ps'] || '').toString().toUpperCase() === 'YES';
+                    const isIp = (row['IS IPS'] || row['IS IP'] || '').toString().toUpperCase() === 'YES';
+                    const isSoloParent = (row['IS SOLO PARENT'] || '').toString().toUpperCase() === 'YES';
+                    const isUnemployed = (row['LABOR STATUS'] || '').toString().toUpperCase() === 'UNEMPLOYED';
+                    const isOfw = (row['IS OFW'] || '').toString().toUpperCase() === 'YES';
+                    const isVoter = (row['IS VOTER'] || '').toString().toUpperCase() === 'YES';
+
+                    const tempRec = { 
+                        type, last, first, middle, suffix, bplace, bdate, sex, civil, citizen, prof, 
+                        contact, email, edu, mother_first: mFirst, mother_middle: mMiddle, mother_last: mLast, 
+                        address, religion, isOSY, isPwd, isIp, isSoloParent, isOfw, isVoter, is4Ps, isUnemployed,
+                        philsys, isDead: false, hh_name: '', hh_role: 'MEMBER' 
+                    };
+
+                    if(!tempRec.last || !tempRec.first || !tempRec.bdate) { 
+                        stagingInvalid.push({ line: i+2, data: tempRec }); 
+                        continue; 
+                    }
+
                     const exists = db.some(x => x.last.toLowerCase() === tempRec.last.toLowerCase() && x.first.toLowerCase() === tempRec.first.toLowerCase() && x.bdate === tempRec.bdate);
-                    if(exists) { stagingDup.push({ line: i+1, name: `${tempRec.last}, ${tempRec.first}` }); continue; }
-                    tempRec.id = Date.now().toString() + i; stagingValid.push(tempRec);
+                    if(exists) { 
+                        stagingDup.push({ line: i+2, name: `${tempRec.last}, ${tempRec.first}` }); 
+                        continue; 
+                    }
+
+                    tempRec.id = Date.now().toString() + i; 
+                    stagingValid.push(tempRec);
                 }
-                document.getElementById('count-valid').innerText = stagingValid.length; document.getElementById('lbl-valid-count').innerText = stagingValid.length; document.getElementById('count-invalid').innerText = stagingInvalid.length; document.getElementById('count-dup').innerText = stagingDup.length;
+                
+                importMode = 'residents';
+                document.getElementById('btn-commit-import').innerText = "Import Valid Records";
+                document.getElementById('import-modal-title').innerText = "Import Preview: Residents";
+                document.getElementById('count-valid').innerText = stagingValid.length; 
+                document.getElementById('lbl-valid-count').innerText = stagingValid.length; 
+                document.getElementById('count-invalid').innerText = stagingInvalid.length; 
+                document.getElementById('count-dup').innerText = stagingDup.length;
                 document.getElementById('btn-commit-import').disabled = (stagingValid.length === 0);
                 document.getElementById('list-dup').innerHTML = stagingDup.map(x => `<div class="border-bottom p-1">Row ${x.line}: ${x.name}</div>`).join('');
-                document.getElementById('list-invalid').innerHTML = stagingInvalid.map(x => `<div class="border-bottom p-1">Row ${x.line}: Missing Data</div>`).join('');
-                document.getElementById('modal-import').style.display = 'block'; document.getElementById('modal-import').classList.add('show'); showImportTab('valid');
+                document.getElementById('list-invalid').innerHTML = stagingInvalid.map(x => `<div class="border-bottom p-1">Row ${x.line}: Missing Data (Requires Last Name, First Name, Birthdate)</div>`).join('');
+                
+                document.getElementById('modal-import').style.display = 'block'; 
+                document.getElementById('modal-import').classList.add('show'); 
+                showImportTab('valid');
+            };
+            reader.readAsBinaryString(file);
+        }
+
+        function previewHouseholdImport() {
+            const file = document.getElementById('import-file').files[0]; 
+            if(!file) {
+                showSystemAlert("Please select an Excel/CSV file first.");
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const workbook = XLSX.read(e.target.result, {type: 'binary'}); 
+                let sheetName = "HOUSEHOLDS"; 
+                if(!workbook.Sheets[sheetName]) sheetName = workbook.SheetNames[0];
+                
+                const json = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {defval: ""}); 
+                stagingValid = []; stagingInvalid = []; stagingDup = [];
+                
+                for(let i=0; i<json.length; i++) {
+                    const row = json[i];
+                    if(!row || Object.keys(row).length === 0) continue;
+                    
+                    const hhId = row['HOUSEHOLD ID'] || row['Household ID'] || '';
+                    const role = row['ROLE'] || row['Role'] || 'MEMBER';
+                    const last = (row['LAST NAME'] || row['Last Name'] || '').toString().trim().toLowerCase();
+                    const first = (row['FIRST NAME'] || row['First Name'] || '').toString().trim().toLowerCase();
+                    const bdate = (row['BIRTHDATE'] || row['Birthdate'] || '').toString().trim();
+                    const loc = (row['LOCATION'] || row['Location'] || '').toString().trim();
+                    const addr = (row['ADDRESS'] || row['Address'] || '').toString().trim();
+                    
+                    if(!hhId || !last || !first) continue;
+                    
+                    const strictMatch = db.find(x => x.last.toLowerCase().trim() === last && x.first.toLowerCase().trim() === first);
+                    
+                    if(strictMatch) {
+                        stagingValid.push({
+                            residentId: strictMatch.id,
+                            hh_name: hhId.toString().toUpperCase(),
+                            hh_role: role.toString().toUpperCase(),
+                            purok: (loc + (loc && addr ? ' ' : '') + addr).toUpperCase()
+                        });
+                    } else {
+                        stagingInvalid.push({ line: i+2, name: `${row['LAST NAME'] || last}, ${row['FIRST NAME'] || first}`, data: row });
+                    }
+                }
+                
+                importMode = 'households';
+                document.getElementById('import-modal-title').innerText = "Import Preview: Households";
+                document.getElementById('count-valid').innerText = stagingValid.length; 
+                document.getElementById('lbl-valid-count').innerText = stagingValid.length; 
+                document.getElementById('count-invalid').innerText = stagingInvalid.length; 
+                document.getElementById('count-dup').innerText = stagingDup.length;
+                document.getElementById('btn-commit-import').disabled = (stagingValid.length === 0);
+                document.getElementById('btn-commit-import').innerText = "Import Valid Households";
+                document.getElementById('list-dup').innerHTML = stagingDup.map(x => `<div class="border-bottom p-1">Row ${x.line}: ${x.name}</div>`).join('');
+                document.getElementById('list-invalid').innerHTML = stagingInvalid.map(x => `<div class="border-bottom p-1">Row ${x.line}: Resident Not Found (${x.name})</div>`).join('');
+                
+                document.getElementById('modal-import').style.display = 'block'; 
+                document.getElementById('modal-import').classList.add('show'); 
+                showImportTab('valid');
             };
             reader.readAsBinaryString(file);
         }
@@ -1479,9 +1599,44 @@
         
         async function commitImport() { 
             if(stagingValid.length === 0) return; 
-            await iDB.residents.bulkPut(stagingValid);
-            await refreshData();
-            closeImportModal(); showSystemAlert(`Imported ${stagingValid.length} records.`); showHome(); 
+            
+            if (importMode === 'households') {
+                const hhMap = {};
+                const residentsToUpdate = [];
+                
+                stagingValid.forEach(item => {
+                    if (!hhMap[item.hh_name]) {
+                        const existingHH = household_db.find(h => h.name === item.hh_name);
+                        if (!existingHH) {
+                            hhMap[item.hh_name] = { name: item.hh_name, purok: item.purok, houseNo: '' };
+                        }
+                    }
+                    const r = db.find(x => x.id === item.residentId);
+                    if(r) {
+                        r.hh_name = item.hh_name;
+                        r.hh_role = item.hh_role;
+                        residentsToUpdate.push(r);
+                    }
+                });
+                
+                const newHouseholds = Object.values(hhMap);
+                if (newHouseholds.length > 0) {
+                    await iDB.households.bulkPut(newHouseholds);
+                }
+                if (residentsToUpdate.length > 0) {
+                    await iDB.residents.bulkPut(residentsToUpdate);
+                }
+                
+                await refreshData();
+                closeImportModal(); 
+                showSystemAlert(`Imported ${stagingValid.length} household mappings.`); 
+                showHouseholds(); 
+                
+            } else {
+                await iDB.residents.bulkPut(stagingValid);
+                await refreshData();
+                closeImportModal(); showSystemAlert(`Imported ${stagingValid.length} records.`); showHome(); 
+            }
         }
 
         function onLguTypeChange() {
