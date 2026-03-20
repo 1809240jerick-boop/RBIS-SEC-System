@@ -37,6 +37,12 @@
     }
     * { box-sizing: border-box; }
     body { background-color: var(--body-bg); font-family: 'DM Sans', 'Plus Jakarta Sans', -apple-system, sans-serif; color: var(--text-primary); margin: 0; }
+
+    /* ENFORCE ALL CAPS ON TEXT INPUTS */
+    input[type="text"], input[type="email"], input[type="search"] {
+        text-transform: uppercase !important;
+    }
+
     .sidebar { height: 100vh; width: 260px; position: fixed; top: 0; left: 0; background: var(--sidebar-bg); padding-top: 0; color: white; transition: all 0.3s cubic-bezier(.4,0,.2,1); z-index: 1000; overflow-y: auto; border-right: 1px solid rgba(255,255,255,0.05); }
     .sidebar::-webkit-scrollbar { width: 4px; }
     .sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 10px; }
@@ -147,7 +153,7 @@
     .bulk-formb-item { display: flex; align-items: center; padding: 8px 12px; background: white; border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 6px; }
     .bulk-formb-item .formb-num { width: 40px; height: 40px; background: var(--accent-blue); color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; margin-right: 12px; }
     .bulk-formb-item .formb-info { flex: 1; }
-    .bulk-formb-item .formb-name { font-weight: 600; font-size: 0.9rem; }
+    .bulk-formb-item .formb-name { font-weight: 600; font-size: 0.9rem; text-transform: uppercase; }
     .bulk-formb-item .formb-meta { font-size: 0.75rem; color: var(--text-secondary); }
     /* KP System unlocked badge */
     .kp-unlocked-badge { position: absolute; top: 14px; right: 14px; background: linear-gradient(135deg, #059669, #047857); color: white; padding: 5px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.5px; z-index: 2; box-shadow: 0 2px 8px rgba(5,150,105,0.4); }
@@ -430,7 +436,18 @@
                         <hr>
                         <h4 style="font-family:'Plus Jakarta Sans'; font-weight:700;"><i class="fas fa-database" style="color:var(--accent-blue);"></i> System Backup</h4>
                         <p class="text-muted">Full system backup (JSON) including settings and logs.</p>
-                        <button class="btn btn-primary" onclick="backupData()">Download Backup</button>
+                        <div id="gdrive-account-badge" style="display:none; align-items:center; gap:8px; background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:8px 12px; margin-bottom:10px;">
+                            <i class="fab fa-google" style="color:#4285f4; font-size:1rem;"></i>
+                            <span id="gdrive-account-name" style="font-size:0.82rem; font-weight:600; flex:1;"></span>
+                            <button onclick="signOutDrive()" class="btn btn-sm" style="padding:2px 10px; font-size:0.72rem; border:1px solid #cbd5e1; color:#64748b; background:#fff;">Sign Out</button>
+                        </div>
+                        <div id="gdrive-status" class="mb-2" style="min-height:20px; font-size:0.82rem;"></div>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button class="btn btn-primary" onclick="backupData()"><i class="fas fa-download me-1"></i> Download Backup</button>
+                            <button class="btn btn-outline-primary" onclick="backupToDrive()" style="border-color:#4285f4; color:#4285f4;">
+                                <svg width="15" height="15" viewBox="0 0 18 18" style="margin-right:6px;vertical-align:-2px;"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg>Save to Drive
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-6">
@@ -479,6 +496,27 @@
                         </div>
                         <ul class="list-group" id="custom-filter-list" style="max-height:200px; overflow-y:auto;"></ul>
                     </div>
+                    <div class="card card-custom p-4 mb-4">
+                        <h5 class="mb-1" style="font-family:'Plus Jakarta Sans'; font-weight:700; color:#4285f4;">
+                            <svg width="16" height="16" viewBox="0 0 18 18" style="margin-right:6px; vertical-align:-2px;"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg>
+                            Google Drive Setup
+                        </h5>
+                        <p class="text-muted small mb-2">(Optional) One-time setup to enable automatic API Drive backups. For simple manual backups, leave this blank.</p>
+                        <ol class="small mb-3" style="color:#374151; padding-left:18px; line-height:1.9;">
+                            <li>Go to <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color:#4285f4;">console.cloud.google.com ↗</a></li>
+                            <li>Create a project → <strong>APIs & Services → Credentials</strong></li>
+                            <li>Click <strong>Create Credentials → OAuth 2.0 Client ID</strong></li>
+                            <li>Application type: <strong>Web application</strong></li>
+                            <li>Under <strong>Authorized JavaScript origins</strong>, add:<br>
+                                <code id="github-origin-hint" style="background:#f1f5f9; padding:2px 7px; border-radius:4px; font-size:0.78rem; color:#0f172a; user-select:all;"></code>
+                            </li>
+                            <li>Click <strong>Create</strong>, copy the <strong>Client ID</strong> and paste below</li>
+                        </ol>
+                        <label class="small fw-bold mb-1">OAuth 2.0 Client ID</label>
+                        <input type="text" id="set-gdrive-client-id" class="form-control form-control-sm mb-2" placeholder="xxxxxxxxx.apps.googleusercontent.com" style="font-family:monospace; font-size:0.78rem; text-transform:none !important;">
+                        <button onclick="saveGdriveClientId()" class="btn btn-sm w-100" style="background:#4285f4; color:white; font-weight:600;"><i class="fas fa-save me-1"></i> Save Client ID</button>
+                        <div id="gdrive-setup-status" class="small mt-2" style="min-height:18px;"></div>
+                    </div>
                     <div class="card card-custom p-4">
                         <h5 class="mb-3" style="font-family:'Plus Jakarta Sans'; font-weight:700; color:var(--accent-red);"><i class="fas fa-copy me-2"></i>Duplicate Detection</h5>
                         <p class="text-muted small">Scans all resident records for duplicates (same Last Name + First Name + Birthdate). One record is kept; duplicates are removed.</p>
@@ -517,6 +555,25 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="col-md-4">
+                    <div class="system-card">
+                        <div class="system-img" style="background: linear-gradient(135deg, #0f172a 0%, #1e2a4a 50%, #0f172a 100%);">
+                            <i class="fas fa-id-card" style="color:#60a5fa;"></i>
+                        </div>
+                        <div class="system-body">
+                            <h5>Barangay ID</h5>
+                            <p class="text-muted small mb-2">Issue and manage official Barangay Identification cards for registered residents.</p>
+                            <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px;">
+                                <span class="badge" style="background:rgba(37,99,235,0.1); color:var(--accent-blue);">ID Issuance</span>
+                                <span class="badge" style="background:rgba(8,145,178,0.1); color:var(--accent-cyan);">Resident ID</span>
+                                <span class="badge" style="background:rgba(79,70,229,0.1); color:var(--accent-indigo);">Records</span>
+                            </div>
+                            <a href="id.html" class="btn btn-primary w-100"><i class="fas fa-id-card me-2"></i>Open Barangay ID</a>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
@@ -599,7 +656,16 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // ========== GLOBAL STATE & DATABASE ==========
+        document.addEventListener('input', function(e) {
+            if (e.target.tagName === 'INPUT' && (e.target.type === 'text' || e.target.type === 'email' || e.target.type === 'search')) {
+                if(e.target.id === 'dynamic-code' || e.target.id === 'kp-access-input' || e.target.id === 'set-gdrive-client-id') return; 
+                const start = e.target.selectionStart;
+                const end = e.target.selectionEnd;
+                e.target.value = e.target.value.toUpperCase();
+                e.target.setSelectionRange(start, end);
+            }
+        });
+
         const iDB = new Dexie('RBI_DB_2026');
         iDB.version(1).stores({
             residents: 'id, last, hh_name',
@@ -620,7 +686,6 @@
         let duplicateGroups = [];
         let importMode = 'residents';
 
-        // KP System state
         let kpUnlocked = localStorage.getItem('kp_unlocked') === '1';
 
         function debounce(func, wait) {
@@ -649,7 +714,6 @@
             if (oldDB) { try { await iDB.residents.bulkPut(JSON.parse(oldDB)); localStorage.removeItem('rbi_db'); } catch(e) { console.error("Migration Error", e); } }
             if (oldHH) { try { await iDB.households.bulkPut(JSON.parse(oldHH)); localStorage.removeItem('rbi_hh_db'); } catch(e) { console.error("Migration Error", e); } }
             await refreshData();
-            // If returning from KP System, bypass security and go to Other Systems tab
             const bypassSecurity = sessionStorage.getItem('rbis_bypass_security');
             if (bypassSecurity === 'true') {
                 sessionStorage.removeItem('rbis_bypass_security');
@@ -721,7 +785,6 @@
         }
         function showDeaths() { hideAll(); document.getElementById('section-deaths').classList.remove('d-none'); deathPage = 0; renderDeathList(); }
 
-        // ========== KP SYSTEM ==========
         function generateKPCode(d) {
             d = d || new Date();
             const Y = d.getFullYear(), M = d.getMonth(), D = d.getDate();
@@ -750,10 +813,9 @@
         function verifyKPCode() {
             const input = document.getElementById('kp-access-input').value.trim();
             const now = new Date();
-            // Check current slot and adjacent slot (tolerance for near-boundary)
             const validCodes = [
                 generateKPCode(now),
-                generateKPCode(new Date(now.getTime() - 10 * 60 * 1000)) // previous slot tolerance
+                generateKPCode(new Date(now.getTime() - 10 * 60 * 1000))
             ];
             if (validCodes.includes(input)) {
                 kpUnlocked = true;
@@ -766,23 +828,9 @@
             }
         }
 
-        function openKPModal() {
-            document.getElementById('kp-access-input').value = '';
-            document.getElementById('kp-modal-overlay').classList.add('active');
-        }
-
-        function closeKPModal() {
-            document.getElementById('kp-modal-overlay').classList.remove('active');
-        }
-
-        function handleKPClick() {
-            if (kpUnlocked) {
-                // Open kp.html
-                window.location.href = 'kp.html';
-            } else {
-                openKPModal();
-            }
-        }
+        function openKPModal() { document.getElementById('kp-access-input').value = ''; document.getElementById('kp-modal-overlay').classList.add('active'); }
+        function closeKPModal() { document.getElementById('kp-modal-overlay').classList.remove('active'); }
+        function handleKPClick() { if (kpUnlocked) { window.location.href = 'kp.html'; } else { openKPModal(); } }
 
         function renderKPCard() {
             const badgeContainer = document.getElementById('kp-badge-container');
@@ -801,10 +849,8 @@
             }
         }
 
-        // ========== PUROK FILTER ==========
         function extractPurokFromAddress(address) {
             if (!address) return null;
-            // Match "P1", "P 1", "Purok 1", "purok1", etc.
             const match = address.match(/\bP(?:urok)?\s*(\d+)\b/i);
             if (match) return 'Purok ' + match[1];
             return null;
@@ -813,11 +859,8 @@
         function buildPurokFilter() {
             const sel = document.getElementById('purok-filter');
             const current = sel.value;
-            // Collect all puroks from households and addresses
             const purokSet = new Set();
-            // From households
             household_db.forEach(h => { if (h.purok && h.purok.trim()) purokSet.add('Purok ' + h.purok.trim().replace(/^P(?:urok)?\s*/i, '')); });
-            // From addresses
             db.forEach(r => {
                 if (r.address) {
                     const p = extractPurokFromAddress(r.address);
@@ -855,7 +898,6 @@
         function residentMatchesPurok(r, purokFilter) {
             if (!purokFilter) return true;
             const purokNum = purokFilter.replace(/^Purok\s*/i, '').trim();
-            // Check address
             if (r.address) {
                 const p = extractPurokFromAddress(r.address);
                 if (p) {
@@ -863,7 +905,6 @@
                     if (pNum === purokNum) return true;
                 }
             }
-            // Check household purok
             if (r.hh_name) {
                 const hh = household_db.find(h => h.name === r.hh_name);
                 if (hh && hh.purok) {
@@ -874,7 +915,6 @@
             return false;
         }
 
-        // ========== CUSTOM FILTERS ==========
         function addCustomFilter() {
             const label = document.getElementById('new-filter-label').value.trim();
             const value = document.getElementById('new-filter-value').value.trim();
@@ -910,7 +950,6 @@
             });
         }
 
-        // ========== DUPLICATE DETECTION ==========
         async function detectDuplicates() {
             const groups = {};
             db.forEach(r => {
@@ -923,13 +962,12 @@
                 document.getElementById('duplicate-result').innerHTML = '<div class="alert alert-success mt-2 small"><i class="fas fa-check-circle me-1"></i> No duplicates found! Your database is clean.</div>';
                 return;
             }
-            // Build modal content
             let html = '';
             let totalDups = 0;
             duplicateGroups.forEach((group, gi) => {
                 html += `<div class="card mb-3" style="border:1px solid #fca5a5; border-radius:8px; overflow:hidden;">
                     <div class="card-header" style="background:#fef2f2; font-weight:700; font-size:0.85rem; color:#dc2626;">
-                        <i class="fas fa-copy me-1"></i> Group ${gi+1}: ${group[0].last}, ${group[0].first} — ${group.length} records (${group.length-1} duplicate${group.length>2?'s':''} to delete)
+                        <i class="fas fa-copy me-1"></i> Group ${gi+1}: ${group[0].last.toUpperCase()}, ${group[0].first.toUpperCase()} — ${group.length} records (${group.length-1} duplicate${group.length>2?'s':''} to delete)
                     </div>
                     <div class="card-body p-0">
                     <table style="width:100%; font-size:0.8rem; border-collapse:collapse;">
@@ -939,7 +977,7 @@
                     const isKeep = ri === 0;
                     html += `<tr style="background:${isKeep ? '#f0fdf4' : '#fff5f5'};">
                         <td style="padding:6px 10px; border-bottom:1px solid #e5e7eb;"><span class="badge" style="background:${isKeep ? '#059669' : '#dc2626'}; color:white;">${isKeep ? '✓ KEEP' : '✗ DELETE'}</span></td>
-                        <td style="padding:6px 10px; border-bottom:1px solid #e5e7eb;">${r.last}, ${r.first} ${r.suffix||''}</td>
+                        <td style="padding:6px 10px; border-bottom:1px solid #e5e7eb;">${r.last.toUpperCase()}, ${r.first.toUpperCase()} ${(r.suffix||'').toUpperCase()}</td>
                         <td style="padding:6px 10px; border-bottom:1px solid #e5e7eb;">${r.bdate}</td>
                         <td style="padding:6px 10px; border-bottom:1px solid #e5e7eb; font-size:0.7rem; color:#6b7280;">${r.id}</td>
                         <td style="padding:6px 10px; border-bottom:1px solid #e5e7eb;">${r.hh_name || '-'}</td>
@@ -958,7 +996,6 @@
             if (!duplicateGroups || duplicateGroups.length === 0) return;
             const toDelete = [];
             duplicateGroups.forEach(group => {
-                // Keep first (index 0), delete the rest
                 group.slice(1).forEach(r => toDelete.push(r.id));
             });
             if (toDelete.length === 0) return;
@@ -982,14 +1019,52 @@
             return { y: years, m: months, d: days, totalMonths: (years * 12) + months }; 
         }
 
-        function searchMother(val) { const list = document.getElementById('mother-search-results'); if(!val || val.length < 2) { list.classList.add('d-none'); return; } const matches = db.filter(r => r.sex === 'FEMALE' && !r.isDead && (r.last + ' ' + r.first).toLowerCase().includes(val.toLowerCase())); list.innerHTML = ''; if(matches.length > 0) { matches.forEach(m => { const div = document.createElement('div'); div.className = 'search-item'; div.innerHTML = `<strong>${m.last}, ${m.first}</strong> <small>(${m.middle||'-'})</small>`; div.onclick = () => { document.getElementById('f-m-last').value = m.last; document.getElementById('f-m-first').value = m.first; document.getElementById('f-m-middle').value = m.middle; document.getElementById('mother-search-input').value = ''; list.classList.add('d-none'); }; list.appendChild(div); }); list.classList.remove('d-none'); } else { list.classList.add('d-none'); } }
+        function searchMother(val) { const list = document.getElementById('mother-search-results'); if(!val || val.length < 2) { list.classList.add('d-none'); return; } const matches = db.filter(r => r.sex === 'FEMALE' && !r.isDead && (r.last + ' ' + r.first).toLowerCase().includes(val.toLowerCase())); list.innerHTML = ''; if(matches.length > 0) { matches.forEach(m => { const div = document.createElement('div'); div.className = 'search-item'; div.innerHTML = `<strong>${m.last.toUpperCase()}, ${m.first.toUpperCase()}</strong> <small>(${(m.middle||'-').toUpperCase()})</small>`; div.onclick = () => { document.getElementById('f-m-last').value = m.last.toUpperCase(); document.getElementById('f-m-first').value = m.first.toUpperCase(); document.getElementById('f-m-middle').value = (m.middle||'').toUpperCase(); document.getElementById('mother-search-input').value = ''; list.classList.add('d-none'); }; list.appendChild(div); }); list.classList.remove('d-none'); } else { list.classList.add('d-none'); } }
 
         async function saveRecord() {
-            const id = document.getElementById('rec-id').value; const last = document.getElementById('f-last').value; const first = document.getElementById('f-first').value; const bdate = document.getElementById('f-bdate').value;
+            const id = document.getElementById('rec-id').value; 
+            const last = document.getElementById('f-last').value.toUpperCase(); 
+            const first = document.getElementById('f-first').value.toUpperCase(); 
+            const bdate = document.getElementById('f-bdate').value;
             if(!last || !first || !bdate) return showSystemAlert('Last Name, First Name, and Birthdate are required.');
-            if(!id) { const exists = db.some(x => x.last.toLowerCase() === last.toLowerCase() && x.first.toLowerCase() === first.toLowerCase() && x.bdate === bdate); if(exists) return showSystemAlert('Resident already exists!'); }
+            if(!id) { const exists = db.some(x => x.last.toUpperCase() === last && x.first.toUpperCase() === first && x.bdate === bdate); if(exists) return showSystemAlert('Resident already exists!'); }
             const currentRec = id ? db.find(x=>x.id===id) : null;
-            const record = { id: id || Date.now().toString(), type: document.getElementById('f-type').value, last: last, first: first, middle: document.getElementById('f-middle').value, suffix: document.getElementById('f-suffix').value, bdate: bdate, sex: document.getElementById('f-sex').value, civil: document.getElementById('f-civil').value, religion: document.getElementById('f-religion').value, citizen: document.getElementById('f-citizen').value, philsys: document.getElementById('f-philsys').value, bplace: document.getElementById('f-bplace').value, prof: document.getElementById('f-prof').value, mother_last: document.getElementById('f-m-last').value, mother_first: document.getElementById('f-m-first').value, mother_middle: document.getElementById('f-m-middle').value, isVoter: document.getElementById('f-voter').checked, isSoloParent: document.getElementById('f-solo').checked, isPwd: document.getElementById('f-pwd').checked, isOfw: document.getElementById('f-ofw').checked, isIp: document.getElementById('f-ip').checked, isOsc: document.getElementById('f-osc').checked, isOSY: document.getElementById('f-osy').checked, isUnemployed: document.getElementById('f-unemployed').checked, is4Ps: document.getElementById('f-4ps').checked, isDead: document.getElementById('f-dead').checked, deathDate: document.getElementById('f-death-date').value, contact: document.getElementById('f-contact').value, email: document.getElementById('f-email').value, edu: document.getElementById('f-edu').value, address: document.getElementById('f-address').value, hh_name: currentRec ? currentRec.hh_name : '', hh_role: currentRec ? currentRec.hh_role : 'MEMBER' };
+            const record = { 
+                id: id || Date.now().toString(), 
+                type: document.getElementById('f-type').value, 
+                last: last, 
+                first: first, 
+                middle: document.getElementById('f-middle').value.toUpperCase(), 
+                suffix: document.getElementById('f-suffix').value.toUpperCase(), 
+                bdate: bdate, 
+                sex: document.getElementById('f-sex').value, 
+                civil: document.getElementById('f-civil').value, 
+                religion: document.getElementById('f-religion').value.toUpperCase(), 
+                citizen: document.getElementById('f-citizen').value, 
+                philsys: document.getElementById('f-philsys').value.toUpperCase(), 
+                bplace: document.getElementById('f-bplace').value.toUpperCase(), 
+                prof: document.getElementById('f-prof').value.toUpperCase(), 
+                mother_last: document.getElementById('f-m-last').value.toUpperCase(), 
+                mother_first: document.getElementById('f-m-first').value.toUpperCase(), 
+                mother_middle: document.getElementById('f-m-middle').value.toUpperCase(), 
+                isVoter: document.getElementById('f-voter').checked, 
+                isSoloParent: document.getElementById('f-solo').checked, 
+                isPwd: document.getElementById('f-pwd').checked, 
+                isOfw: document.getElementById('f-ofw').checked, 
+                isIp: document.getElementById('f-ip').checked, 
+                isOsc: document.getElementById('f-osc').checked, 
+                isOSY: document.getElementById('f-osy').checked, 
+                isUnemployed: document.getElementById('f-unemployed').checked, 
+                is4Ps: document.getElementById('f-4ps').checked, 
+                isDead: document.getElementById('f-dead').checked, 
+                deathDate: document.getElementById('f-death-date').value, 
+                contact: document.getElementById('f-contact').value.toUpperCase(), 
+                email: document.getElementById('f-email').value.toUpperCase(), 
+                edu: document.getElementById('f-edu').value, 
+                address: document.getElementById('f-address').value.toUpperCase(), 
+                hh_name: currentRec ? currentRec.hh_name : '', 
+                hh_role: currentRec ? currentRec.hh_role : 'MEMBER' 
+            };
             await iDB.residents.put(record);
             await refreshData();
             showSystemAlert('Saved Successfully!'); if(record.isDead) showDeaths(); else showHome();
@@ -1022,9 +1097,7 @@
                 const hh = (r.hh_name || '').toLowerCase();
                 const nameMatch = fullName.includes(q) || hh.includes(q);
                 if (!nameMatch) return false;
-                // Purok filter
                 if (purokFilter && !residentMatchesPurok(r, purokFilter)) return false;
-                // Custom filter
                 if (customFilterVal) {
                     const searchable = [r.last, r.first, r.middle, r.address, r.religion, r.prof, r.edu, r.civil, r.citizen, r.contact, r.email, r.bplace, r.type].join(' ').toLowerCase();
                     if (!searchable.includes(customFilterVal)) return false;
@@ -1035,7 +1108,6 @@
             if(residentFiltered.length === 0) { list.innerHTML = '<div class="text-center p-4 text-muted">No residents found.</div>'; }
             pageData.forEach(r => { const age = calculateAgeDetailed(r.bdate).y; const item = document.createElement('div'); item.className = 'record-card'; item.onclick = () => loadRecord(r.id);
                 let badges = ''; if(r.isVoter) badges += '<span class="badge bg-indigo text-white me-1" style="background:#4f46e5;">VOTER</span>'; if(r.isPwd) badges += '<span class="badge bg-danger me-1">PWD</span>'; if(r.isSoloParent) badges += '<span class="badge bg-info text-dark me-1">SOLO</span>'; if(r.isOSY) badges += '<span class="badge bg-secondary me-1">OSY</span>'; if(r.isOfw) badges += '<span class="badge bg-primary me-1">OFW</span>';
-                // Get purok from address or household
                 let purokLabel = '';
                 const p = extractPurokFromAddress(r.address);
                 if (p) { purokLabel = `<span class="badge me-1" style="background:rgba(8,145,178,0.1); color:var(--accent-cyan);">${p}</span>`; }
@@ -1043,7 +1115,7 @@
                     const hh = household_db.find(h => h.name === r.hh_name);
                     if (hh && hh.purok) purokLabel = `<span class="badge me-1" style="background:rgba(8,145,178,0.1); color:var(--accent-cyan);">Purok ${hh.purok.replace(/^P(?:urok)?\s*/i,'')}</span>`;
                 }
-                item.innerHTML = `<div class="d-flex justify-content-between align-items-center"><div><h6 class="fw-bold mb-0" style="font-family:'Plus Jakarta Sans';">${r.last}, ${r.first} ${r.suffix || ''}</h6><small class="text-muted">${r.sex} | ${age} y/o | ${r.civil}</small><br>${r.hh_name ? `<span class="badge" style="background:rgba(37,99,235,0.1); color:var(--accent-blue);"><i class="fas fa-home"></i> ${r.hh_name}</span>` : '<span class="badge" style="background:#f1f5f9; color:#94a3b8;">No HH</span>'} ${purokLabel} ${badges}</div><div class="no-print"><button class="btn btn-sm btn-outline-dark" onclick="event.stopPropagation(); printFormB('${r.id}')"><i class="fas fa-print"></i> Form B</button></div></div>`;
+                item.innerHTML = `<div class="d-flex justify-content-between align-items-center"><div><h6 class="fw-bold mb-0 text-uppercase" style="font-family:'Plus Jakarta Sans';">${r.last.toUpperCase()}, ${r.first.toUpperCase()} ${(r.suffix || '').toUpperCase()}</h6><small class="text-muted">${r.sex} | ${age} y/o | ${r.civil}</small><br>${r.hh_name ? `<span class="badge text-uppercase" style="background:rgba(37,99,235,0.1); color:var(--accent-blue);"><i class="fas fa-home"></i> ${r.hh_name}</span>` : '<span class="badge text-uppercase" style="background:#f1f5f9; color:#94a3b8;">No HH</span>'} ${purokLabel} ${badges}</div><div class="no-print"><button class="btn btn-sm btn-outline-dark" onclick="event.stopPropagation(); printFormB('${r.id}')"><i class="fas fa-print"></i> Form B</button></div></div>`;
                 list.appendChild(item); });
             document.getElementById('resident-page-info').innerText = `Page ${residentPage + 1} of ${totalPages || 1} (${residentFiltered.length} total)`;
             document.getElementById('btn-res-prev').disabled = residentPage === 0; document.getElementById('btn-res-next').disabled = end >= residentFiltered.length;
@@ -1056,7 +1128,7 @@
             const list = document.getElementById('death-list'); list.innerHTML = ''; const dead = db.filter(r => r.isDead); document.getElementById('death-total').innerText = dead.length;
             const totalPages = Math.ceil(dead.length / deathPerPage); const start = deathPage * deathPerPage; const end = Math.min(start + deathPerPage, dead.length); const pageData = dead.slice(start, end);
             if(dead.length === 0) { list.innerHTML = '<div class="col-12 text-center text-muted p-4">No records found.</div>'; }
-            pageData.forEach(r => { list.innerHTML += `<div class="col-md-4 mb-3"><div class="card card-custom p-3" style="border-left:4px solid var(--accent-red); cursor:pointer;" onclick="loadRecord('${r.id}')"><div class="d-flex justify-content-between align-items-center"><div><h6 class="fw-bold mb-0" style="color:var(--accent-red);">${r.last}, ${r.first}</h6><small class="text-muted">Died: ${r.deathDate || 'N/A'}</small></div><i class="fas fa-edit text-secondary"></i></div></div></div>`; });
+            pageData.forEach(r => { list.innerHTML += `<div class="col-md-4 mb-3"><div class="card card-custom p-3" style="border-left:4px solid var(--accent-red); cursor:pointer;" onclick="loadRecord('${r.id}')"><div class="d-flex justify-content-between align-items-center"><div><h6 class="fw-bold mb-0" style="color:var(--accent-red);">${r.last.toUpperCase()}, ${r.first.toUpperCase()}</h6><small class="text-muted">Died: ${r.deathDate || 'N/A'}</small></div><i class="fas fa-edit text-secondary"></i></div></div></div>`; });
             document.getElementById('death-page-info').innerText = `Page ${deathPage + 1} of ${totalPages || 1} (${dead.length} total)`;
             document.getElementById('btn-death-prev').disabled = deathPage === 0; document.getElementById('btn-death-next').disabled = end >= dead.length;
         }
@@ -1069,7 +1141,7 @@
             let allNames = new Set([...existingNames, ...hhObjects.map(h => h.name)]); let sortedNames = [...allNames].sort();
             hhFiltered = sortedNames.filter(name => name.toLowerCase().includes(q));
             const totalPages = Math.ceil(hhFiltered.length / hhPerPage); const start = hhPage * hhPerPage; const end = Math.min(start + hhPerPage, hhFiltered.length); const pageData = hhFiltered.slice(start, end);
-            pageData.forEach(hName => { const meta = hhMap[hName] || { purok: '', houseNo: '' }; const li = document.createElement('li'); li.className = 'list-group-item list-group-item-action d-flex justify-content-between'; li.innerHTML = `<div><strong>${hName}</strong><br><small class="text-muted">Purok: ${meta.purok || 'N/A'} | House No: ${meta.houseNo || 'N/A'}</small></div><button class="btn btn-sm btn-primary align-self-center">Manage</button>`; li.onclick = () => loadHH(hName, meta.purok, meta.houseNo); list.appendChild(li); });
+            pageData.forEach(hName => { const meta = hhMap[hName] || { purok: '', houseNo: '' }; const li = document.createElement('li'); li.className = 'list-group-item list-group-item-action d-flex justify-content-between'; li.innerHTML = `<div><strong>${hName}</strong><br><small class="text-muted text-uppercase">Purok: ${meta.purok || 'N/A'} | House No: ${meta.houseNo || 'N/A'}</small></div><button class="btn btn-sm btn-primary align-self-center">Manage</button>`; li.onclick = () => loadHH(hName, meta.purok, meta.houseNo); list.appendChild(li); });
             document.getElementById('hh-page-info').innerText = `Page ${hhPage + 1} of ${totalPages || 1} (${hhFiltered.length} total)`;
             document.getElementById('btn-hh-prev').disabled = hhPage === 0; document.getElementById('btn-hh-next').disabled = end >= hhFiltered.length;
         }
@@ -1132,7 +1204,20 @@
             showSystemAlert("Household deleted."); document.getElementById('hh-view').style.display='none'; document.getElementById('hh-list-container').style.display='block'; renderHHList(); 
         }
 
-        function renderHHMembers(hhName) { const tbody = document.getElementById('hh-members-body'); tbody.innerHTML = ''; const mems = db.filter(r => r.hh_name === hhName); mems.forEach(m => { tbody.innerHTML += `<tr><td>${m.last}, ${m.first}</td><td><select onchange="updateRole('${m.id}', this.value)" class="form-select form-select-sm"><option value="HEAD" ${m.hh_role==='HEAD'?'selected':''}>HEAD OF FAMILY</option><option value="SPOUSE" ${m.hh_role==='SPOUSE'?'selected':''}>SPOUSE</option><option value="SON" ${m.hh_role==='SON'?'selected':''}>SON</option><option value="DAUGHTER" ${m.hh_role==='DAUGHTER'?'selected':''}>DAUGHTER</option><option value="MEMBER" ${m.hh_role==='MEMBER'?'selected':''}>MEMBER (Other)</option></select></td><td><button class="btn btn-sm btn-danger" onclick="removeFromHH('${m.id}')">Remove</button></td></tr>`; }); }
+        function renderHHMembers(hhName) { 
+            const tbody = document.getElementById('hh-members-body'); 
+            tbody.innerHTML = ''; 
+            const mems = db.filter(r => r.hh_name === hhName); 
+            mems.forEach(m => { 
+                let rUP = (m.hh_role || '').toUpperCase();
+                let isHead = rUP.includes('HEAD');
+                let isSpouse = rUP.includes('SPOUSE');
+                let isSon = rUP.includes('SON');
+                let isDau = rUP.includes('DAUGHTER');
+                let isMem = (!isHead && !isSpouse && !isSon && !isDau);
+                tbody.innerHTML += `<tr><td>${m.last.toUpperCase()}, ${m.first.toUpperCase()}</td><td><select onchange="updateRole('${m.id}', this.value)" class="form-select form-select-sm"><option value="HEAD" ${isHead?'selected':''}>HEAD OF FAMILY</option><option value="SPOUSE" ${isSpouse?'selected':''}>SPOUSE</option><option value="SON" ${isSon?'selected':''}>SON</option><option value="DAUGHTER" ${isDau?'selected':''}>DAUGHTER</option><option value="MEMBER" ${isMem?'selected':''}>MEMBER (Other)</option></select></td><td><button class="btn btn-sm btn-danger" onclick="removeFromHH('${m.id}')">Remove</button></td></tr>`; 
+            }); 
+        }
         
         async function updateRole(id, role) { const r = db.find(x => x.id === id); if(r) { r.hh_role = role; await iDB.residents.put(r); await refreshData(); } }
         async function removeFromHH(id) { const r = db.find(x => x.id === id); if(r) { r.hh_name = ''; r.hh_role = ''; await iDB.residents.put(r); await refreshData(); renderHHMembers(document.getElementById('manage-hh-name').value); } }
@@ -1149,7 +1234,7 @@
             const q = document.getElementById('search-mem-hh').value.toLowerCase(); 
             const res = document.getElementById('hh-search-results'); 
             res.innerHTML = ''; 
-            db.filter(r => (!r.hh_name || r.hh_name.trim() === '') && !r.isDead && (r.last+' '+r.first).toLowerCase().includes(q)).slice(0,10).forEach(r => { res.innerHTML += `<button class="list-group-item list-group-item-action" onclick="promptRole('${r.id}')">${r.last}, ${r.first}</button>`; }); 
+            db.filter(r => (!r.hh_name || r.hh_name.trim() === '') && !r.isDead && (r.last+' '+r.first).toLowerCase().includes(q)).slice(0,10).forEach(r => { res.innerHTML += `<button class="list-group-item list-group-item-action" onclick="promptRole('${r.id}')">${r.last.toUpperCase()}, ${r.first.toUpperCase()}</button>`; }); 
         }
         function promptRole(id) { document.getElementById('temp-mem-id').value = id; closeModal('modal-add-mem'); new bootstrap.Modal(document.getElementById('modal-select-role')).show(); }
         async function confirmAddToHH() { const id = document.getElementById('temp-mem-id').value; const role = document.getElementById('select-role-input').value; const hh = document.getElementById('manage-hh-name').value; const r = db.find(x => x.id === id); if(r) { r.hh_name = hh; r.hh_role = role; await iDB.residents.put(r); await refreshData(); renderHHMembers(hh); closeModal('modal-select-role'); } }
@@ -1157,13 +1242,12 @@
         function generateFormBHTML(r) {
             const chk = (val, target) => (val === target) ? '&#9745;' : '&#9744;'; const edu = r.edu || '';
             let isElem = edu === 'ELEMENTARY'; let isHS = edu === 'HIGH SCHOOL'; let isCol = edu.includes('COLLEGE'); let isPost = edu === 'POST GRAD'; let isVoc = edu === 'VOCATIONAL'; let isGrad = edu.includes('GRADUATE') && !edu.includes('UNDER'); let isUnder = edu.includes('UNDER');
-            // Get household number from household record (not address)
             let hhNum = ''; 
             if (r.hh_name) { 
                 const hhObj = household_db.find(h => h.name === r.hh_name); 
                 if (hhObj) hhNum = hhObj.houseNo || ''; 
             }
-            return `<div class="form-b-container"><div class="form-header"><div style="font-size: 9pt;">RBI Form B (Revised 2024)</div><div class="form-title">INDIVIDUAL RECORDS OF BARANGAY INHABITANT</div></div><table style="width:100%; font-size: 9pt; font-weight: bold; margin-bottom: 10px;"><tr><td width="10%">REGION</td><td width="2%">:</td><td style="border-bottom: 1px solid black;">${settings.region}</td><td width="5%"></td><td width="15%">CITY/MUN</td><td width="2%">:</td><td style="border-bottom: 1px solid black;">${settings.municipality}</td></tr><tr><td>PROVINCE</td><td>:</td><td style="border-bottom: 1px solid black;">${settings.province}</td><td></td><td>BARANGAY</td><td>:</td><td style="border-bottom: 1px solid black;">${settings.barangay}</td></tr></table><div class="main-box"><div class="box-title">PERSONAL INFORMATION</div><table class="layout-table"><tr><td width="30%"><div class="input-box">${r.philsys || ''}</div><div class="label-under">(PhilSys Card No.)</div></td><td width="70%"></td></tr></table><table class="layout-table"><tr><td width="25%"><div class="input-box">${r.last}</div><div class="label-under">(Last Name)</div></td><td width="10%"><div class="input-box">${r.suffix || ''}</div><div class="label-under">(Suffix)</div></td><td width="35%"><div class="input-box">${r.first}</div><div class="label-under">(First Name)</div></td><td width="30%"><div class="input-box">${r.middle || ''}</div><div class="label-under">(Middle Name)</div></td></tr></table><table class="layout-table"><tr><td width="20%"><div class="input-box">${r.bdate}</div><div class="label-under">(Birth Date)</div></td><td width="30%"><div class="input-box">${r.bplace || ''}</div><div class="label-under">(Birth Place)</div></td><td width="10%"><div class="input-box">${r.sex}</div><div class="label-under">(Sex)</div></td><td width="15%"><div class="input-box">${r.civil}</div><div class="label-under">(Civil Status)</div></td><td width="25%"><div class="input-box">${r.religion || ''}</div><div class="label-under">(Religion)</div></td></tr></table><table class="layout-table"><tr><td width="65%"><div class="input-box">${r.address}</div><div class="label-under">(Residence Address)</div></td><td width="35%"><div class="input-box">${r.citizen || 'FILIPINO'}</div><div class="label-under">(Citizenship)</div></td></tr></table><table class="layout-table"><tr><td width="35%"><div class="input-box">${r.prof || ''}</div><div class="label-under">(Profession / Occupation)</div></td><td width="30%"><div class="input-box">${r.contact || ''}</div><div class="label-under">(Contact Number)</div></td><td width="35%"><div class="input-box">${r.email || ''}</div><div class="label-under">(E-mail Address)</div></td></tr></table><hr style="border-top: 1px dashed #ccc; margin: 5px 0;"><div style="font-size: 9pt; padding: 5px;"><strong>HIGHEST EDUCATIONAL ATTAINMENT:</strong><span class="chk-group" style="display:inline-flex;"><span><span class="chk-box">${chk(isElem, true)}</span> ELEMENTARY</span><span><span class="chk-box">${chk(isHS, true)}</span> HIGH SCHOOL</span><span><span class="chk-box">${chk(isCol, true)}</span> COLLEGE</span><span><span class="chk-box">${chk(isPost, true)}</span> POST GRAD</span><span><span class="chk-box">${chk(isVoc, true)}</span> VOCATIONAL</span></span><div style="margin-top:5px; margin-left: 200px;"><em>Please specify:</em> <span class="chk-box" style="margin-left: 10px;">${chk(isGrad, true)}</span> Graduate <span class="chk-box" style="margin-left: 20px;">${chk(isUnder, true)}</span> Under Graduate</div></div><div class="legal-text">I hereby certify that the above information is true and correct to the best of my knowledge. I understand that for the Barangay to carry out its mandate pursuant to Section 394 (d)(6) of the Local Government Code of 1991, they must necessarily process my personal information for easy identification of inhabitants, as a tool in planning, and as an updated reference in the number of inhabitants of the Barangay. Therefore, I grant my consent and recognize the authority of the Barangay to process my personal information, subject to the provision of the Philippine Data Privacy Act of 2012.</div><table style="width:100%; margin-top: 30px; font-size: 9pt;"><tr><td width="40%" style="text-align:center;"><div class="sig-line"></div><div>Date Accomplished</div></td><td width="20%"></td><td width="40%" style="text-align:center;"><div class="sig-line"></div><div>Name/Signature of Person Accomplishing the Form</div></td></tr></table><div style="margin-top: 20px; font-size: 9pt;">Attested By:</div><table style="width:100%; margin-top: 10px; font-size: 9pt;"><tr><td width="40%" style="text-align:center; vertical-align: bottom;"><div class="sig-line" style="font-weight:bold; text-transform:uppercase;">${settings.secretary}</div><div style="font-weight:bold;">Barangay Secretary</div></td><td width="30%" style="text-align:center;"><div class="thumb-box"></div><div style="font-size:8pt;">Left Thumbmark</div></td><td width="30%" style="text-align:center;"><div class="thumb-box"></div><div style="font-size:8pt;">Right Thumbmark</div></td></tr></table><div style="margin-top: 20px; display: flex; align-items: center;"><span style="font-weight:bold; font-size: 9pt; margin-right: 10px;">Household Number:</span><div style="border: 2px solid black; width: 200px; height: 30px; display:flex; align-items:center; justify-content:center; font-weight:bold;">${hhNum}</div></div><div style="font-size: 8pt; font-style: italic; margin-top: 5px;">Note: The household number shall be filled up by the Barangay Secretary.</div></div></div>`;
+            return `<div class="form-b-container"><div class="form-header"><div style="font-size: 9pt;">RBI Form B (Revised 2024)</div><div class="form-title">INDIVIDUAL RECORDS OF BARANGAY INHABITANT</div></div><table style="width:100%; font-size: 9pt; font-weight: bold; margin-bottom: 10px;"><tr><td width="10%">REGION</td><td width="2%">:</td><td style="border-bottom: 1px solid black;">${settings.region}</td><td width="5%"></td><td width="15%">CITY/MUN</td><td width="2%">:</td><td style="border-bottom: 1px solid black;">${settings.municipality}</td></tr><tr><td>PROVINCE</td><td>:</td><td style="border-bottom: 1px solid black;">${settings.province}</td><td></td><td>BARANGAY</td><td>:</td><td style="border-bottom: 1px solid black;">${settings.barangay}</td></tr></table><div class="main-box"><div class="box-title">PERSONAL INFORMATION</div><table class="layout-table"><tr><td width="30%"><div class="input-box">${r.philsys || ''}</div><div class="label-under">(PhilSys Card No.)</div></td><td width="70%"></td></tr></table><table class="layout-table"><tr><td width="25%"><div class="input-box">${r.last.toUpperCase()}</div><div class="label-under">(Last Name)</div></td><td width="10%"><div class="input-box">${(r.suffix || '').toUpperCase()}</div><div class="label-under">(Suffix)</div></td><td width="35%"><div class="input-box">${r.first.toUpperCase()}</div><div class="label-under">(First Name)</div></td><td width="30%"><div class="input-box">${(r.middle || '').toUpperCase()}</div><div class="label-under">(Middle Name)</div></td></tr></table><table class="layout-table"><tr><td width="20%"><div class="input-box">${r.bdate}</div><div class="label-under">(Birth Date)</div></td><td width="30%"><div class="input-box">${(r.bplace || '').toUpperCase()}</div><div class="label-under">(Birth Place)</div></td><td width="10%"><div class="input-box">${r.sex}</div><div class="label-under">(Sex)</div></td><td width="15%"><div class="input-box">${r.civil}</div><div class="label-under">(Civil Status)</div></td><td width="25%"><div class="input-box">${(r.religion || '').toUpperCase()}</div><div class="label-under">(Religion)</div></td></tr></table><table class="layout-table"><tr><td width="65%"><div class="input-box">${(r.address || '').toUpperCase()}</div><div class="label-under">(Residence Address)</div></td><td width="35%"><div class="input-box">${r.citizen || 'FILIPINO'}</div><div class="label-under">(Citizenship)</div></td></tr></table><table class="layout-table"><tr><td width="35%"><div class="input-box">${(r.prof || '').toUpperCase()}</div><div class="label-under">(Profession / Occupation)</div></td><td width="30%"><div class="input-box">${(r.contact || '').toUpperCase()}</div><div class="label-under">(Contact Number)</div></td><td width="35%"><div class="input-box">${(r.email || '').toUpperCase()}</div><div class="label-under">(E-mail Address)</div></td></tr></table><hr style="border-top: 1px dashed #ccc; margin: 5px 0;"><div style="font-size: 9pt; padding: 5px;"><strong>HIGHEST EDUCATIONAL ATTAINMENT:</strong><span class="chk-group" style="display:inline-flex;"><span><span class="chk-box">${chk(isElem, true)}</span> ELEMENTARY</span><span><span class="chk-box">${chk(isHS, true)}</span> HIGH SCHOOL</span><span><span class="chk-box">${chk(isCol, true)}</span> COLLEGE</span><span><span class="chk-box">${chk(isPost, true)}</span> POST GRAD</span><span><span class="chk-box">${chk(isVoc, true)}</span> VOCATIONAL</span></span><div style="margin-top:5px; margin-left: 200px;"><em>Please specify:</em> <span class="chk-box" style="margin-left: 10px;">${chk(isGrad, true)}</span> Graduate <span class="chk-box" style="margin-left: 20px;">${chk(isUnder, true)}</span> Under Graduate</div></div><div class="legal-text">I hereby certify that the above information is true and correct to the best of my knowledge. I understand that for the Barangay to carry out its mandate pursuant to Section 394 (d)(6) of the Local Government Code of 1991, they must necessarily process my personal information for easy identification of inhabitants, as a tool in planning, and as an updated reference in the number of inhabitants of the Barangay. Therefore, I grant my consent and recognize the authority of the Barangay to process my personal information, subject to the provision of the Philippine Data Privacy Act of 2012.</div><table style="width:100%; margin-top: 30px; font-size: 9pt;"><tr><td width="40%" style="text-align:center;"><div class="sig-line"></div><div>Date Accomplished</div></td><td width="20%"></td><td width="40%" style="text-align:center;"><div class="sig-line"></div><div>Name/Signature of Person Accomplishing the Form</div></td></tr></table><div style="margin-top: 20px; font-size: 9pt;">Attested By:</div><table style="width:100%; margin-top: 10px; font-size: 9pt;"><tr><td width="40%" style="text-align:center; vertical-align: bottom;"><div class="sig-line" style="font-weight:bold; text-transform:uppercase;">${settings.secretary}</div><div style="font-weight:bold;">Barangay Secretary</div></td><td width="30%" style="text-align:center;"><div class="thumb-box"></div><div style="font-size:8pt;">Left Thumbmark</div></td><td width="30%" style="text-align:center;"><div class="thumb-box"></div><div style="font-size:8pt;">Right Thumbmark</div></td></tr></table><div style="margin-top: 20px; display: flex; align-items: center;"><span style="font-weight:bold; font-size: 9pt; margin-right: 10px;">Household Number:</span><div style="border: 2px solid black; width: 200px; height: 30px; display:flex; align-items:center; justify-content:center; font-weight:bold;">${hhNum}</div></div><div style="font-size: 8pt; font-style: italic; margin-top: 5px;">Note: The household number shall be filled up by the Barangay Secretary.</div></div></div>`;
         }
 
         function printFormB(id) {
@@ -1179,7 +1263,7 @@
             document.getElementById('bulk-formb-total').innerText = total; document.getElementById('bulk-formb-batch-label').innerText = `${bulkFormBPage + 1} of ${totalBatches || 1}`; document.getElementById('bulk-formb-range').innerText = `${start + 1}-${end}`;
             document.getElementById('btn-bulk-prev').disabled = bulkFormBPage === 0; document.getElementById('btn-bulk-next').disabled = end >= total;
             const list = document.getElementById('bulk-formb-list'); list.innerHTML = '';
-            pageData.forEach((r, i) => { const age = calculateAgeDetailed(r.bdate); const ageStr = age.y > 0 ? `${age.y} y/o` : `${age.m} mo`; list.innerHTML += `<div class="bulk-formb-item"><div class="formb-num">${start + i + 1}</div><div class="formb-info"><div class="formb-name">${r.last}, ${r.first} ${r.suffix || ''}</div><div class="formb-meta">${r.sex} | ${ageStr} | ${r.civil} | ${r.hh_name || 'No HH'}</div></div></div>`; });
+            pageData.forEach((r, i) => { const age = calculateAgeDetailed(r.bdate); const ageStr = age.y > 0 ? `${age.y} y/o` : `${age.m} mo`; list.innerHTML += `<div class="bulk-formb-item"><div class="formb-num">${start + i + 1}</div><div class="formb-info"><div class="formb-name">${r.last.toUpperCase()}, ${r.first.toUpperCase()} ${(r.suffix || '').toUpperCase()}</div><div class="formb-meta">${r.sex} | ${ageStr} | ${r.civil} | ${r.hh_name || 'No HH'}</div></div></div>`; });
         }
         function bulkFormBPrev() { if(bulkFormBPage > 0) { bulkFormBPage--; renderBulkFormBModal(); } }
         function bulkFormBNext() { if((bulkFormBPage + 1) * bulkFormBPerPage < bulkFormBData.length) { bulkFormBPage++; renderBulkFormBModal(); } }
@@ -1194,7 +1278,6 @@
         function printFormA() {
             const hhName = document.getElementById('manage-hh-name').value;
             const purok = document.getElementById('view-hh-purok').innerText;
-            // House number from household record (not from address field)
             const houseNo = document.getElementById('view-hh-num').innerText;
 
             if (!hhName) { showSystemAlert("Error: No household selected."); return; }
@@ -1202,8 +1285,17 @@
             if (members.length === 0) { showSystemAlert("This household has no members."); return; }
 
             members.sort((a, b) => {
-                const roles = { 'HEAD': 1, 'SPOUSE': 2, 'SON': 3, 'DAUGHTER': 4, 'MEMBER': 5 };
-                const ra = roles[a.hh_role] || 99; const rb = roles[b.hh_role] || 99;
+                const getRoleScore = (roleStr) => {
+                    if (!roleStr) return 99;
+                    let r = roleStr.toUpperCase();
+                    if (r.includes('HEAD')) return 1;
+                    if (r.includes('SPOUSE')) return 2;
+                    if (r.includes('SON')) return 3;
+                    if (r.includes('DAUGHTER')) return 4;
+                    if (r.includes('MEMBER')) return 5;
+                    return 99;
+                };
+                const ra = getRoleScore(a.hh_role); const rb = getRoleScore(b.hh_role);
                 if (ra !== rb) return ra - rb; return a.last.localeCompare(b.last);
             });
 
@@ -1223,14 +1315,14 @@
                 rowsHtml += `
                 <tr>
                     <td style="text-align:center;">${i + 1}</td>
-                    <td>${m.last}</td><td>${m.first}</td><td>${m.middle || ''}</td><td>${m.suffix || ''}</td>
-                    <td>${m.bplace || ''}</td>
+                    <td>${m.last.toUpperCase()}</td><td>${m.first.toUpperCase()}</td><td>${(m.middle || '').toUpperCase()}</td><td>${(m.suffix || '').toUpperCase()}</td>
+                    <td>${(m.bplace || '').toUpperCase()}</td>
                     <td style="text-align:center;">${m.bdate}</td>
                     <td style="text-align:center;">${ageInfo.y}</td>
                     <td style="text-align:center;">${m.sex ? m.sex.substring(0,1) : ''}</td>
                     <td style="text-align:center;">${m.civil || ''}</td>
                     <td style="text-align:center;">${m.citizen || 'FILIPINO'}</td>
-                    <td>${m.prof || ''}</td>
+                    <td>${(m.prof || '').toUpperCase()}</td>
                     <td style="font-size:8pt;">${indicators.join(', ')}</td>
                 </tr>`;
             });
@@ -1329,10 +1421,12 @@
             setTimeout(() => { window.print(); }, 500);
         }
 
-        // ========== REPORTING ==========
         function updateReportUI() {
             const living = db.filter(r => !r.isDead); const stats = { male: 0, female: 0, adults: 0, children: 0, solo: 0, pwd: 0, senior: 0, osy: 0, voter: 0, '4ps': 0, total: living.length };
-            const totalFamilies = living.filter(r => r.hh_role === 'HEAD').length; const uniqueHH = new Set(living.map(r => r.hh_name).filter(n => n && n.trim() !== '')); const totalHH = uniqueHH.size;
+            
+            const totalFamilies = living.filter(r => r.hh_role && r.hh_role.trim().toUpperCase().includes('HEAD')).length; 
+            
+            const uniqueHH = new Set(living.map(r => r.hh_name).filter(n => n && n.trim() !== '')); const totalHH = uniqueHH.size;
             living.forEach(r => { if(r.sex === 'MALE') stats.male++; else if(r.sex === 'FEMALE') stats.female++; const age = calculateAgeDetailed(r.bdate).y; if(age < 18) stats.children++; else if(age >= 60) stats.senior++; else stats.adults++; if(r.isPwd) stats.pwd++; if(r.isSoloParent) stats.solo++; if(r.isOSY) stats.osy++; if(r.isVoter) stats.voter++; if(r.is4Ps) stats['4ps']++; });
             document.getElementById('rep-male').innerText = stats.male; document.getElementById('rep-female').innerText = stats.female; document.getElementById('rep-total').innerText = stats.total; document.getElementById('rep-child').innerText = stats.children; document.getElementById('rep-adult').innerText = stats.adults; document.getElementById('rep-senior').innerText = stats.senior; document.getElementById('rep-pwd').innerText = stats.pwd; document.getElementById('rep-solo').innerText = stats.solo; document.getElementById('rep-osy').innerText = stats.osy; document.getElementById('rep-4ps').innerText = stats['4ps']; document.getElementById('rep-hh-total').innerText = totalHH; document.getElementById('rep-family-total').innerText = totalFamilies;
             document.getElementById('rep-voters').innerText = stats.voter;
@@ -1340,19 +1434,19 @@
 
         function printStatCategory(category) {
             const living = db.filter(r => !r.isDead); let filtered = []; let label = '';
-            switch(category) { case 'total': filtered = living; label = 'ALL RESIDENTS'; break; case 'male': filtered = living.filter(r => r.sex === 'MALE'); label = 'MALE RESIDENTS'; break; case 'female': filtered = living.filter(r => r.sex === 'FEMALE'); label = 'FEMALE RESIDENTS'; break; case 'children': filtered = living.filter(r => calculateAgeDetailed(r.bdate).y < 18); label = 'CHILDREN (Below 18)'; break; case 'adults': filtered = living.filter(r => { const a = calculateAgeDetailed(r.bdate).y; return a >= 18 && a < 60; }); label = 'ADULTS (18-59)'; break; case 'seniors': filtered = living.filter(r => calculateAgeDetailed(r.bdate).y >= 60); label = 'SENIOR CITIZENS (60+)'; break; case 'pwd': filtered = living.filter(r => r.isPwd); label = 'PERSONS WITH DISABILITY (PWD)'; break; case 'solo': filtered = living.filter(r => r.isSoloParent); label = 'SOLO PARENTS'; break; case 'osy': filtered = living.filter(r => r.isOSY); label = 'OUT OF SCHOOL YOUTH (OSY)'; break; case '4ps': filtered = living.filter(r => r.is4Ps); label = '4Ps BENEFICIARIES'; break; case 'voters': filtered = living.filter(r => r.isVoter); label = 'REGISTERED VOTERS'; break; case 'households': printHHHeads(); return; case 'families': filtered = living.filter(r => r.hh_role === 'HEAD'); label = 'HEAD OF FAMILIES'; break; default: filtered = living; label = 'ALL RESIDENTS'; }
+            switch(category) { case 'total': filtered = living; label = 'ALL RESIDENTS'; break; case 'male': filtered = living.filter(r => r.sex === 'MALE'); label = 'MALE RESIDENTS'; break; case 'female': filtered = living.filter(r => r.sex === 'FEMALE'); label = 'FEMALE RESIDENTS'; break; case 'children': filtered = living.filter(r => calculateAgeDetailed(r.bdate).y < 18); label = 'CHILDREN (Below 18)'; break; case 'adults': filtered = living.filter(r => { const a = calculateAgeDetailed(r.bdate).y; return a >= 18 && a < 60; }); label = 'ADULTS (18-59)'; break; case 'seniors': filtered = living.filter(r => calculateAgeDetailed(r.bdate).y >= 60); label = 'SENIOR CITIZENS (60+)'; break; case 'pwd': filtered = living.filter(r => r.isPwd); label = 'PERSONS WITH DISABILITY (PWD)'; break; case 'solo': filtered = living.filter(r => r.isSoloParent); label = 'SOLO PARENTS'; break; case 'osy': filtered = living.filter(r => r.isOSY); label = 'OUT OF SCHOOL YOUTH (OSY)'; break; case '4ps': filtered = living.filter(r => r.is4Ps); label = '4Ps BENEFICIARIES'; break; case 'voters': filtered = living.filter(r => r.isVoter); label = 'REGISTERED VOTERS'; break; case 'households': printHHHeads(); return; case 'families': filtered = living.filter(r => r.hh_role && r.hh_role.trim().toUpperCase().includes('HEAD')); label = 'HEAD OF FAMILIES'; break; default: filtered = living; label = 'ALL RESIDENTS'; }
             filtered.sort((a,b) => a.last.localeCompare(b.last)); printCatData = filtered; printCatPage = 0; printCatLabel = label; renderPrintCatModal(); new bootstrap.Modal(document.getElementById('modal-print-category')).show();
         }
         function renderPrintCatModal() {
             const perPage = 100; const start = printCatPage * perPage; const end = Math.min(start + perPage, printCatData.length); const pageData = printCatData.slice(start, end); const totalPages = Math.ceil(printCatData.length / perPage);
             document.getElementById('print-cat-title').innerHTML = `<i class="fas fa-print me-2" style="color:var(--accent-blue);"></i>${printCatLabel}`; document.getElementById('print-cat-total').innerText = printCatData.length; document.getElementById('print-cat-page-label').innerText = `${printCatPage + 1} of ${totalPages}`; document.getElementById('btn-cat-prev').disabled = (printCatPage === 0); document.getElementById('btn-cat-next').disabled = (end >= printCatData.length);
-            const tbody = document.getElementById('print-cat-body'); tbody.innerHTML = ''; pageData.forEach((r, i) => { const age = calculateAgeDetailed(r.bdate).y; tbody.innerHTML += `<tr><td>${start + i + 1}</td><td>${r.last}, ${r.first} ${r.suffix || ''}</td><td>${r.sex}</td><td>${age}</td><td>${r.civil}</td><td>${r.address || '-'}</td></tr>`; });
+            const tbody = document.getElementById('print-cat-body'); tbody.innerHTML = ''; pageData.forEach((r, i) => { const age = calculateAgeDetailed(r.bdate).y; tbody.innerHTML += `<tr><td>${start + i + 1}</td><td>${r.last.toUpperCase()}, ${r.first.toUpperCase()} ${(r.suffix || '').toUpperCase()}</td><td>${r.sex}</td><td>${age}</td><td>${r.civil}</td><td>${(r.address || '-').toUpperCase()}</td></tr>`; });
         }
         function printCatPrev() { if(printCatPage > 0) { printCatPage--; renderPrintCatModal(); } }
         function printCatNext() { const perPage = 100; if((printCatPage + 1) * perPage < printCatData.length) { printCatPage++; renderPrintCatModal(); } }
         function executePrintCategory() {
             const perPage = 100; const start = printCatPage * perPage; const end = Math.min(start + perPage, printCatData.length); const pageData = printCatData.slice(start, end); const totalPages = Math.ceil(printCatData.length / perPage);
-            let rows = pageData.map((r, i) => { const age = calculateAgeDetailed(r.bdate).y; return `<tr><td>${start+i+1}</td><td>${r.last}, ${r.first} ${r.suffix||''}</td><td>${r.sex}</td><td>${age}</td><td>${r.civil}</td><td>${r.address || '-'}</td></tr>`; }).join('');
+            let rows = pageData.map((r, i) => { const age = calculateAgeDetailed(r.bdate).y; return `<tr><td>${start+i+1}</td><td>${r.last.toUpperCase()}, ${r.first.toUpperCase()} ${(r.suffix||'').toUpperCase()}</td><td>${r.sex}</td><td>${age}</td><td>${r.civil}</td><td>${(r.address || '-').toUpperCase()}</td></tr>`; }).join('');
             const html = `<style>table { width:100%; border-collapse:collapse; font-family:Arial; font-size:10pt; } th,td { border:1px solid black; padding:4px; } h2,h3 { text-align:center; margin:5px; }</style><h2>${printCatLabel}</h2><h3 style="font-size:11pt;">Barangay ${settings.barangay}, ${settings.municipality}, ${settings.province}</h3><p style="text-align:center; font-size:9pt;">Page ${printCatPage+1} of ${totalPages} | Total: ${printCatData.length} records | Printed: ${new Date().toLocaleDateString()}</p><table><thead><tr><th>#</th><th>Name</th><th>Sex</th><th>Age</th><th>Civil Status</th><th>Address</th></tr></thead><tbody>${rows}</tbody></table><br><br><div style="display:flex; justify-content:space-between; font-size:9pt;"><div style="text-align:center; width:40%;"><div style="border-top:1px solid black; padding-top:5px; font-weight:bold;">${settings.secretary || '_______________'}</div>Barangay Secretary</div><div style="text-align:center; width:40%;"><div style="border-top:1px solid black; padding-top:5px; font-weight:bold;">${settings.captain || '_______________'}</div>Punong Barangay</div></div>`;
             document.getElementById('print-area').innerHTML = html; window.print();
         }
@@ -1381,7 +1475,12 @@
             const brackets = [ { lbl: "Under 5 years old", min:0, max:4 }, { lbl: "5-9 years old", min:5, max:9 }, { lbl: "10-14 years old", min:10, max:14 }, { lbl: "15-19 years old", min:15, max:19 }, { lbl: "20-24 years old", min:20, max:24 }, { lbl: "25-29 years old", min:25, max:29 }, { lbl: "30-34 years old", min:30, max:34 }, { lbl: "35-39 years old", min:35, max:39 }, { lbl: "40-44 years old", min:40, max:44 }, { lbl: "45-49 years old", min:45, max:49 }, { lbl: "50-54 years old", min:50, max:54 }, { lbl: "55-59 years old", min:55, max:59 }, { lbl: "60-64 years old", min:60, max:64 }, { lbl: "65-69 years old", min:65, max:69 }, { lbl: "70-74 years old", min:70, max:74 }, { lbl: "75-79 years old", min:75, max:79 }, { lbl: "80 years old and over", min:80, max:200 } ];
             let bracketData = brackets.map(b => ({ ...b, m:0, f:0 }));
             let sectors = { labor: {m:0, f:0}, unemployed: {m:0, f:0}, osc: {m:0, f:0}, osy: {m:0, f:0}, pwd: {m:0, f:0}, ofw: {m:0, f:0}, solo: {m:0, f:0}, ip: {m:0, f:0}, single: {m:0, f:0}, married: {m:0, f:0}, filipino: {m:0, f:0}, foreigner: {m:0, f:0} };
-            const totalInhabitants = living.length; const uniqueHH = new Set(living.map(r => r.hh_name).filter(n => n && n.trim() !== '')); const totalHH = uniqueHH.size; const totalFamilies = living.filter(r => r.hh_role === 'HEAD').length;
+            
+            const totalInhabitants = living.length; 
+            const uniqueHH = new Set(living.map(r => r.hh_name).filter(n => n && n.trim() !== '')); const totalHH = uniqueHH.size; 
+            
+            const totalFamilies = living.filter(r => r.hh_role && r.hh_role.trim().toUpperCase().includes('HEAD')).length;
+            
             living.forEach(r => {
                 const age = calculateAgeDetailed(r.bdate).y; const isMale = r.sex === 'MALE';
                 for(let b of bracketData) { if(age >= b.min && age <= b.max) { if(isMale) b.m++; else b.f++; break; } }
@@ -1415,12 +1514,134 @@
             const dataRows = living.map(r => {
                 let purok = '', addAdd = r.address || '';
                 if(r.address && r.address.includes('Purok')) { const parts = r.address.split('Purok'); addAdd = parts[0].trim(); purok = parts[1].trim(); }
-                return [r.type || "NON-MIGRANT", r.last || "", r.first || "", r.middle || "", r.suffix || "", r.bplace || "", r.bdate || "", r.sex || "", r.civil || "", r.citizen || "FILIPINO", r.prof || "", r.contact || "", r.email || "", r.edu || "", r.mother_first || "", r.mother_middle || "", r.mother_last || "", purok, addAdd, r.religion || "", r.isOSY ? "YES" : "NO", r.isPwd ? "YES" : "NO", "NO", r.isIp ? "YES" : "NO", r.isSoloParent ? "YES" : "NO", r.isUnemployed ? "UNEMPLOYED" : "EMPLOYED", r.isOfw ? "YES" : "NO", "NO"];
+                return [r.type || "NON-MIGRANT", r.last.toUpperCase() || "", r.first.toUpperCase() || "", (r.middle || "").toUpperCase(), (r.suffix || "").toUpperCase(), (r.bplace || "").toUpperCase(), r.bdate || "", r.sex || "", r.civil || "", (r.citizen || "FILIPINO").toUpperCase(), (r.prof || "").toUpperCase(), (r.contact || "").toUpperCase(), (r.email || "").toUpperCase(), r.edu || "", (r.mother_first || "").toUpperCase(), (r.mother_middle || "").toUpperCase(), (r.mother_last || "").toUpperCase(), purok, addAdd, (r.religion || "").toUpperCase(), r.isOSY ? "YES" : "NO", r.isPwd ? "YES" : "NO", "NO", r.isIp ? "YES" : "NO", r.isSoloParent ? "YES" : "NO", r.isUnemployed ? "UNEMPLOYED" : "EMPLOYED", r.isOfw ? "YES" : "NO", "NO"];
             });
             const wb = XLSX.utils.book_new(); const wsInstr = XLSX.utils.aoa_to_sheet([instrHeader, ...instrData]); XLSX.utils.book_append_sheet(wb, wsInstr, "INSTRUCTIONS"); const wsData = XLSX.utils.aoa_to_sheet([dataHeader, ...dataRows]); XLSX.utils.book_append_sheet(wb, wsData, "DATA"); XLSX.writeFile(wb, "RBI_Export_BIMS.xlsx");
         }
 
         function backupData() { const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({db, settings, household_db})); const a = document.createElement('a'); a.href = dataStr; a.download = "RBI_Backup.json"; a.click(); }
+
+        let _driveToken = null;
+        let _driveUser  = null;
+        let _driveBlob  = null;
+        let _driveFilename = null;
+
+        function getDriveClientId() {
+            return localStorage.getItem('rbi_gdrive_client_id') || '';
+        }
+
+        function loadGIS() {
+            return new Promise(resolve => {
+                if (window.google && window.google.accounts) { resolve(); return; }
+                const s = document.createElement('script');
+                s.src = 'https://accounts.google.com/gsi/client';
+                s.async = true; s.defer = true;
+                s.onload = resolve;
+                document.head.appendChild(s);
+            });
+        }
+
+        async function backupToDrive() {
+            const statusEl = document.getElementById('gdrive-status');
+            const clientId = getDriveClientId();
+            
+            if (!clientId) {
+                statusEl.innerHTML = '<span style="color:var(--accent-blue);"><i class="fas fa-spinner fa-spin me-1"></i>Preparing simple backup...</span>';
+                backupData(); 
+                setTimeout(() => {
+                    window.open('https://drive.google.com/', '_blank');
+                    statusEl.innerHTML = '<span style="color:var(--accent-green);"><i class="fas fa-check-circle me-1"></i>Backup downloaded! Please drag & drop it into your Google Drive.</span>';
+                    showSystemAlert("Simplified GDrive Save:\n\n1. Your backup file has been downloaded to your computer.\n2. Google Drive will now open in a new tab.\n3. Simply drag and drop the downloaded file into your Drive to save it safely.", "Google Drive Backup");
+                }, 1000);
+                return;
+            }
+
+            statusEl.innerHTML = '<span style="color:var(--accent-amber);"><i class="fas fa-spinner fa-spin me-1"></i>Connecting to Google...</span>';
+
+            const backupJson = JSON.stringify({db, settings, household_db});
+            _driveFilename = 'RBI_Backup_' + new Date().toISOString().slice(0,10) + '.json';
+            _driveBlob = new Blob([backupJson], {type: 'application/json'});
+
+            try {
+                await loadGIS();
+                if (_driveToken) { await _doUpload(statusEl); return; }
+
+                const client = google.accounts.oauth2.initTokenClient({
+                    client_id: clientId,
+                    scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email',
+                    callback: async (resp) => {
+                        if (resp.error) {
+                            statusEl.innerHTML = '<span style="color:var(--accent-red);"><i class="fas fa-times-circle me-1"></i>Sign-in cancelled.</span>';
+                            return;
+                        }
+                        _driveToken = resp.access_token;
+                        setTimeout(() => { _driveToken = null; }, (resp.expires_in - 30) * 1000);
+                        try {
+                            const r = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+                                headers: { Authorization: 'Bearer ' + _driveToken }
+                            });
+                            _driveUser = await r.json();
+                            _updateDriveAccountUI();
+                        } catch(e) {}
+                        await _doUpload(statusEl);
+                    }
+                });
+                client.requestAccessToken({ prompt: _driveToken ? '' : 'select_account' });
+            } catch(e) {
+                statusEl.innerHTML = '<span style="color:var(--accent-red);"><i class="fas fa-times-circle me-1"></i>' + e.message + '</span>';
+            }
+        }
+
+        async function _doUpload(statusEl) {
+            statusEl.innerHTML = '<span style="color:var(--accent-amber);"><i class="fas fa-spinner fa-spin me-1"></i>Uploading to Google Drive...</span>';
+            try {
+                const form = new FormData();
+                form.append('metadata', new Blob([JSON.stringify({ name: _driveFilename, mimeType: 'application/json' })], {type: 'application/json'}));
+                form.append('file', _driveBlob);
+                const resp = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                    method: 'POST',
+                    headers: { Authorization: 'Bearer ' + _driveToken },
+                    body: form
+                });
+                if (resp.ok) {
+                    statusEl.innerHTML = '<span style="color:var(--accent-green);"><i class="fas fa-check-circle me-1"></i>Saved <strong>' + _driveFilename + '</strong> to Google Drive!</span>';
+                } else if (resp.status === 401) {
+                    _driveToken = null;
+                    statusEl.innerHTML = '<span style="color:var(--accent-amber);">Session expired — click "Save to Drive" again to re-authenticate.</span>';
+                } else {
+                    statusEl.innerHTML = '<span style="color:var(--accent-red);">Upload failed (HTTP ' + resp.status + ').</span>';
+                }
+            } catch(e) {
+                statusEl.innerHTML = '<span style="color:var(--accent-red);">' + e.message + '</span>';
+            }
+        }
+
+        function _updateDriveAccountUI() {
+            if (!_driveUser) return;
+            const el = document.getElementById('gdrive-account-badge');
+            if (el) {
+                el.style.display = 'flex';
+                document.getElementById('gdrive-account-name').textContent = _driveUser.email || '';
+            }
+        }
+
+        function signOutDrive() {
+            if (_driveToken && window.google) google.accounts.oauth2.revoke(_driveToken);
+            _driveToken = null; _driveUser = null;
+            const el = document.getElementById('gdrive-account-badge');
+            if (el) el.style.display = 'none';
+            document.getElementById('gdrive-status').innerHTML = '';
+        }
+
+        function saveGdriveClientId() {
+            const val = document.getElementById('set-gdrive-client-id').value.trim();
+            const st  = document.getElementById('gdrive-setup-status');
+            if (!val || !val.includes('.apps.googleusercontent.com')) {
+                st.innerHTML = '<span style="color:var(--accent-red);">Enter a valid Client ID ending in .apps.googleusercontent.com</span>'; return;
+            }
+            localStorage.setItem('rbi_gdrive_client_id', val);
+            st.innerHTML = '<span style="color:var(--accent-green);"><i class="fas fa-check-circle me-1"></i>Saved! Google Drive backup is now active.</span>';
+        }
 
         function restoreData(event) {
             const file = event.target.files[0]; if (!file) return;
@@ -1456,7 +1677,6 @@
                     const row = json[i]; 
                     if(!row || Object.keys(row).length === 0) continue;
                     
-                    // Flexible header matching
                     const type = (row['INHABITANT TYPE'] || "NON-MIGRANT").toString().toUpperCase();
                     const philsys = (row['PHYLSYS ID NUMBER'] || row['Phylsys ID Number'] || row['PhilSys ID'] || '').toString().trim();
                     const last = (row['LAST NAME'] || row['Last Name'] || '').toString().toUpperCase().trim();
@@ -1553,7 +1773,14 @@
                     if(!row || Object.keys(row).length === 0) continue;
                     
                     const hhId = row['HOUSEHOLD ID'] || row['Household ID'] || '';
-                    const role = row['ROLE'] || row['Role'] || 'MEMBER';
+                    
+                    let rawRole = (row['ROLE'] || row['Role'] || 'MEMBER').toString().toUpperCase().trim();
+                    let role = 'MEMBER';
+                    if (rawRole.includes('HEAD')) role = 'HEAD';
+                    else if (rawRole.includes('SPOUSE')) role = 'SPOUSE';
+                    else if (rawRole.includes('SON')) role = 'SON';
+                    else if (rawRole.includes('DAUGHTER')) role = 'DAUGHTER';
+                    
                     const last = (row['LAST NAME'] || row['Last Name'] || '').toString().trim().toLowerCase();
                     const first = (row['FIRST NAME'] || row['First Name'] || '').toString().trim().toLowerCase();
                     const bdate = (row['BIRTHDATE'] || row['Birthdate'] || '').toString().trim();
@@ -1568,7 +1795,7 @@
                         stagingValid.push({
                             residentId: strictMatch.id,
                             hh_name: hhId.toString().toUpperCase(),
-                            hh_role: role.toString().toUpperCase(),
+                            hh_role: role,
                             purok: (loc + (loc && addr ? ' ' : '') + addr).toUpperCase()
                         });
                     } else {
