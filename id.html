@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barangay ID System - RBI 2026</title>
+    <meta name="theme-color" content="#0d6efd">
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
+
+    <style>
+        :root {
+            --body-bg: #f0f2f7;
+            --card-bg: #ffffff;
+            --text-primary: #111827;
+            --text-secondary: #6b7280;
+            --border-color: #e5e7eb;
+            --accent-blue: #2563eb;
+            --radius: 12px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.07);
+        }
+        body { background-color: var(--body-bg); font-family: 'DM Sans', sans-serif; color: var(--text-primary); margin: 0; padding: 0; }
+        
+        /* Layout */
+        .top-nav { background: #111827; color: white; padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; box-shadow: var(--shadow-md); }
+        .top-nav a { color: #9ca3af; text-decoration: none; font-weight: 500; transition: 0.2s; cursor: pointer; }
+        .top-nav a:hover { color: white; }
+        .main-container { padding: 32px; max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: 350px 1fr; gap: 24px; }
+        
+        /* Sidebar & Cards */
+        .controls-card { background: var(--card-bg); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); height: fit-content; }
+        .page-title { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 1.4rem; margin-bottom: 16px; }
+        .form-control, .form-select { border-radius: 8px; border-color: var(--border-color); font-size: 0.9rem; padding: 10px 14px; }
+        
+        /* ENFORCE ALL CAPS ON TEXT INPUTS */
+        input[type="text"], input[type="search"] {
+            text-transform: uppercase !important;
+        }
+
+        /* Search List - Adjusted to show 3 results exactly with scrolling */
+        #resident-list { max-height: 165px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; margin-top: 12px; }
+        .resident-item { padding: 10px 14px; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: background 0.2s; font-size: 0.85rem; }
+        .resident-item:hover, .resident-item.active { background: #eff6ff; border-left: 3px solid var(--accent-blue); }
+        .resident-item:last-child { border-bottom: none; }
+        
+        /* Preview Area */
+        .preview-area { background: #e2e8f0; border-radius: var(--radius); padding: 40px; display: flex; align-items: center; justify-content: center; min-height: 600px; background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 20px 20px; flex-direction: column; gap: 20px;}
+        
+        /* Pagination Controls */
+        .pagination-controls { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 16px; padding: 12px; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); }
+        .pagination-controls .page-info { font-size: 0.85rem; color: var(--text-secondary); font-weight: 500; }
+        .pagination-controls .btn { padding: 6px 14px; font-size: 0.82rem; }
+
+        /* Print Fixed Elements */
+        @media print {
+            @page { margin: 0.5cm; size: auto; }
+            body { background: white; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            body * { visibility: hidden; }
+            
+            #print-section, #print-section * { visibility: visible; }
+            #print-section { 
+                position: absolute; 
+                left: 0; 
+                top: 0; 
+                width: 100%; 
+                display: flex; 
+                flex-direction: column; 
+                gap: 20px; 
+                align-items: flex-start; /* Keeps it top-left for neat printing */
+                padding: 10px;
+            }
+            .top-nav, .controls-card, #tabs-nav, #view-rec { display: none !important; }
+            .preview-area { background: none; padding: 0; min-height: auto; }
+            .id-card { page-break-inside: avoid; box-shadow: none !important; border: 1px solid #ccc; }
+        }
+
+        /* ================= ID DESIGNS - OPTIMIZED FOR NO OVERLAPS ================= */
+        .id-card { 
+            background: white; position: relative; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
+            border: 1px solid #e2e8f0; border-radius: 10px; font-family: 'Plus Jakarta Sans', sans-serif; box-sizing: border-box;
+        }
+        .id-card * { box-sizing: border-box; margin: 0; padding: 0; line-height: 1.2; }
+        
+        /* Shared elements */
+        .id-photo { width: 80px; height: 80px; background: #e2e8f0; object-fit: cover; border: 2px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .id-lgu-text { text-transform: uppercase; font-size: 0.45rem; line-height: 1.1; font-weight: 600; text-align: center; margin-bottom: 2px; }
+        .id-brgy-name { text-transform: uppercase; font-size: 0.75rem; font-weight: 800; text-align: center; margin-top: 2px; }
+        .id-label { font-size: 0.45rem; color: #64748b; text-transform: uppercase; font-weight: 700; margin-bottom: 2px; }
+        .id-value { font-size: 0.7rem; font-weight: 700; color: #0f172a; text-transform: uppercase; margin-bottom: 4px; }
+        .id-sig-line { border-bottom: 1px solid #000; width: 80%; margin: 0 auto 3px auto; }
+        .id-sig-label { font-size: 0.45rem; text-align: center; font-weight: 600; text-transform: uppercase; }
+
+        /* DESIGN 1: Vertical Modern Blue */
+        .design-1 { width: 230px; height: 360px; }
+        .design-1 .header { background: linear-gradient(135deg, #1e3a8a, #3b82f6); color: white; padding: 10px 10px 25px 10px; text-align: center; border-radius: 0 0 50% 50% / 0 0 15px 15px; }
+        .design-1 .id-lgu-text, .design-1 .id-brgy-name { color: white; }
+        .design-1 .photo-container { text-align: center; margin-top: -25px; }
+        .design-1 .id-photo { border-radius: 50%; }
+        .design-1 .id-title { text-align: center; font-size: 0.6rem; font-weight: 800; color: #ef4444; letter-spacing: 1px; margin: 4px 0; }
+        .design-1 .body { padding: 0 15px; text-align: center; }
+        .design-1 .id-name { font-size: 1rem; font-weight: 800; color: #1e3a8a; line-height: 1.1; margin-bottom: 6px; text-transform: uppercase; }
+        .design-1 .footer { position: absolute; bottom: 15px; width: 100%; padding: 0 15px; }
+
+        /* DESIGN 2: Horizontal Classic Green */
+        .design-2 { width: 360px; height: 230px; display: flex; flex-direction: column; }
+        .design-2 .header { background: #065f46; color: white; padding: 4px 10px; display: flex; align-items: center; justify-content: center; gap: 10px; border-bottom: 4px solid #f59e0b; }
+        .design-2 .header-text { flex: 1; text-align: center; }
+        .design-2 .body { padding: 10px 12px; display: flex; gap: 10px; flex: 1; background: #f8fafc; }
+        .design-2 .id-photo { border-radius: 8px; border: 2px solid #065f46; }
+        .design-2 .info-grid { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
+        .design-2 .id-name { font-size: 0.95rem; font-weight: 800; color: #065f46; grid-column: span 2; margin-bottom: 2px; text-transform: uppercase; border-bottom: 1px solid #cbd5e1; padding-bottom: 2px;}
+        .design-2 .footer { position: absolute; bottom: 10px; right: 15px; width: 120px; }
+
+        /* DESIGN 3: Minimalist Corporate Vertical */
+        .design-3 { width: 230px; height: 360px; border-top: 8px solid #0f172a; }
+        .design-3 .header { padding: 10px 10px 2px 10px; }
+        .design-3 .id-brgy-name { color: #0f172a; }
+        .design-3 .id-lgu-text { color: #475569; }
+        .design-3 .photo-container { padding: 5px 15px; display: flex; justify-content: flex-start; }
+        .design-3 .id-photo { border-radius: 8px; width: 75px; height: 75px; border: none; box-shadow: none; border-left: 4px solid #0f172a; }
+        .design-3 .body { padding: 5px 15px; }
+        .design-3 .id-name { font-size: 1rem; font-weight: 800; margin-bottom: 8px; text-transform: uppercase; }
+        .design-3 .info-row { display: flex; justify-content: space-between; margin-bottom: 3px; border-bottom: 1px solid #f1f5f9; padding-bottom: 2px;}
+        .design-3 .id-label { margin-bottom: 0; }
+        .design-3 .id-value { margin-bottom: 0; font-size: 0.65rem; }
+        .design-3 .footer { background: #f8fafc; position: absolute; bottom: 0; width: 100%; padding: 10px; border-top: 1px solid #e2e8f0; }
+
+        /* DESIGN 4: Premium Official Gold/Red Horizontal */
+        .design-4 { width: 360px; height: 230px; border: 2px solid #b91c1c; border-radius: 12px; }
+        .design-4 .inner-border { border: 1px solid #f59e0b; height: 100%; border-radius: 10px; display: flex; padding: 2px; background: linear-gradient(to right, rgba(254,226,226,0.3), rgba(255,255,255,1)); }
+        .design-4 .left-col { width: 100px; background: #b91c1c; border-radius: 8px; display: flex; flex-direction: column; align-items: center; padding: 10px 5px; color: white; }
+        .design-4 .right-col { flex: 1; padding: 8px 12px; position: relative; }
+        .design-4 .id-photo { border-radius: 5px; width: 75px; height: 75px; border-color: #f59e0b; margin-bottom: 6px; }
+        .design-4 .id-title { font-size: 0.55rem; text-align: center; font-weight: 700; letter-spacing: 1px; color: #fca5a5; }
+        .design-4 .header-text { border-bottom: 2px solid #f59e0b; padding-bottom: 4px; margin-bottom: 6px; }
+        .design-4 .id-lgu-text { color: #64748b; }
+        .design-4 .id-brgy-name { color: #b91c1c; font-size: 0.9rem; }
+        .design-4 .id-name { font-size: 1rem; font-weight: 800; color: #0f172a; text-transform: uppercase; margin-bottom: 6px; }
+        .design-4 .footer { position: absolute; bottom: 8px; right: 12px; width: 130px; }
+
+        /* DESIGN 5: Corporate Horizontal (Navy/Gold) */
+        .design-5 { width: 360px; height: 230px; border-top: 15px solid #1e3a8a; border-bottom: 5px solid #f59e0b; background: #f8fafc; }
+        .design-5 .header-text-top { position: absolute; top: 2px; left: 15px; color: white; font-size: 0.5rem; font-weight: bold; letter-spacing: 1px; }
+        .design-5 .content-wrap { display: flex; padding: 10px 15px; gap: 12px; align-items: center; height: 100%; }
+        .design-5 .id-photo { border-radius: 6px; border: 2px solid #1e3a8a; }
+        .design-5 .info-col { flex: 1; }
+        .design-5 .id-name { font-size: 1rem; font-weight: 800; color: #1e3a8a; margin-bottom: 6px; text-transform: uppercase; }
+
+        /* DESIGN 6: Civic Horizontal (Blue/Yellow Banner) */
+        .design-6 { width: 360px; height: 230px; background: #ffffff; display: flex; flex-direction: column; border: 1px solid #0ea5e9; }
+        .design-6 .top-banner { background: #0ea5e9; padding: 4px; text-align: center; color: white; border-bottom: 3px solid #facc15; }
+        .design-6 .top-banner .id-lgu-text, .design-6 .top-banner .id-brgy-name { color: white; }
+        .design-6 .main-area { display: flex; padding: 10px 12px; gap: 12px; flex: 1; align-items: center; }
+        .design-6 .id-photo { border-radius: 50%; border: 3px solid #0ea5e9; }
+        .design-6 .id-name { font-size: 0.9rem; font-weight: 800; text-transform: uppercase; }
+        
+        /* DESIGN 7: Vertical Dark Mode (Black/Gold) */
+        .design-7 { width: 230px; height: 360px; background: #111827; color: white; border: 2px solid #f59e0b; }
+        .design-7 .header { text-align: center; padding: 10px; border-bottom: 2px solid #f59e0b; }
+        .design-7 .id-lgu-text { color: #d1d5db; }
+        .design-7 .id-brgy-name { color: #f59e0b; }
+        .design-7 .photo-container { display: flex; justify-content: center; margin: 10px 0; }
+        .design-7 .id-photo { border: 3px solid #f59e0b; border-radius: 8px; }
+        .design-7 .body { padding: 0 15px; text-align: center; }
+        .design-7 .id-name { font-size: 1rem; font-weight: 800; color: white; text-transform: uppercase; margin-bottom: 4px; }
+        .design-7 .id-label { color: #9ca3af; }
+        .design-7 .id-value { color: #e5e7eb; }
+        .design-7 .footer { position: absolute; bottom: 15px; width: 100%; text-align: center; }
+        .design-7 .id-sig-line { border-bottom: 1px solid #f59e0b; width: 60%; margin: 0 auto; }
+        .design-7 .id-sig-label { color: #d1d5db; margin-top: 3px; }
+
+        /* DESIGN 8: Horizontal Clean Red/White */
+        .design-8 { width: 360px; height: 230px; background: white; border-left: 20px solid #dc2626; display: flex; align-items: center; padding: 10px; }
+        .design-8 .left-col { flex: 0 0 90px; text-align: center; }
+        .design-8 .id-photo { border-radius: 50%; border: 3px solid #dc2626; }
+        .design-8 .right-col { flex: 1; padding-left: 10px; }
+        .design-8 .header-text { margin-bottom: 6px; border-bottom: 1px solid #fca5a5; padding-bottom: 4px; }
+        .design-8 .id-brgy-name { color: #dc2626; font-size: 0.95rem; }
+        .design-8 .id-name { font-size: 1.05rem; color: #111827; font-weight: 800; text-transform: uppercase; margin-bottom: 4px; }
+        
+        /* DESIGN 9: Horizontal Gradient (Purple/Pink) */
+        .design-9 { width: 360px; height: 230px; background: linear-gradient(135deg, #6d28d9, #db2777); color: white; padding: 10px; position: relative; overflow: hidden; border: none; }
+        .design-9::before { content: ''; position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: rgba(255,255,255,0.1); border-radius: 50%; }
+        .design-9 .header-text { text-align: left; margin-bottom: 6px; position: relative; z-index: 1;}
+        .design-9 .id-brgy-name { color: white; font-size: 1.05rem; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); }
+        .design-9 .id-lgu-text { color: #e5e7eb; }
+        .design-9 .content { display: flex; gap: 15px; position: relative; z-index: 1;}
+        .design-9 .id-photo { border: 2px solid white; border-radius: 8px; width: 75px; height: 75px; }
+        .design-9 .id-name { font-size: 1rem; font-weight: 800; margin-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,0.3); padding-bottom: 4px; text-transform: uppercase;}
+        .design-9 .id-label { color: #f3f4f6; }
+        .design-9 .id-value { color: white; }
+        .design-9 .footer { position: absolute; bottom: 10px; right: 15px; width: 100px; z-index: 1;}
+        .design-9 .id-sig-line { border-bottom: 1px solid white; }
+        .design-9 .id-sig-label { color: white; }
+
+        /* DESIGN 10: Vertical Eco-Friendly Green */
+        .design-10 { width: 230px; height: 360px; border: 2px solid #10b981; border-radius: 15px; background: #ecfdf5; }
+        .design-10 .header { background: #10b981; color: white; padding: 10px; text-align: center; border-radius: 12px 12px 0 0; }
+        .design-10 .id-lgu-text, .design-10 .id-brgy-name { color: white; }
+        .design-10 .photo-container { display: flex; justify-content: center; margin: 10px 0; }
+        .design-10 .id-photo { border: 3px solid #059669; border-radius: 50%; }
+        .design-10 .body { padding: 0 15px; text-align: center; }
+        .design-10 .id-name { font-size: 1rem; font-weight: 800; color: #065f46; margin-bottom: 4px; text-transform: uppercase; }
+        .design-10 .id-label { color: #047857; }
+        .design-10 .id-value { color: #064e3b; }
+        .design-10 .footer { position: absolute; bottom: 15px; width: 100%; text-align: center; }
+        .design-10 .id-sig-line { border-bottom: 1px solid #059669; width: 60%; margin: 0 auto; }
+
+        /* DESIGN 11: Horizontal Tech Dark/Blue */
+        .design-11 { width: 360px; height: 230px; background: #1f2937; color: #f3f4f6; border-left: 10px solid #3b82f6; display: flex; align-items: center; padding: 10px; border-radius: 8px; }
+        .design-11 .left-col { flex: 0 0 80px; }
+        .design-11 .id-photo { border-radius: 8px; border: 2px solid #3b82f6; box-shadow: 0 0 10px rgba(59,130,246,0.5); }
+        .design-11 .right-col { flex: 1; padding-left: 10px; }
+        .design-11 .header-text { margin-bottom: 6px; border-bottom: 1px solid #374151; padding-bottom: 4px; }
+        .design-11 .id-lgu-text { color: #9ca3af; text-align: left; }
+        .design-11 .id-brgy-name { color: #60a5fa; font-size: 0.95rem; text-align: left; }
+        .design-11 .id-name { font-size: 1.05rem; color: #ffffff; font-weight: 800; margin-bottom: 4px; letter-spacing: 1px; text-transform: uppercase; }
+        .design-11 .id-label { color: #6b7280; }
+        .design-11 .id-value { color: #e5e7eb; }
+
+        /* DESIGN 12: Vertical Minimalist Elegance */
+        .design-12 { width: 230px; height: 360px; background: #ffffff; border: 1px solid #e5e7eb; box-shadow: inset 0 0 0 6px #f8fafc; border-radius: 4px; }
+        .design-12 .header { padding: 15px 10px 5px 10px; text-align: center; }
+        .design-12 .id-lgu-text { color: #64748b; font-weight: 500; letter-spacing: 1px; }
+        .design-12 .id-brgy-name { color: #0f172a; font-family: 'DM Sans', serif; font-weight: 700; letter-spacing: 1px; }
+        .design-12 .photo-container { display: flex; justify-content: center; margin: 8px 0; }
+        .design-12 .id-photo { border: 1px solid #cbd5e1; border-radius: 4px; padding: 2px; background: white; }
+        .design-12 .body { padding: 0 20px; text-align: center; }
+        .design-12 .id-name { font-size: 1rem; font-weight: 700; color: #111827; margin-bottom: 6px; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; }
+        .design-12 .id-label { color: #9ca3af; font-size: 0.45rem; }
+        .design-12 .id-value { color: #334155; font-size: 0.65rem; font-weight: 600; }
+        .design-12 .footer { position: absolute; bottom: 20px; width: 100%; text-align: center; }
+        .design-12 .id-sig-line { border-bottom: 1px solid #94a3b8; width: 70%; margin: 0 auto; }
+
+        /* DESIGN 13: Horizontal Vibrant Orange/Yellow */
+        .design-13 { width: 360px; height: 230px; background: linear-gradient(135deg, #f59e0b, #ea580c); color: white; display: flex; flex-direction: column; border-radius: 10px; }
+        .design-13 .header { padding: 8px 12px; border-bottom: 2px solid rgba(255,255,255,0.2); display: flex; justify-content: space-between; align-items: center; }
+        .design-13 .header-text { text-align: left; }
+        .design-13 .id-lgu-text { color: #fef3c7; }
+        .design-13 .id-brgy-name { color: white; font-size: 0.95rem; }
+        .design-13 .id-title { font-size: 0.55rem; font-weight: 800; letter-spacing: 1px; background: white; color: #ea580c; padding: 2px 6px; border-radius: 12px; }
+        .design-13 .body { padding: 10px 12px; display: flex; gap: 12px; flex: 1; align-items: center; }
+        .design-13 .id-photo { border-radius: 8px; border: 2px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .design-13 .info-col { flex: 1; }
+        .design-13 .id-name { font-size: 1.05rem; font-weight: 800; text-transform: uppercase; margin-bottom: 6px; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); }
+        .design-13 .id-label { color: #fef3c7; }
+        .design-13 .id-value { color: white; }
+
+        /* DESIGN 14: Vertical Classic Government */
+        .design-14 { width: 230px; height: 360px; background: #f8fafc; border: 1px solid #cbd5e1; border-top: 25px solid #0284c7; }
+        .design-14 .header { padding: 8px; text-align: center; border-bottom: 2px solid #0284c7; background: white; }
+        .design-14 .id-lgu-text { color: #475569; }
+        .design-14 .id-brgy-name { color: #0284c7; font-size: 0.85rem; }
+        .design-14 .photo-container { text-align: center; margin: 10px 0; }
+        .design-14 .id-photo { border: 2px solid #0284c7; padding: 2px; background: white; }
+        .design-14 .body { padding: 0 15px; }
+        .design-14 .id-name { font-size: 1rem; font-weight: 800; color: #0f172a; text-align: center; text-transform: uppercase; margin-bottom: 6px; background: #e0f2fe; padding: 4px; }
+        .design-14 .id-label { color: #64748b; margin-bottom: 1px; }
+        .design-14 .id-value { color: #1e293b; border-bottom: 1px solid #cbd5e1; padding-bottom: 2px; margin-bottom: 4px; }
+        .design-14 .footer { position: absolute; bottom: 10px; width: 100%; text-align: center; }
+        .design-14 .id-sig-line { border-bottom: 1px solid #000; width: 75%; margin: 0 auto; }
+    </style>
+</head>
+<body>
+
+    <div class="top-nav">
+        <div style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 1.2rem;">
+            <i class="fas fa-id-card text-primary me-2"></i> Barangay ID Generation
+        </div>
+        <a href="#" onclick="goBackToIndex(); return false;"><i class="fas fa-arrow-left me-1"></i> Back to Index</a>
+    </div>
+
+    <div id="tabs-nav" class="px-4 pt-3 pb-0" style="max-width: 1400px; margin: 0 auto;">
+        <ul class="nav nav-tabs" style="border-bottom: 2px solid var(--border-color);">
+            <li class="nav-item">
+                <a class="nav-link active fw-bold" id="tab-gen" href="#" onclick="switchTab('gen')" style="color: var(--accent-blue); cursor: pointer;">ID Generator</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link fw-bold text-muted" id="tab-rec" href="#" onclick="switchTab('rec')" style="cursor: pointer;">ID Records Log</a>
+            </li>
+        </ul>
+    </div>
+
+    <div id="view-gen" class="main-container">
+        <div class="controls-card">
+            <h2 class="page-title">Generate ID</h2>
+            
+            <div class="mb-3">
+                <label class="form-label fw-bold small text-muted text-uppercase">1. Search Resident</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
+                    <input type="text" id="search-input" class="form-control" placeholder="Type name..." onkeyup="filterResidents()">
+                </div>
+                <div id="resident-list"></div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold small text-muted text-uppercase">2. Resident Photo</label>
+                <input type="file" id="photo-upload" class="form-control" accept="image/*" onchange="loadPhoto(event)">
+                <div class="form-text" style="font-size: 0.75rem;">Upload a 1x1 ratio photo for best results.</div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold small text-muted text-uppercase">3. Select Template</label>
+                <select id="template-select" class="form-select" onchange="renderID()">
+                    <option value="1">Design 1: Vertical Modern Blue</option>
+                    <option value="2">Design 2: Horizontal Classic Green</option>
+                    <option value="3">Design 3: Vertical Minimalist Corporate</option>
+                    <option value="4">Design 4: Horizontal Premium Official</option>
+                    <option value="5">Design 5: Horizontal Corporate (Navy/Gold)</option>
+                    <option value="6">Design 6: Horizontal Civic (Blue/Yellow)</option>
+                    <option value="7">Design 7: Vertical Dark Mode (Black/Gold)</option>
+                    <option value="8">Design 8: Horizontal Minimalist (Red/White)</option>
+                    <option value="9">Design 9: Horizontal Modern Gradient</option>
+                    <option value="10">Design 10: Vertical Eco-Friendly Green</option>
+                    <option value="11">Design 11: Horizontal Tech Dark/Blue</option>
+                    <option value="12">Design 12: Vertical Minimalist Elegance</option>
+                    <option value="13">Design 13: Horizontal Vibrant Orange/Yellow</option>
+                    <option value="14">Design 14: Vertical Classic Government</option>
+                </select>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold small text-muted text-uppercase">4. ID Header Settings</label>
+                <div class="form-check form-switch mb-2">
+                    <input class="form-check-input" type="checkbox" id="toggle-city" onchange="renderID()">
+                    <label class="form-check-label" style="font-size: 0.85rem;" for="toggle-city">City (Instead of Municipality)</label>
+                </div>
+                <div class="form-check form-switch mb-2">
+                    <input class="form-check-input" type="checkbox" id="toggle-independent" onchange="renderID()">
+                    <label class="form-check-label" style="font-size: 0.85rem;" for="toggle-independent">Independent City (Remove Province)</label>
+                </div>
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" id="toggle-barmm" onchange="renderID()">
+                    <label class="form-check-label" style="font-size: 0.85rem;" for="toggle-barmm">BARMM (Add Autonomous Region)</label>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 mt-4">
+                <button id="btn-save-id" class="btn btn-success w-100 py-2 fw-bold" onclick="saveIDRecord()">
+                    <i class="fas fa-save me-2"></i> Save Record
+                </button>
+                <button id="btn-print-id" class="btn btn-primary w-100 py-2 fw-bold" onclick="printIDCard()" disabled>
+                    <i class="fas fa-print me-2"></i> Print ID
+                </button>
+            </div>
+            <div class="form-text mt-2 text-center" style="font-size: 0.7rem;"><i class="fas fa-info-circle"></i> You must save the ID record before printing.</div>
+        </div>
+
+        <div class="preview-area">
+            <h5 class="text-muted mb-4 no-print" style="font-family: 'Plus Jakarta Sans';"><i class="fas fa-eye me-2"></i>Live Preview</h5>
+            <div id="print-section">
+                <div id="id-front-preview"></div>
+                <div id="id-back-preview"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-rec" class="d-none" style="padding: 32px; max-width: 1400px; margin: 0 auto;">
+        <div class="controls-card" style="width: 100%;">
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                <h2 class="page-title mb-0">Issued ID Records</h2>
+                <div class="input-group" style="width: 320px;">
+                    <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
+                    <input type="text" id="search-records" class="form-control" placeholder="SEARCH RECORDS..." onkeyup="debouncedLoadRecords()">
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Resident Name</th>
+                            <th>Date Issued</th>
+                            <th>Template Used</th>
+                            <th class="text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="records-table-body">
+                        </tbody>
+                </table>
+            </div>
+            
+            <div class="pagination-controls" id="logs-pagination">
+                <button class="btn btn-outline-secondary" id="btn-logs-prev" onclick="logsPrevPage()" disabled><i class="fas fa-chevron-left"></i> Previous</button>
+                <span class="page-info" id="logs-page-info">Page 1 of 1</span>
+                <button class="btn btn-outline-secondary" id="btn-logs-next" onclick="logsNextPage()" disabled>Next <i class="fas fa-chevron-right"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="custom-alert-modal" tabindex="-1">
+        <div class="modal-dialog modal-sm modal-dialog-centered">
+            <div class="modal-content text-center p-3">
+                <div class="mb-2"><i class="fas fa-info-circle fa-2x text-primary"></i></div>
+                <h6 class="fw-bold mb-2" id="custom-alert-title">System Alert</h6>
+                <p class="small text-muted mb-3" id="custom-alert-msg"></p>
+                <button type="button" class="btn btn-sm btn-primary w-100" data-bs-dismiss="modal">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentFocus = -1; 
+
+        function goBackToIndex() {
+            sessionStorage.setItem('rbis_bypass_security', 'true');
+            sessionStorage.setItem('rbi_auth', 'true');
+            sessionStorage.setItem('rbi_security_passed', 'true');
+            localStorage.setItem('bypassSecurity', 'true');
+            setTimeout(() => {
+                window.location.href = 'index.html?bypass=true&auth=1';
+            }, 20); 
+        }
+
+        function showSystemAlert(message, title = "System Notification") {
+            document.getElementById('custom-alert-msg').innerText = message;
+            document.getElementById('custom-alert-title').innerText = title;
+            new bootstrap.Modal(document.getElementById('custom-alert-modal')).show();
+        }
+
+        // Initialize Dexie to connect to the main DB & ID Logs
+        const iDB = new Dexie('RBI_DB_2026');
+        iDB.version(1).stores({
+            residents: 'id, last, hh_name',
+            households: 'name'
+        });
+        iDB.version(2).stores({
+            residents: 'id, last, hh_name',
+            households: 'name',
+            id_logs: '++id, residentId, name, dateIssued, template'
+        });
+
+        let residents = [];
+        let selectedResident = null;
+        let currentPhotoUrl = 'https://via.placeholder.com/100x100?text=PHOTO'; 
+        
+        let currentLogs = [];
+        let logsPage = 0;
+        const logsPerPage = 10;
+        
+        const settings = JSON.parse(localStorage.getItem('rbi_settings')) || {
+            barangay: 'UNKNOWN',
+            municipality: 'UNKNOWN',
+            province: 'UNKNOWN',
+            captain: 'CAPTAIN NAME',
+            secretary: 'SECRETARY NAME',
+            lguType: 'MUNICIPALITY'
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(async () => {
+                const allRes = await iDB.residents.toArray();
+                residents = allRes.filter(r => !r.isDead).sort((a,b) => a.last.localeCompare(b.last));
+                renderResidentList([]);
+            }, 20); 
+
+            const searchInput = document.getElementById('search-input');
+            searchInput.addEventListener('keydown', function(e) {
+                let list = document.getElementById('resident-list');
+                let items = list.getElementsByClassName('resident-item');
+                if (!items.length) return;
+
+                if (e.key === 'ArrowDown') {
+                    currentFocus++;
+                    addActive(items);
+                    e.preventDefault(); 
+                } else if (e.key === 'ArrowUp') {
+                    currentFocus--;
+                    addActive(items);
+                    e.preventDefault();
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (currentFocus > -1) {
+                        if (items[currentFocus]) items[currentFocus].click();
+                    }
+                }
+            });
+        });
+
+        // TAB SWITCHER FUNCTION
+        function switchTab(tab) {
+            if(tab === 'gen') {
+                document.getElementById('view-gen').classList.remove('d-none');
+                document.getElementById('view-rec').classList.add('d-none');
+                document.getElementById('tab-gen').classList.add('active');
+                document.getElementById('tab-gen').style.color = 'var(--accent-blue)';
+                document.getElementById('tab-rec').classList.remove('active');
+                document.getElementById('tab-rec').style.color = '';
+                document.getElementById('tab-rec').classList.add('text-muted');
+            } else {
+                document.getElementById('view-gen').classList.add('d-none');
+                document.getElementById('view-rec').classList.remove('d-none');
+                document.getElementById('tab-rec').classList.add('active');
+                document.getElementById('tab-rec').style.color = 'var(--accent-blue)';
+                document.getElementById('tab-rec').classList.remove('text-muted');
+                document.getElementById('tab-gen').classList.remove('active');
+                document.getElementById('tab-gen').style.color = '';
+                document.getElementById('tab-gen').classList.add('text-muted');
+                loadRecords(); 
+            }
+        }
+
+        // SAVE ID RECORD BEFORE PRINTING
+        async function saveIDRecord() {
+            if(!selectedResident) {
+                showSystemAlert("Please select a resident first.");
+                return;
+            }
+
+            const templateSelect = document.getElementById('template-select');
+            const templateName = templateSelect.options[templateSelect.selectedIndex].text;
+
+            const logEntry = {
+                residentId: selectedResident.id,
+                name: `${selectedResident.last.toUpperCase()}, ${selectedResident.first.toUpperCase()} ${(selectedResident.suffix || '').toUpperCase()}`.trim(),
+                dateIssued: new Date().toLocaleString(),
+                template: templateName
+            };
+
+            try {
+                await iDB.id_logs.add(logEntry);
+                showSystemAlert("ID Record successfully saved! You can now print the ID.", "Success");
+                // Enable Print Button
+                document.getElementById('btn-print-id').disabled = false;
+            } catch(e) {
+                console.error("Error saving log:", e);
+                showSystemAlert("Error saving record to database.", "Error");
+            }
+        }
+
+        // PRINT FUNCTION
+        function printIDCard() {
+            window.print();
+        }
+
+        // Debounce for records search
+        let recSearchTimer;
+        function debouncedLoadRecords() {
+            clearTimeout(recSearchTimer);
+            recSearchTimer = setTimeout(() => {
+                loadRecords();
+            }, 200);
+        }
+
+        // LOAD RECORDS FUNCTION (IndexedDB)
+        async function loadRecords() {
+            const tbody = document.getElementById('records-table-body');
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin"></i> Loading records...</td></tr>';
+            
+            try {
+                let logs = await iDB.id_logs.reverse().toArray(); 
+                const q = document.getElementById('search-records').value.toUpperCase().trim();
+                
+                if(q) {
+                    logs = logs.filter(l => l.name.includes(q) || l.dateIssued.toUpperCase().includes(q));
+                }
+
+                currentLogs = logs;
+                logsPage = 0;
+                renderLogsTable();
+            } catch(e) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error loading records.</td></tr>';
+            }
+        }
+
+        // Render the paginated records table
+        function renderLogsTable() {
+            const tbody = document.getElementById('records-table-body');
+            tbody.innerHTML = '';
+            
+            if(currentLogs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">No ID records found.</td></tr>';
+                document.getElementById('logs-page-info').innerText = `Page 1 of 1 (0 total)`;
+                document.getElementById('btn-logs-prev').disabled = true;
+                document.getElementById('btn-logs-next').disabled = true;
+                return;
+            }
+
+            const totalPages = Math.ceil(currentLogs.length / logsPerPage);
+            const start = logsPage * logsPerPage;
+            const end = Math.min(start + logsPerPage, currentLogs.length);
+            const pageData = currentLogs.slice(start, end);
+
+            pageData.forEach((log, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="text-muted">${start + index + 1}</td>
+                    <td class="fw-bold">${log.name}</td>
+                    <td>${log.dateIssued}</td>
+                    <td><span class="badge bg-light text-dark border">${log.template}</span></td>
+                    <td class="text-end" style="white-space: nowrap;">
+                        <button class="btn btn-sm btn-outline-primary me-1" onclick="reprintLog(${log.id})" title="Print Record"><i class="fas fa-print"></i></button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteRecordLog(${log.id})" title="Delete Record"><i class="fas fa-trash"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('logs-page-info').innerText = `Page ${logsPage + 1} of ${totalPages} (${currentLogs.length} total)`;
+            document.getElementById('btn-logs-prev').disabled = (logsPage === 0);
+            document.getElementById('btn-logs-next').disabled = (end >= currentLogs.length);
+        }
+
+        function logsPrevPage() {
+            if (logsPage > 0) {
+                logsPage--;
+                renderLogsTable();
+            }
+        }
+
+        function logsNextPage() {
+            if ((logsPage + 1) * logsPerPage < currentLogs.length) {
+                logsPage++;
+                renderLogsTable();
+            }
+        }
+
+        // DELETE RECORD FUNCTION
+        async function deleteRecordLog(id) {
+            if(confirm("Are you sure you want to delete this issued ID record?")) {
+                await iDB.id_logs.delete(id);
+                loadRecords();
+            }
+        }
+
+        // REPRINT RECORD FUNCTION
+        async function reprintLog(logId) {
+            try {
+                const log = await iDB.id_logs.get(logId);
+                if (!log) return showSystemAlert("Record not found.", "Error");
+
+                const r = await iDB.residents.get(log.residentId);
+                if (!r) return showSystemAlert("Resident data no longer exists.", "Error");
+
+                selectedResident = r;
+                
+                // Match template
+                const select = document.getElementById('template-select');
+                for (let i = 0; i < select.options.length; i++) {
+                    if (select.options[i].text === log.template) {
+                        select.selectedIndex = i;
+                        break;
+                    }
+                }
+
+                // Photo is not saved in DB, so it resets to placeholder
+                currentPhotoUrl = 'https://via.placeholder.com/100x100?text=PHOTO';
+                document.getElementById('photo-upload').value = '';
+
+                // Switch to the Gen Tab to show the preview
+                switchTab('gen');
+                
+                // Render the ID
+                renderID();
+
+                // Small delay to ensure rendering is complete before calling print
+                setTimeout(() => {
+                    window.print();
+                }, 300);
+
+            } catch (e) {
+                console.error("Error reprinting:", e);
+                showSystemAlert("An error occurred while trying to print.", "Error");
+            }
+        }
+
+        function addActive(items) {
+            if (!items) return false;
+            removeActive(items);
+            if (currentFocus >= items.length) currentFocus = 0;
+            if (currentFocus < 0) currentFocus = (items.length - 1);
+            items[currentFocus].classList.add("active");
+            items[currentFocus].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function removeActive(items) {
+            for (let i = 0; i < items.length; i++) {
+                items[i].classList.remove("active");
+            }
+        }
+
+        function renderResidentList(list) {
+            const container = document.getElementById('resident-list');
+            container.innerHTML = '';
+            
+            const q = document.getElementById('search-input').value.trim();
+            if (!q) {
+                container.innerHTML = '<div class="p-3 text-muted small text-center"><i class="fas fa-search mb-2" style="font-size:1.5rem; opacity:0.5;"></i><br>Type a name to search residents.</div>';
+                return;
+            }
+
+            if (list.length === 0) {
+                container.innerHTML = '<div class="p-3 text-muted small text-center">No residents found.</div>';
+                return;
+            }
+            
+            list.slice(0, 30).forEach(r => {
+                const div = document.createElement('div');
+                div.className = 'resident-item';
+                div.innerHTML = `<strong>${r.last}, ${r.first} ${r.suffix||''}</strong><br><span class="text-muted" style="font-size:0.7rem;">${r.address || 'No Address'}</span>`;
+                div.onclick = () => selectResident(r, div);
+                container.appendChild(div);
+            });
+        }
+
+        let searchTimer;
+        function filterResidents() {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(() => {
+                const q = document.getElementById('search-input').value.toLowerCase().trim();
+                currentFocus = -1; 
+                
+                if (!q) {
+                    renderResidentList([]);
+                    return;
+                }
+                const filtered = residents.filter(r => 
+                    (r.last + ' ' + r.first).toLowerCase().includes(q)
+                );
+                renderResidentList(filtered);
+            }, 200);
+        }
+
+        function selectResident(r, element) {
+            document.querySelectorAll('.resident-item').forEach(el => el.classList.remove('active'));
+            if(element) element.classList.add('active');
+            
+            selectedResident = r;
+            currentPhotoUrl = 'https://via.placeholder.com/100x100?text=PHOTO';
+            document.getElementById('photo-upload').value = '';
+            
+            // Disable print button until saved
+            const btnPrint = document.getElementById('btn-print-id');
+            if(btnPrint) btnPrint.disabled = true;
+            
+            renderID();
+        }
+
+        function loadPhoto(event) {
+            const file = event.target.files[0];
+            if (file) {
+                currentPhotoUrl = URL.createObjectURL(file);
+                
+                // Disable print button until saved
+                const btnPrint = document.getElementById('btn-print-id');
+                if(btnPrint) btnPrint.disabled = true;
+
+                renderID();
+            }
+        }
+
+        function calculateAge(bdate) {
+            if(!bdate) return '-';
+            const birth = new Date(bdate);
+            const now = new Date();
+            let years = now.getFullYear() - birth.getFullYear();
+            if(now.getMonth() < birth.getMonth() || (now.getMonth() === birth.getMonth() && now.getDate() < birth.getDate())) {
+                years--;
+            }
+            return years;
+        }
+
+        function renderID() {
+            // When ID settings/templates change, require saving again before printing to ensure log accuracy
+            const btnPrint = document.getElementById('btn-print-id');
+            if(btnPrint) btnPrint.disabled = true;
+
+            if (!selectedResident) return;
+            
+            const r = selectedResident;
+            const tpl = document.getElementById('template-select').value;
+            const frontContainer = document.getElementById('id-front-preview');
+            const backContainer = document.getElementById('id-back-preview');
+            
+            const fullName = `${r.first} ${r.middle ? r.middle[0] + '.' : ''} ${r.last} ${r.suffix || ''}`.trim();
+            const address = `${r.address ? r.address + ', ' : ''}Brgy. ${settings.barangay}, ${settings.municipality}`;
+            const age = calculateAge(r.bdate);
+
+            const isIndependent = document.getElementById('toggle-independent').checked;
+            const isBarmm = document.getElementById('toggle-barmm').checked;
+            const isCity = document.getElementById('toggle-city').checked;
+            
+            let headerParts = ['Republic of the Philippines'];
+            if (isBarmm) {
+                headerParts.push('Autonomous Region in Muslim Mindanao');
+            }
+            if (!isIndependent && settings.province) {
+                headerParts.push(`Province of ${settings.province}`);
+            }
+            
+            const lguTypeStr = isCity ? 'City' : 'Municipality';
+            headerParts.push(`${lguTypeStr} of ${settings.municipality}`);
+
+            const lguHeader = headerParts.join('<br>');
+            const lguHeaderInline = headerParts.join(', ');
+            const lguHeaderBanner = headerParts.join(' • ');
+            
+            let frontHTML = '';
+
+            if (tpl === '1') {
+                frontHTML = `
+                <div class="id-card design-1">
+                    <div class="header">
+                        <div class="id-lgu-text">${lguHeader}</div>
+                        <div class="id-brgy-name">BRGY. ${settings.barangay}</div>
+                    </div>
+                    <div class="photo-container"><img src="${currentPhotoUrl}" class="id-photo"></div>
+                    <div class="id-title">RESIDENT IDENTIFICATION</div>
+                    <div class="body">
+                        <div class="id-name">${fullName}</div>
+                        <div class="id-label">Address</div>
+                        <div class="id-value" style="font-size:0.6rem;">${address}</div>
+                        <div style="display:flex; justify-content:space-between; margin-top:8px;">
+                            <div style="text-align:left;">
+                                <div class="id-label">Birthdate</div>
+                                <div class="id-value">${r.bdate || '-'}</div>
+                            </div>
+                            <div style="text-align:right;">
+                                <div class="id-label">Blood Type</div>
+                                <div class="id-value text-danger">___</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="footer">
+                        <div class="id-sig-line"></div>
+                        <div class="id-sig-label">Signature</div>
+                    </div>
+                </div>`;
+            } 
+            else if (tpl === '2') {
+                frontHTML = `
+                <div class="id-card design-2">
+                    <div class="header">
+                        <div class="header-text">
+                            <div class="id-lgu-text">${lguHeader}</div>
+                            <div class="id-brgy-name">BARANGAY ${settings.barangay}</div>
+                        </div>
+                    </div>
+                    <div class="body">
+                        <div><img src="${currentPhotoUrl}" class="id-photo"><div class="id-title" style="text-align:center; font-size:0.5rem; font-weight:700; margin-top:4px; color:#065f46;">RESIDENT ID</div></div>
+                        <div class="info-grid">
+                            <div class="id-name">${fullName}</div>
+                            <div style="grid-column:span 2;">
+                                <div class="id-label">Address</div>
+                                <div class="id-value" style="font-size:0.6rem;">${address}</div>
+                            </div>
+                            <div>
+                                <div class="id-label">Date of Birth</div>
+                                <div class="id-value">${r.bdate || '-'}</div>
+                            </div>
+                            <div>
+                                <div class="id-label">Sex / Civil Status</div>
+                                <div class="id-value">${r.sex ? r.sex.substring(0,1) : '-'} / ${r.civil ? r.civil.substring(0,1) : '-'}</div>
+                            </div>
+                            <div>
+                                <div class="id-label">PhilSys NO.</div>
+                                <div class="id-value">${r.philsys || '-'}</div>
+                            </div>
+                            <div>
+                                <div class="id-label">Contact No.</div>
+                                <div class="id-value">${r.contact || '-'}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="footer">
+                        <div class="id-sig-line"></div>
+                        <div class="id-sig-label">Resident Signature</div>
+                    </div>
+                </div>`;
+            }
+            else if (tpl === '3') {
+                frontHTML = `
+                <div class="id-card design-3">
+                    <div class="header">
+                        <div class="id-lgu-text" style="text-align:left;">${lguHeaderInline}</div>
+                        <div class="id-brgy-name" style="text-align:left;">BRGY. ${settings.barangay}</div>
+                    </div>
+                    <div class="photo-container"><img src="${currentPhotoUrl}" class="id-photo"></div>
+                    <div class="body">
+                        <div class="id-name">${fullName}</div>
+                        <div class="info-row"><span class="id-label">DOB</span><span class="id-value">${r.bdate || '-'}</span></div>
+                        <div class="info-row"><span class="id-label">SEX</span><span class="id-value">${r.sex || '-'}</span></div>
+                        <div class="info-row"><span class="id-label">CIVIL</span><span class="id-value">${r.civil || '-'}</span></div>
+                        <div class="info-row" style="border:none;"><span class="id-label">ADDRESS</span></div>
+                        <div class="id-value" style="font-size:0.6rem; text-align:right;">${address}</div>
+                    </div>
+                    <div class="footer">
+                        <div class="id-sig-line"></div>
+                        <div class="id-sig-label">Signature</div>
+                    </div>
+                </div>`;
+            }
+            else if (tpl === '4') {
+                frontHTML = `
+                <div class="id-card design-4">
+                    <div class="inner-border">
+                        <div class="left-col">
+                            <img src="${currentPhotoUrl}" class="id-photo">
+                            <div class="id-title">RESIDENT</div>
+                            <div class="id-title">IDENTIFICATION</div>
+                        </div>
+                        <div class="right-col">
+                            <div class="header-text">
+                                <div class="id-lgu-text" style="text-align:left; font-size:0.45rem;">${lguHeader}</div>
+                                <div class="id-brgy-name" style="text-align:left;">BRGY. ${settings.barangay}</div>
+                            </div>
+                            <div class="id-name">${fullName}</div>
+                            <div style="display:flex; gap:10px; margin-bottom:4px;">
+                                <div style="flex:1;"><div class="id-label">Birthdate</div><div class="id-value">${r.bdate || '-'}</div></div>
+                                <div style="flex:1;"><div class="id-label">Sex</div><div class="id-value">${r.sex || '-'}</div></div>
+                                <div style="flex:1;"><div class="id-label">Blood Type</div><div class="id-value text-danger">___</div></div>
+                            </div>
+                            <div><div class="id-label">Address</div><div class="id-value" style="font-size:0.6rem;">${address}</div></div>
+                            
+                            <div class="footer">
+                                <div class="id-sig-line"></div>
+                                <div class="id-sig-label">Signature</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            }
+            else if (tpl === '5') {
+                frontHTML = `
+                <div class="id-card design-5">
+                    <div class="header-text-top">BRGY. ${settings.barangay.toUpperCase()}</div>
+                    <div class="content-wrap">
+                        <img src="${currentPhotoUrl}" class="id-photo">
+                        <div class="info-col">
+                            <div style="font-size:1rem; font-weight:800; color:#1e3a8a; margin-bottom: 6px; text-transform:uppercase;">${fullName}</div>
+                            <div class="id-label">Resident ID No.</div><div class="id-value">2026-${r.id || 'XXXX'}</div>
+                            <div class="id-label">Address</div><div class="id-value" style="font-size:0.6rem;">${address}</div>
+                            <div class="id-label">Date of Birth</div><div class="id-value">${r.bdate || '-'}</div>
+                        </div>
+                    </div>
+                </div>`;
+            }
+            else if (tpl === '6') {
+                frontHTML = `
+                <div class="id-card design-6">
+                    <div class="top-banner">
+                        <div class="id-lgu-text">${lguHeaderBanner}</div>
+                        <div class="id-brgy-name">BRGY. ${settings.barangay} RESIDENT</div>
+                    </div>
+                    <div class="main-area">
+                        <img src="${currentPhotoUrl}" class="id-photo">
+                        <div class="info-col" style="flex:1;">
+                            <div class="id-label text-primary">Full Name</div><div class="id-value" style="font-size: 0.9rem;">${fullName}</div>
+                            <div style="display:flex; gap:10px; margin-top:5px;">
+                                <div style="flex:1;"><div class="id-label">ID Number</div><div class="id-value">2026-${r.id || 'XXXX'}</div></div>
+                                <div style="flex:1;"><div class="id-label">Blood Type</div><div class="id-value text-danger">___</div></div>
+                            </div>
+                            <div class="id-label mt-1">Address</div><div class="id-value" style="font-size:0.6rem;">${address}</div>
+                        </div>
+                    </div>
+                </div>`;
+            }
+            else if (tpl === '7') {
+                frontHTML = `
+                <div class="id-card design-7">
+                    <div class="header">
+                        <div class="id-lgu-text">${lguHeader}</div>
+                        <div class="id-brgy-name">BRGY. ${settings.barangay}</div>
+                    </div>
+                    <div class="photo-container"><img src="${currentPhotoUrl}" class="id-photo"></div>
+                    <div class="body">
+                        <div class="id-name">${fullName}</div>
+                        <div class="id-label">Address</div>
+                        <div class="id-value" style="font-size:0.6rem;">${address}</div>
+                        <div style="display:flex; justify-content:space-between; margin-top:8px;">
+                            <div style="text-align:left;">
+                                <div class="id-label">Birthdate</div>
+                                <div class="id-value">${r.bdate || '-'}</div>
+                            </div>
+                            <div style="text-align:right;">
+                                <div class="id-label">Blood Type</div>
+                                <div class="id-value text-danger">___</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="footer">
+                        <div class="id-sig-line"></div>
+                        <div class="id-sig-label">Signature</div>
+                    </div>
+                </div>`;
+            }
+            else if (tpl === '8') {
+                frontHTML = `
+                <div class="id-card design-8">
+                    <div class="left-col">
+                        <img src="${currentPhotoUrl}" class="id-photo">
+                        <div style="margin-top: 10px; font-size: 0.6rem; font-weight: bold; color: #dc2626;">RESIDENT ID</div>
+                    </div>
+                    <div class="right-col">
+                        <div class="header-text">
+                            <div class="id-lgu-text" style="text-align: left;">${lguHeader}</div>
+                            <div class="id-brgy-name" style="text-align: left;">BRGY. ${settings.barangay}</div>
+                        </div>
+                        <div class="id-name">${fullName}</div>
+                        <div style="display:flex; gap: 10px; margin-bottom: 5px;">
+                            <div><div class="id-label">DOB</div><div class="id-value">${r.bdate || '-'}</div></div>
+                            <div><div class="id-label">Sex</div><div class="id-value">${r.sex || '-'}</div></div>
+                            <div><div class="id-label">ID No.</div><div class="id-value">2026-${r.id || 'XXXX'}</div></div>
+                        </div>
+                        <div><div class="id-label">Address</div><div class="id-value" style="font-size:0.6rem;">${address}</div></div>
+                    </div>
+                </div>`;
+            }
+            else if (tpl === '9') {
+                frontHTML = `
+                <div class="id-card design-9">
+                    <div class="header-text">
+                        <div class="id-lgu-text" style="text-align:left;">${lguHeaderBanner}</div>
+                        <div class="id-brgy-name" style="text-align:left;">BARANGAY ${settings.barangay}</div>
+                    </div>
+                    <div class="content">
+                        <div><img src="${currentPhotoUrl}" class="id-photo"></div>
+                        <div style="flex: 1;">
+                            <div class="id-name">${fullName}</div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+                                <div><div class="id-label">Birthdate</div><div class="id-value">${r.bdate || '-'}</div></div>
+                                <div><div class="id-label">Contact</div><div class="id-value">${r.contact || '-'}</div></div>
+                                <div style="grid-column: span 2;"><div class="id-label">Address</div><div class="id-value" style="font-size:0.6rem;">${address}</div></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="footer">
+                        <div class="id-sig-line"></div>
+                        <div class="id-sig-label">Signature</div>
+                    </div>
+                </div>`;
+            }
+            else if (tpl === '10') {
+                frontHTML = `
+                <div class="id-card design-10">
+                    <div class="header">
+                        <div class="id-lgu-text">${lguHeader}</div>
+                        <div class="id-brgy-name">BRGY. ${settings.barangay}</div>
+                    </div>
+                    <div class="photo-container"><img src="${currentPhotoUrl}" class="id-photo"></div>
+                    <div class="body">
+                        <div class="id-name">${fullName}</div>
+                        <div class="id-label">Address</div>
+                        <div class="id-value" style="font-size:0.6rem;">${address}</div>
+                        <div style="display:flex; justify-content:space-between; margin-top:10px;">
+                            <div style="text-align:left;">
+                                <div class="id-label">DOB</div>
+                                <div class="id-value">${r.bdate || '-'}</div>
+                            </div>
+                            <div style="text-align:right;">
+                                <div class="id-label">Civil Status</div>
+                                <div class="id-value">${r.civil || '-'}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="footer">
+                        <div class="id-sig-line"></div>
+                        <div class="id-sig-label" style="color:#047857;">Resident Signature</div>
+                    </div>
+                </div>`;
+            }
+            else if (tpl === '11') {
+                frontHTML = `
+                <div class="id-card design-11">
+                    <div class="left-col">
+                        <img src="${currentPhotoUrl}" class="id-photo">
+                    </div>
+                    <div class="right-col">
+                        <div class="header-text">
+                            <div class="id-brgy-name">BRGY. ${settings.barangay}</div>
+                            <div class="id-lgu-text" style="margin-top:2px;">${lguHeaderBanner}</div>
+                        </div>
+                        <div class="id-name">${fullName}</div>
+                        <div style="display:flex; gap:10px; margin-bottom:5px;">
+                            <div><div class="id-label">Birthdate</div><div class="id-value">${r.bdate || '-'}</div></div>
+                            <div><div class="id-label">ID No.</div><div class="id-value">2026-${r.id || 'XXXX'}</div></div>
+                        </div>
+                        <div><div class="id-label">Address</div><div class="id-value" style="font-size:0.65rem;">${address}</div></div>
+                    </div>
+                </div>`;
+            }
+            else if (tpl === '12') {
+                frontHTML = `
+                <div class="id-card design-12">
+                    <div class="header">
+                        <div class="id-lgu-text">${lguHeader}</div>
+                        <div class="id-brgy-name" style="margin-top:4px;">BARANGAY ${settings.barangay}</div>
+                    </div>
+                    <div class="photo-container"><img src="${currentPhotoUrl}" class="id-photo"></div>
+                    <div class="body">
+                        <div class="id-name">${fullName}</div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                            <div style="text-align:left;"><div class="id-label">DOB</div><div class="id-value">${r.bdate || '-'}</div></div>
+                            <div style="text-align:right;"><div class="id-label">Gender</div><div class="id-value">${r.sex || '-'}</div></div>
+                        </div>
+                        <div style="text-align:center;">
+                            <div class="id-label">Address</div>
+                            <div class="id-value" style="font-size:0.6rem;">${address}</div>
+                        </div>
+                    </div>
+                    <div class="footer">
+                        <div class="id-sig-line"></div>
+                        <div class="id-sig-label" style="color:#64748b;">Resident Signature</div>
+                    </div>
+                </div>`;
+            }
+            else if (tpl === '13') {
+                frontHTML = `
+                <div class="id-card design-13">
+                    <div class="header">
+                        <div class="header-text">
+                            <div class="id-lgu-text">${lguHeaderBanner}</div>
+                            <div class="id-brgy-name">BRGY. ${settings.barangay}</div>
+                        </div>
+                        <div class="id-title">RESIDENT</div>
+                    </div>
+                    <div class="body">
+                        <div><img src="${currentPhotoUrl}" class="id-photo"></div>
+                        <div class="info-col">
+                            <div class="id-name">${fullName}</div>
+                            <div style="display:flex; gap:10px; margin-bottom:5px;">
+                                <div style="flex:1;"><div class="id-label">DOB</div><div class="id-value">${r.bdate || '-'}</div></div>
+                                <div style="flex:1;"><div class="id-label">Civil</div><div class="id-value">${r.civil || '-'}</div></div>
+                            </div>
+                            <div><div class="id-label">Address</div><div class="id-value" style="font-size:0.6rem;">${address}</div></div>
+                        </div>
+                    </div>
+                </div>`;
+            }
+            else if (tpl === '14') {
+                frontHTML = `
+                <div class="id-card design-14">
+                    <div class="header">
+                        <div class="id-lgu-text">${lguHeader}</div>
+                        <div class="id-brgy-name">BARANGAY ${settings.barangay}</div>
+                    </div>
+                    <div class="photo-container"><img src="${currentPhotoUrl}" class="id-photo"></div>
+                    <div class="body">
+                        <div class="id-name">${fullName}</div>
+                        <div class="id-label">Date of Birth</div>
+                        <div class="id-value">${r.bdate || '-'}</div>
+                        <div class="id-label">Address</div>
+                        <div class="id-value" style="font-size:0.6rem;">${address}</div>
+                    </div>
+                    <div class="footer">
+                        <div class="id-sig-line"></div>
+                        <div class="id-sig-label" style="color:#64748b;">Signature</div>
+                    </div>
+                </div>`;
+            }
+
+            const isVertical = ['1', '3', '7', '10', '12', '14'].includes(tpl);
+            const backWidth = isVertical ? '230px' : '360px';
+            const backHeight = isVertical ? '360px' : '230px';
+
+            const backHTML = `
+            <div class="id-card" style="width:${backWidth}; height:${backHeight};">
+                <div style="width: 100%; height: 100%; background: white; padding: 10px 14px; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div style="text-align:center; margin-bottom:4px;">
+                        <div style="font-size:0.75rem; font-weight:800; text-transform:uppercase;">CERTIFICATION</div>
+                    </div>
+                    <div style="font-size: 0.5rem; text-align: justify; color: #475569; line-height: 1.2; margin-bottom: 4px;">
+                        This is to certify that the person whose name, photograph, and signature appear herein is a bonafide resident of Barangay ${settings.barangay}, ${settings.municipality}, ${settings.province}.<br><br>
+                        This card is non-transferable and valid for official barangay transactions. If found, please return to the Barangay Hall.
+                    </div>
+                    
+                    <div style="background: #fef2f2; border: 1px solid #fca5a5; padding: 4px; border-radius: 6px; text-align: center; margin-bottom: 4px;">
+                        <div style="font-size: 0.45rem; color:#b91c1c; text-transform: uppercase; font-weight: 700;">In case of emergency, please notify:</div>
+                        <div style="border-bottom:1px solid #fca5a5; margin:4px 0; min-height:10px;"></div>
+                        <div style="border-bottom:1px solid #fca5a5; margin:0 0 2px 0; min-height:10px;"></div>
+                        <div style="font-size: 0.4rem; text-transform: uppercase; color: #64748b;">Name / Contact Number</div>
+                    </div>
+
+                    <div style="text-align:center; margin-top: auto; padding-top: 4px;">
+                        <div style="border-bottom: 1px solid #000; width: 90%; margin: 0 auto 2px auto; font-weight:800; font-size:0.7rem; text-transform:uppercase; white-space:nowrap;">${settings.captain}</div>
+                        <div style="font-size: 0.45rem; font-weight: 600; text-transform: uppercase;">Punong Barangay</div>
+                    </div>
+                </div>
+            </div>`;
+
+            frontContainer.innerHTML = frontHTML;
+            backContainer.innerHTML = backHTML;
+        }
+
+    </script>
+</body>
+</html>
