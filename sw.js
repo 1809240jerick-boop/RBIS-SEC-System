@@ -1,5 +1,5 @@
 // --- 1. UPDATE VERSION HERE ---
-const CACHE_NAME = 'rbi-system-v27'; 
+const CACHE_NAME = 'rbi-system-v28'; 
 
 // 2. Install: Safe caching strategy
 self.addEventListener('install', (event) => {
@@ -15,22 +15,25 @@ self.addEventListener('install', (event) => {
         './icon.png'
       ];
 
-      // B. External Files (If these fail, we still want the app to update)
+      // B. External Files (cache each individually so one failure doesn't stop others)
       const optionalAssets = [
         'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css',
         'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css',
         'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
-        'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js'
+        'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js',
+        'https://unpkg.com/dexie/dist/dexie.js'
       ];
 
       // Add critical files first
       await cache.addAll(criticalAssets);
 
-      // Try to add optional files, but don't crash if they fail
-      try {
-        await cache.addAll(optionalAssets);
-      } catch (error) {
-        console.warn('Some external assets failed to cache, but app installed successfully.');
+      // Try each optional file individually
+      for (const url of optionalAssets) {
+        try {
+          await cache.add(url);
+        } catch (error) {
+          console.warn('Failed to cache optional asset:', url, error.message);
+        }
       }
     })
   );
@@ -52,34 +55,31 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// 4. Fetch: Cache First strategy
+// 4. Fetch: Cache First, fall back to network, cache new responses dynamically
 self.addEventListener('fetch', (event) => {
+  // Skip non-GET requests
+  if (event.request.method !== 'GET') return;
+
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
+    caches.match(event.request).then((cachedResponse) => {
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+      // Not in cache — fetch from network and cache the result for next time
+      return fetch(event.request).then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200 && networkResponse.type !== 'opaque') {
+          const responseClone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseClone);
+          });
+        }
+        return networkResponse;
+      }).catch(() => {
+        // Offline and not in cache - return index.html for navigation requests
+        if (event.request.destination === 'document') {
+          return caches.match('./index.html');
+        }
+      });
     })
   );
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
