@@ -3,6 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="./manifest.json">
+    <link rel="icon" type="image/png" href="./icon.png">
+    <link rel="apple-touch-icon" href="./icon.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="RBI 2026">
     <title>RBI Management System 2026 (Final)</title>
     <meta name="theme-color" content="#0d6efd">
     
@@ -482,16 +489,6 @@
                         <div class="mb-3"><label>Barangay</label><input type="text" id="set-brgy" class="form-control text-uppercase"></div>
                         <div class="mb-3"><label>Punong Barangay (Signatory)</label><input type="text" id="set-captain" class="form-control text-uppercase" placeholder="Full Name of Captain"></div>
                         <div class="mb-3"><label>Barangay Secretary (Signatory)</label><input type="text" id="set-sec" class="form-control text-uppercase" placeholder="Full Name of Secretary"></div>
-                        <div class="mb-3"><label>Date Display Format</label>
-                        <select id="set-date-format" class="form-select">
-                            <option value="YYYY-MM-DD">YYYY-MM-DD &nbsp;(e.g. 2000-12-30)</option>
-                            <option value="MM/DD/YYYY">MM/DD/YYYY &nbsp;(e.g. 12/30/2000)</option>
-                            <option value="DD/MM/YYYY">DD/MM/YYYY &nbsp;(e.g. 30/12/2000)</option>
-                            <option value="DD-MM-YYYY">DD-MM-YYYY &nbsp;(e.g. 30-12-2000)</option>
-                            <option value="MMM DD, YYYY">MMM DD, YYYY &nbsp;(e.g. Dec 30, 2000)</option>
-                            <option value="Month DD, YYYY">Month DD, YYYY &nbsp;(e.g. December 30, 2000)</option>
-                            <option value="DD Month YYYY">DD Month YYYY &nbsp;(e.g. 30 December 2000)</option>
-                        </select></div>
                         <button class="btn btn-primary" onclick="saveSettings()"><i class="fas fa-save me-1"></i> Save Configuration</button>
                     </div>
                 </div>
@@ -623,7 +620,7 @@
             </div>
             <div style="max-height: 400px; overflow-y: auto;"><table class="print-preview-table" id="print-cat-table"><thead><tr><th>#</th><th>Name</th><th>Sex</th><th>Age</th><th>Civil Status</th><th>Address</th></tr></thead><tbody id="print-cat-body"></tbody></table></div>
         </div>
-        <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Close</button><button class="btn btn-primary" id="btn-exec-print-cat" onclick="executePrintCategory()"><i class="fas fa-print me-1"></i> Print This Page (100 max)</button></div>
+        <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Close</button><button class="btn btn-primary" onclick="executePrintCategory()"><i class="fas fa-print me-1"></i> Print This Page (100 max)</button></div>
     </div></div></div>
 
     <div class="modal fade" id="custom-alert-modal" tabindex="-1">
@@ -684,8 +681,7 @@
 
         let db = [];
         let household_db = [];
-        let settings = JSON.parse(localStorage.getItem('rbi_settings')) || { user_password: null, barangay: '', province: '', municipality: '', secretary: '', region: '', captain: '', lguType: 'MUNICIPALITY', customFilters: [], dateFormat: 'YYYY-MM-DD' };
-        if (!settings.dateFormat) settings.dateFormat = 'YYYY-MM-DD';
+        let settings = JSON.parse(localStorage.getItem('rbi_settings')) || { user_password: null, barangay: '', province: '', municipality: '', secretary: '', region: '', captain: '', lguType: 'MUNICIPALITY', customFilters: [] };
         if (!settings.customFilters) settings.customFilters = [];
         
         let stagingValid = [], stagingInvalid = [], stagingDup = [];
@@ -793,7 +789,6 @@
             document.getElementById('set-sec').value = settings.secretary || '';
             renderCustomFilterList();
             onLguTypeChange();
-            document.getElementById('set-date-format').value = settings.dateFormat || 'YYYY-MM-DD';
         }
         function showDeaths() { hideAll(); document.getElementById('section-deaths').classList.remove('d-none'); deathPage = 0; renderDeathList(); }
 
@@ -990,7 +985,7 @@
                     html += `<tr style="background:${isKeep ? '#f0fdf4' : '#fff5f5'};">
                         <td style="padding:6px 10px; border-bottom:1px solid #e5e7eb;"><span class="badge" style="background:${isKeep ? '#059669' : '#dc2626'}; color:white;">${isKeep ? '✓ KEEP' : '✗ DELETE'}</span></td>
                         <td style="padding:6px 10px; border-bottom:1px solid #e5e7eb;">${r.last.toUpperCase()}, ${r.first.toUpperCase()} ${(r.suffix||'').toUpperCase()}</td>
-                        <td style="padding:6px 10px; border-bottom:1px solid #e5e7eb;">${formatDate(r.bdate)}</td>
+                        <td style="padding:6px 10px; border-bottom:1px solid #e5e7eb;">${r.bdate}</td>
                         <td style="padding:6px 10px; border-bottom:1px solid #e5e7eb; font-size:0.7rem; color:#6b7280;">${r.id}</td>
                         <td style="padding:6px 10px; border-bottom:1px solid #e5e7eb;">${r.hh_name || '-'}</td>
                     </tr>`;
@@ -1029,27 +1024,6 @@
             if (days < 0) { months--; days += 30; } 
             if (months < 0) { years--; months += 12; } 
             return { y: years, m: months, d: days, totalMonths: (years * 12) + months }; 
-        }
-
-        function formatDate(dateStr) {
-            if (!dateStr) return '';
-            // dateStr is always stored as YYYY-MM-DD internally
-            const parts = dateStr.split('-');
-            if (parts.length !== 3) return dateStr;
-            const [y, m, d] = parts;
-            const fmt = settings.dateFormat || 'YYYY-MM-DD';
-            const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-            const monthFull  = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-            const mi = parseInt(m, 10) - 1;
-            switch(fmt) {
-                case 'MM/DD/YYYY': return `${m}/${d}/${y}`;
-                case 'DD/MM/YYYY': return `${d}/${m}/${y}`;
-                case 'DD-MM-YYYY': return `${d}-${m}-${y}`;
-                case 'Month DD, YYYY': return `${monthFull[mi]} ${parseInt(d,10)}, ${y}`;
-                case 'DD Month YYYY': return `${parseInt(d,10)} ${monthFull[mi]} ${y}`;
-                case 'MMM DD, YYYY': return `${monthNames[mi]} ${parseInt(d,10)}, ${y}`;
-                default: return dateStr; // YYYY-MM-DD
-            }
         }
 
         function searchMother(val) { const list = document.getElementById('mother-search-results'); if(!val || val.length < 2) { list.classList.add('d-none'); return; } const matches = db.filter(r => r.sex === 'FEMALE' && !r.isDead && (r.last + ' ' + r.first).toLowerCase().includes(val.toLowerCase())); list.innerHTML = ''; if(matches.length > 0) { matches.forEach(m => { const div = document.createElement('div'); div.className = 'search-item'; div.innerHTML = `<strong>${m.last.toUpperCase()}, ${m.first.toUpperCase()}</strong> <small>(${(m.middle||'-').toUpperCase()})</small>`; div.onclick = () => { document.getElementById('f-m-last').value = m.last.toUpperCase(); document.getElementById('f-m-first').value = m.first.toUpperCase(); document.getElementById('f-m-middle').value = (m.middle||'').toUpperCase(); document.getElementById('mother-search-input').value = ''; list.classList.add('d-none'); }; list.appendChild(div); }); list.classList.remove('d-none'); } else { list.classList.add('d-none'); } }
@@ -1161,7 +1135,7 @@
             const list = document.getElementById('death-list'); list.innerHTML = ''; const dead = db.filter(r => r.isDead); document.getElementById('death-total').innerText = dead.length;
             const totalPages = Math.ceil(dead.length / deathPerPage); const start = deathPage * deathPerPage; const end = Math.min(start + deathPerPage, dead.length); const pageData = dead.slice(start, end);
             if(dead.length === 0) { list.innerHTML = '<div class="col-12 text-center text-muted p-4">No records found.</div>'; }
-            pageData.forEach(r => { list.innerHTML += `<div class="col-md-4 mb-3"><div class="card card-custom p-3" style="border-left:4px solid var(--accent-red); cursor:pointer;" onclick="loadRecord('${r.id}')"><div class="d-flex justify-content-between align-items-center"><div><h6 class="fw-bold mb-0" style="color:var(--accent-red);">${r.last.toUpperCase()}, ${r.first.toUpperCase()}</h6><small class="text-muted">Died: ${r.deathDate ? formatDate(r.deathDate) : 'N/A'}</small></div><i class="fas fa-edit text-secondary"></i></div></div></div>`; });
+            pageData.forEach(r => { list.innerHTML += `<div class="col-md-4 mb-3"><div class="card card-custom p-3" style="border-left:4px solid var(--accent-red); cursor:pointer;" onclick="loadRecord('${r.id}')"><div class="d-flex justify-content-between align-items-center"><div><h6 class="fw-bold mb-0" style="color:var(--accent-red);">${r.last.toUpperCase()}, ${r.first.toUpperCase()}</h6><small class="text-muted">Died: ${r.deathDate || 'N/A'}</small></div><i class="fas fa-edit text-secondary"></i></div></div></div>`; });
             document.getElementById('death-page-info').innerText = `Page ${deathPage + 1} of ${totalPages || 1} (${dead.length} total)`;
             document.getElementById('btn-death-prev').disabled = deathPage === 0; document.getElementById('btn-death-next').disabled = end >= dead.length;
         }
@@ -1280,7 +1254,7 @@
                 const hhObj = household_db.find(h => h.name === r.hh_name); 
                 if (hhObj) hhNum = hhObj.houseNo || ''; 
             }
-            return `<div class="form-b-container"><div class="form-header"><div style="font-size: 9pt;">RBI Form B (Revised 2024)</div><div class="form-title">INDIVIDUAL RECORDS OF BARANGAY INHABITANT</div></div><table style="width:100%; font-size: 9pt; font-weight: bold; margin-bottom: 10px;"><tr><td width="10%">REGION</td><td width="2%">:</td><td style="border-bottom: 1px solid black;">${settings.region}</td><td width="5%"></td><td width="15%">CITY/MUN</td><td width="2%">:</td><td style="border-bottom: 1px solid black;">${settings.municipality}</td></tr><tr><td>PROVINCE</td><td>:</td><td style="border-bottom: 1px solid black;">${settings.province}</td><td></td><td>BARANGAY</td><td>:</td><td style="border-bottom: 1px solid black;">${settings.barangay}</td></tr></table><div class="main-box"><div class="box-title">PERSONAL INFORMATION</div><table class="layout-table"><tr><td width="30%"><div class="input-box">${r.philsys || ''}</div><div class="label-under">(PhilSys Card No.)</div></td><td width="70%"></td></tr></table><table class="layout-table"><tr><td width="25%"><div class="input-box">${r.last.toUpperCase()}</div><div class="label-under">(Last Name)</div></td><td width="10%"><div class="input-box">${(r.suffix || '').toUpperCase()}</div><div class="label-under">(Suffix)</div></td><td width="35%"><div class="input-box">${r.first.toUpperCase()}</div><div class="label-under">(First Name)</div></td><td width="30%"><div class="input-box">${(r.middle || '').toUpperCase()}</div><div class="label-under">(Middle Name)</div></td></tr></table><table class="layout-table"><tr><td width="20%"><div class="input-box">${formatDate(r.bdate)}</div><div class="label-under">(Birth Date)</div></td><td width="30%"><div class="input-box">${(r.bplace || '').toUpperCase()}</div><div class="label-under">(Birth Place)</div></td><td width="10%"><div class="input-box">${r.sex}</div><div class="label-under">(Sex)</div></td><td width="15%"><div class="input-box">${r.civil}</div><div class="label-under">(Civil Status)</div></td><td width="25%"><div class="input-box">${(r.religion || '').toUpperCase()}</div><div class="label-under">(Religion)</div></td></tr></table><table class="layout-table"><tr><td width="65%"><div class="input-box">${(r.address || '').toUpperCase()}</div><div class="label-under">(Residence Address)</div></td><td width="35%"><div class="input-box">${r.citizen || 'FILIPINO'}</div><div class="label-under">(Citizenship)</div></td></tr></table><table class="layout-table"><tr><td width="35%"><div class="input-box">${(r.prof || '').toUpperCase()}</div><div class="label-under">(Profession / Occupation)</div></td><td width="30%"><div class="input-box">${(r.contact || '').toUpperCase()}</div><div class="label-under">(Contact Number)</div></td><td width="35%"><div class="input-box">${(r.email || '').toUpperCase()}</div><div class="label-under">(E-mail Address)</div></td></tr></table><hr style="border-top: 1px dashed #ccc; margin: 5px 0;"><div style="font-size: 9pt; padding: 5px;"><strong>HIGHEST EDUCATIONAL ATTAINMENT:</strong><span class="chk-group" style="display:inline-flex;"><span><span class="chk-box">${chk(isElem, true)}</span> ELEMENTARY</span><span><span class="chk-box">${chk(isHS, true)}</span> HIGH SCHOOL</span><span><span class="chk-box">${chk(isCol, true)}</span> COLLEGE</span><span><span class="chk-box">${chk(isPost, true)}</span> POST GRAD</span><span><span class="chk-box">${chk(isVoc, true)}</span> VOCATIONAL</span></span><div style="margin-top:5px; margin-left: 200px;"><em>Please specify:</em> <span class="chk-box" style="margin-left: 10px;">${chk(isGrad, true)}</span> Graduate <span class="chk-box" style="margin-left: 20px;">${chk(isUnder, true)}</span> Under Graduate</div></div><div class="legal-text">I hereby certify that the above information is true and correct to the best of my knowledge. I understand that for the Barangay to carry out its mandate pursuant to Section 394 (d)(6) of the Local Government Code of 1991, they must necessarily process my personal information for easy identification of inhabitants, as a tool in planning, and as an updated reference in the number of inhabitants of the Barangay. Therefore, I grant my consent and recognize the authority of the Barangay to process my personal information, subject to the provision of the Philippine Data Privacy Act of 2012.</div><table style="width:100%; margin-top: 30px; font-size: 9pt;"><tr><td width="40%" style="text-align:center;"><div class="sig-line"></div><div>Date Accomplished</div></td><td width="20%"></td><td width="40%" style="text-align:center;"><div class="sig-line"></div><div>Name/Signature of Person Accomplishing the Form</div></td></tr></table><div style="margin-top: 20px; font-size: 9pt;">Attested By:</div><table style="width:100%; margin-top: 10px; font-size: 9pt;"><tr><td width="40%" style="text-align:center; vertical-align: bottom;"><div class="sig-line" style="font-weight:bold; text-transform:uppercase;">${settings.secretary}</div><div style="font-weight:bold;">Barangay Secretary</div></td><td width="30%" style="text-align:center;"><div class="thumb-box"></div><div style="font-size:8pt;">Left Thumbmark</div></td><td width="30%" style="text-align:center;"><div class="thumb-box"></div><div style="font-size:8pt;">Right Thumbmark</div></td></tr></table><div style="margin-top: 20px; display: flex; align-items: center;"><span style="font-weight:bold; font-size: 9pt; margin-right: 10px;">Household Number:</span><div style="border: 2px solid black; width: 200px; height: 30px; display:flex; align-items:center; justify-content:center; font-weight:bold;">${hhNum}</div></div><div style="font-size: 8pt; font-style: italic; margin-top: 5px;">Note: The household number shall be filled up by the Barangay Secretary.</div></div></div>`;
+            return `<div class="form-b-container"><div class="form-header"><div style="font-size: 9pt;">RBI Form B (Revised 2024)</div><div class="form-title">INDIVIDUAL RECORDS OF BARANGAY INHABITANT</div></div><table style="width:100%; font-size: 9pt; font-weight: bold; margin-bottom: 10px;"><tr><td width="10%">REGION</td><td width="2%">:</td><td style="border-bottom: 1px solid black;">${settings.region}</td><td width="5%"></td><td width="15%">CITY/MUN</td><td width="2%">:</td><td style="border-bottom: 1px solid black;">${settings.municipality}</td></tr><tr><td>PROVINCE</td><td>:</td><td style="border-bottom: 1px solid black;">${settings.province}</td><td></td><td>BARANGAY</td><td>:</td><td style="border-bottom: 1px solid black;">${settings.barangay}</td></tr></table><div class="main-box"><div class="box-title">PERSONAL INFORMATION</div><table class="layout-table"><tr><td width="30%"><div class="input-box">${r.philsys || ''}</div><div class="label-under">(PhilSys Card No.)</div></td><td width="70%"></td></tr></table><table class="layout-table"><tr><td width="25%"><div class="input-box">${r.last.toUpperCase()}</div><div class="label-under">(Last Name)</div></td><td width="10%"><div class="input-box">${(r.suffix || '').toUpperCase()}</div><div class="label-under">(Suffix)</div></td><td width="35%"><div class="input-box">${r.first.toUpperCase()}</div><div class="label-under">(First Name)</div></td><td width="30%"><div class="input-box">${(r.middle || '').toUpperCase()}</div><div class="label-under">(Middle Name)</div></td></tr></table><table class="layout-table"><tr><td width="20%"><div class="input-box">${r.bdate}</div><div class="label-under">(Birth Date)</div></td><td width="30%"><div class="input-box">${(r.bplace || '').toUpperCase()}</div><div class="label-under">(Birth Place)</div></td><td width="10%"><div class="input-box">${r.sex}</div><div class="label-under">(Sex)</div></td><td width="15%"><div class="input-box">${r.civil}</div><div class="label-under">(Civil Status)</div></td><td width="25%"><div class="input-box">${(r.religion || '').toUpperCase()}</div><div class="label-under">(Religion)</div></td></tr></table><table class="layout-table"><tr><td width="65%"><div class="input-box">${(r.address || '').toUpperCase()}</div><div class="label-under">(Residence Address)</div></td><td width="35%"><div class="input-box">${r.citizen || 'FILIPINO'}</div><div class="label-under">(Citizenship)</div></td></tr></table><table class="layout-table"><tr><td width="35%"><div class="input-box">${(r.prof || '').toUpperCase()}</div><div class="label-under">(Profession / Occupation)</div></td><td width="30%"><div class="input-box">${(r.contact || '').toUpperCase()}</div><div class="label-under">(Contact Number)</div></td><td width="35%"><div class="input-box">${(r.email || '').toUpperCase()}</div><div class="label-under">(E-mail Address)</div></td></tr></table><hr style="border-top: 1px dashed #ccc; margin: 5px 0;"><div style="font-size: 9pt; padding: 5px;"><strong>HIGHEST EDUCATIONAL ATTAINMENT:</strong><span class="chk-group" style="display:inline-flex;"><span><span class="chk-box">${chk(isElem, true)}</span> ELEMENTARY</span><span><span class="chk-box">${chk(isHS, true)}</span> HIGH SCHOOL</span><span><span class="chk-box">${chk(isCol, true)}</span> COLLEGE</span><span><span class="chk-box">${chk(isPost, true)}</span> POST GRAD</span><span><span class="chk-box">${chk(isVoc, true)}</span> VOCATIONAL</span></span><div style="margin-top:5px; margin-left: 200px;"><em>Please specify:</em> <span class="chk-box" style="margin-left: 10px;">${chk(isGrad, true)}</span> Graduate <span class="chk-box" style="margin-left: 20px;">${chk(isUnder, true)}</span> Under Graduate</div></div><div class="legal-text">I hereby certify that the above information is true and correct to the best of my knowledge. I understand that for the Barangay to carry out its mandate pursuant to Section 394 (d)(6) of the Local Government Code of 1991, they must necessarily process my personal information for easy identification of inhabitants, as a tool in planning, and as an updated reference in the number of inhabitants of the Barangay. Therefore, I grant my consent and recognize the authority of the Barangay to process my personal information, subject to the provision of the Philippine Data Privacy Act of 2012.</div><table style="width:100%; margin-top: 30px; font-size: 9pt;"><tr><td width="40%" style="text-align:center;"><div class="sig-line"></div><div>Date Accomplished</div></td><td width="20%"></td><td width="40%" style="text-align:center;"><div class="sig-line"></div><div>Name/Signature of Person Accomplishing the Form</div></td></tr></table><div style="margin-top: 20px; font-size: 9pt;">Attested By:</div><table style="width:100%; margin-top: 10px; font-size: 9pt;"><tr><td width="40%" style="text-align:center; vertical-align: bottom;"><div class="sig-line" style="font-weight:bold; text-transform:uppercase;">${settings.secretary}</div><div style="font-weight:bold;">Barangay Secretary</div></td><td width="30%" style="text-align:center;"><div class="thumb-box"></div><div style="font-size:8pt;">Left Thumbmark</div></td><td width="30%" style="text-align:center;"><div class="thumb-box"></div><div style="font-size:8pt;">Right Thumbmark</div></td></tr></table><div style="margin-top: 20px; display: flex; align-items: center;"><span style="font-weight:bold; font-size: 9pt; margin-right: 10px;">Household Number:</span><div style="border: 2px solid black; width: 200px; height: 30px; display:flex; align-items:center; justify-content:center; font-weight:bold;">${hhNum}</div></div><div style="font-size: 8pt; font-style: italic; margin-top: 5px;">Note: The household number shall be filled up by the Barangay Secretary.</div></div></div>`;
         }
 
         function printFormB(id) {
@@ -1350,7 +1324,7 @@
                     <td style="text-align:center;">${i + 1}</td>
                     <td>${m.last.toUpperCase()}</td><td>${m.first.toUpperCase()}</td><td>${(m.middle || '').toUpperCase()}</td><td>${(m.suffix || '').toUpperCase()}</td>
                     <td>${(m.bplace || '').toUpperCase()}</td>
-                    <td style="text-align:center;">${formatDate(m.bdate)}</td>
+                    <td style="text-align:center;">${m.bdate}</td>
                     <td style="text-align:center;">${ageInfo.y}</td>
                     <td style="text-align:center;">${m.sex ? m.sex.substring(0,1) : ''}</td>
                     <td style="text-align:center;">${m.civil || ''}</td>
@@ -1467,11 +1441,10 @@
 
         function printStatCategory(category) {
             const living = db.filter(r => !r.isDead); let filtered = []; let label = '';
-            switch(category) { case 'total': filtered = living; label = 'ALL RESIDENTS'; break; case 'male': filtered = living.filter(r => r.sex === 'MALE'); label = 'MALE RESIDENTS'; break; case 'female': filtered = living.filter(r => r.sex === 'FEMALE'); label = 'FEMALE RESIDENTS'; break; case 'children': filtered = living.filter(r => calculateAgeDetailed(r.bdate).y < 18); label = 'CHILDREN (Below 18)'; break; case 'adults': filtered = living.filter(r => { const a = calculateAgeDetailed(r.bdate).y; return a >= 18 && a < 60; }); label = 'ADULTS (18-59)'; break; case 'seniors': filtered = living.filter(r => calculateAgeDetailed(r.bdate).y >= 60); label = 'SENIOR CITIZENS (60+)'; break; case 'pwd': filtered = living.filter(r => r.isPwd); label = 'PERSONS WITH DISABILITY (PWD)'; break; case 'solo': filtered = living.filter(r => r.isSoloParent); label = 'SOLO PARENTS'; break; case 'osy': filtered = living.filter(r => r.isOSY); label = 'OUT OF SCHOOL YOUTH (OSY)'; break; case '4ps': filtered = living.filter(r => r.is4Ps); label = '4Ps BENEFICIARIES'; break; case 'voters': filtered = living.filter(r => r.isVoter); label = 'REGISTERED VOTERS'; break; case 'households': printHouseholdList(); return; case 'families': filtered = living.filter(r => r.hh_role && r.hh_role.trim().toUpperCase().includes('HEAD')); label = 'HEAD OF FAMILIES'; break; default: filtered = living; label = 'ALL RESIDENTS'; }
+            switch(category) { case 'total': filtered = living; label = 'ALL RESIDENTS'; break; case 'male': filtered = living.filter(r => r.sex === 'MALE'); label = 'MALE RESIDENTS'; break; case 'female': filtered = living.filter(r => r.sex === 'FEMALE'); label = 'FEMALE RESIDENTS'; break; case 'children': filtered = living.filter(r => calculateAgeDetailed(r.bdate).y < 18); label = 'CHILDREN (Below 18)'; break; case 'adults': filtered = living.filter(r => { const a = calculateAgeDetailed(r.bdate).y; return a >= 18 && a < 60; }); label = 'ADULTS (18-59)'; break; case 'seniors': filtered = living.filter(r => calculateAgeDetailed(r.bdate).y >= 60); label = 'SENIOR CITIZENS (60+)'; break; case 'pwd': filtered = living.filter(r => r.isPwd); label = 'PERSONS WITH DISABILITY (PWD)'; break; case 'solo': filtered = living.filter(r => r.isSoloParent); label = 'SOLO PARENTS'; break; case 'osy': filtered = living.filter(r => r.isOSY); label = 'OUT OF SCHOOL YOUTH (OSY)'; break; case '4ps': filtered = living.filter(r => r.is4Ps); label = '4Ps BENEFICIARIES'; break; case 'voters': filtered = living.filter(r => r.isVoter); label = 'REGISTERED VOTERS'; break; case 'households': printHHHeads(); return; case 'families': filtered = living.filter(r => r.hh_role && r.hh_role.trim().toUpperCase().includes('HEAD')); label = 'HEAD OF FAMILIES'; break; default: filtered = living; label = 'ALL RESIDENTS'; }
             filtered.sort((a,b) => a.last.localeCompare(b.last)); printCatData = filtered; printCatPage = 0; printCatLabel = label; renderPrintCatModal(); new bootstrap.Modal(document.getElementById('modal-print-category')).show();
         }
         function renderPrintCatModal() {
-            document.getElementById('btn-exec-print-cat').onclick = executePrintCategory;
             const perPage = 100; const start = printCatPage * perPage; const end = Math.min(start + perPage, printCatData.length); const pageData = printCatData.slice(start, end); const totalPages = Math.ceil(printCatData.length / perPage);
             document.getElementById('print-cat-title').innerHTML = `<i class="fas fa-print me-2" style="color:var(--accent-blue);"></i>${printCatLabel}`; document.getElementById('print-cat-total').innerText = printCatData.length; document.getElementById('print-cat-page-label').innerText = `${printCatPage + 1} of ${totalPages}`; document.getElementById('btn-cat-prev').disabled = (printCatPage === 0); document.getElementById('btn-cat-next').disabled = (end >= printCatData.length);
             const tbody = document.getElementById('print-cat-body'); tbody.innerHTML = ''; pageData.forEach((r, i) => { const age = calculateAgeDetailed(r.bdate).y; tbody.innerHTML += `<tr><td>${start + i + 1}</td><td>${r.last.toUpperCase()}, ${r.first.toUpperCase()} ${(r.suffix || '').toUpperCase()}</td><td>${r.sex}</td><td>${age}</td><td>${r.civil}</td><td>${(r.address || '-').toUpperCase()}</td></tr>`; });
@@ -1536,81 +1509,6 @@
             const html = `<style>@media print { @page { size: portrait; margin: 10mm; } body { -webkit-print-color-adjust: exact; } } .rbi-c-container { font-family: Arial, sans-serif; font-size: 10pt; width: 100%; color: black; } .rbi-c-header { text-align: center; font-weight: bold; margin-bottom: 20px; } .rbi-info-table { width: 100%; margin-bottom: 15px; } .rbi-info-table td { padding: 2px; } .rbi-main-table { width: 100%; border-collapse: collapse; margin-top: 10px; } .rbi-main-table th { border: 1px solid black; background: #e0e0e0; padding: 5px; text-align: center; font-weight: bold; } .rbi-main-table td { border: 1px solid black; padding: 4px; text-align: center; } .rbi-main-table td:first-child { text-align: left; } .sig-box { margin-top: 40px; display: flex; justify-content: space-between; page-break-inside: avoid; } .sig-line { border-bottom: 1px solid black; width: 200px; margin: 0 auto; margin-top: 30px; }</style><div class="rbi-c-container"><div class="rbi-c-header"><div style="font-size: 11pt;">RBI FORM C (Revised 2024)</div><div style="font-size: 12pt; margin-top:5px;">MONITORING REPORT</div><div style="font-weight: normal; margin-top: 5px;">for ___ Semester of CY ________</div></div><table class="rbi-info-table"><tr><td width="15%">REGION</td><td width="2%">:</td><td style="border-bottom: 1px solid black;">${settings.region}</td></tr><tr><td>PROVINCE</td><td>:</td><td style="border-bottom: 1px solid black;">${settings.province}</td></tr><tr><td>CITY/MUNICIPALITY</td><td>:</td><td style="border-bottom: 1px solid black;">${settings.municipality}</td></tr><tr><td>BARANGAY</td><td>:</td><td style="border-bottom: 1px solid black;">${settings.barangay}</td></tr></table><table class="rbi-info-table" style="margin-top: 10px;"><tr><td width="30%">Total No. of Barangay Inhabitants:</td><td style="border-bottom: 1px solid black; font-weight:bold;">${totalInhabitants}</td></tr><tr><td>Total No. of Households:</td><td style="border-bottom: 1px solid black; font-weight:bold;">${totalHH}</td></tr><tr><td>Total No. of Families:</td><td style="border-bottom: 1px solid black; font-weight:bold;">${totalFamilies}</td></tr></table><table class="rbi-main-table"><thead><tr><th width="40%">INDICATORS</th><th width="15%">MALE</th><th width="15%">FEMALE</th><th width="15%">TOTAL</th><th width="15%">REMARKS</th></tr></thead><tbody><tr><td style="font-weight:bold;">Population by Age Bracket:</td><td></td><td></td><td></td><td></td></tr>${ageRows}<tr><td style="font-weight:bold; padding-top:10px;">Population by Sector:</td><td></td><td></td><td></td><td></td></tr>${sectorRow("Labor Force", sectors.labor)}${sectorRow("Unemployed", sectors.unemployed)}${sectorRow("Out of School Children (OSC) (6-14 years old)", sectors.osc)}${sectorRow("Out of School Youth (OSY) (15-24 years old)", sectors.osy)}${sectorRow("Person with Disabilities (PWDs)", sectors.pwd)}${sectorRow("Overseas Filipino Workers (OFWs)", sectors.ofw)}${sectorRow("Solo Parents", sectors.solo)}${sectorRow("Indigenous Peoples (IPs)", sectors.ip)}<tr><td style="border:none; border-left:1px solid black; border-right:1px solid black;" colspan="5"></td></tr>${sectorRow("Civil Status : Single", sectors.single)}${sectorRowIndent(": Married", sectors.married)}<tr><td style="border:none; border-left:1px solid black; border-right:1px solid black;" colspan="5"></td></tr>${sectorRow("Citizenship : Filipino", sectors.filipino)}${sectorRowIndent(": Foreigner", sectors.foreigner)}</tbody></table><div class="sig-box"><div style="text-align: center; width: 40%;"><div style="margin-bottom: 40px; text-align:left;">Prepared by:</div><div class="sig-line" style="text-transform:uppercase; font-weight:bold;">${settings.secretary}</div><div>Barangay Secretary</div><div style="font-size: 8pt;">(Signature over Printed Name)</div><div style="text-align:left; margin-top:20px;">Date Accomplished: ____________________</div></div><div style="text-align: center; width: 40%;"><div style="margin-bottom: 40px; text-align:left;">Submitted by:</div><div class="sig-line" style="text-transform:uppercase; font-weight:bold;">${settings.captain}</div><div>Punong Barangay</div><div style="font-size: 8pt;">(Signature over Printed Name)</div></div></div><div style="font-size: 8pt; margin-top: 20px;">Note: This RBI Form C (Semestral Monitoring Report) is to be submitted to DILG C/MLGOO as a reference for encoding to BIS-BPS.</div></div>`;
             document.getElementById('print-area').innerHTML = html; window.print();
         }
-
-        // Stores household rows for printing
-        let hhPrintData = [];
-
-        function printHouseholdList() {
-            const living = db.filter(r => !r.isDead);
-            const allHHNames = new Set([
-                ...household_db.map(h => h.name),
-                ...living.map(r => r.hh_name).filter(n => n && n.trim() !== '')
-            ]);
-            hhPrintData = [...allHHNames].sort().map((hhName, i) => {
-                const meta = household_db.find(h => h.name === hhName) || { purok: '', houseNo: '' };
-                const members = living.filter(r => r.hh_name === hhName);
-                const head = members.find(r => r.hh_role && r.hh_role.toUpperCase().includes('HEAD'));
-                const headName = head
-                    ? (head.last.toUpperCase() + ', ' + head.first.toUpperCase() + (head.suffix ? ' ' + head.suffix.toUpperCase() : ''))
-                    : (members.length > 0 ? members[0].last.toUpperCase() + ', ' + members[0].first.toUpperCase() : '-');
-                const purokLabel = meta.purok ? 'Purok ' + meta.purok.replace(/^P(?:urok)?\s*/i, '') : '-';
-                return { num: i + 1, houseNo: meta.houseNo || '-', name: hhName, purok: purokLabel, head: headName, count: members.length };
-            });
-
-            // Set modal title and totals
-            document.getElementById('print-cat-title').innerHTML = '<i class="fas fa-print me-2" style="color:var(--accent-blue);"></i>TOTAL HOUSEHOLDS';
-            document.getElementById('print-cat-total').innerText = hhPrintData.length;
-            document.getElementById('print-cat-page-label').innerText = '1 of 1';
-            document.getElementById('btn-cat-prev').disabled = true;
-            document.getElementById('btn-cat-next').disabled = true;
-
-            // Swap table headers to household columns
-            document.getElementById('print-cat-table').querySelector('thead tr').innerHTML =
-                '<th>#</th><th>House No.</th><th>Household Name</th><th>Purok</th><th>Primary Head</th><th>Members</th>';
-
-            // Populate rows
-            const tbody = document.getElementById('print-cat-body');
-            tbody.innerHTML = '';
-            hhPrintData.forEach(row => {
-                tbody.innerHTML += `<tr>
-                    <td style="text-align:center;">${row.num}</td>
-                    <td style="text-align:center;">${row.houseNo}</td>
-                    <td><strong>${row.name}</strong></td>
-                    <td>${row.purok}</td>
-                    <td>${row.head}</td>
-                    <td style="text-align:center;">${row.count}</td>
-                </tr>`;
-            });
-
-            // Point the print button to household printer
-            document.getElementById('btn-exec-print-cat').onclick = executePrintHouseholds;
-            new bootstrap.Modal(document.getElementById('modal-print-category')).show();
-        }
-
-        function executePrintHouseholds() {
-            if (!hhPrintData || hhPrintData.length === 0) return showSystemAlert('No households to print.');
-            const rows = hhPrintData.map(row =>
-                `<tr><td style="text-align:center;">${row.num}</td><td style="text-align:center;">${row.houseNo}</td><td><strong>${row.name}</strong></td><td>${row.purok}</td><td>${row.head}</td><td style="text-align:center;">${row.count}</td></tr>`
-            ).join('');
-            const html = `<style>@media print { @page { size: portrait; margin: 10mm; } body { -webkit-print-color-adjust: exact; } }
-                table { width:100%; border-collapse:collapse; font-family:Arial; font-size:10pt; }
-                th, td { border:1px solid black; padding:5px; }
-                th { background:#e0e0e0; font-weight:bold; text-align:center; }
-                h2, h3, p { text-align:center; margin:4px; }</style>
-                <h2>TOTAL HOUSEHOLDS</h2>
-                <h3 style="font-size:11pt;">Barangay ${settings.barangay}, ${settings.municipality}${settings.province ? ', ' + settings.province : ''}</h3>
-                <p style="font-size:9pt;">Total: ${hhPrintData.length} household(s) | Printed: ${new Date().toLocaleDateString()}</p><br>
-                <table><thead><tr><th width="5%">#</th><th width="10%">House No.</th><th width="25%">Household Name</th><th width="15%">Purok</th><th width="30%">Primary Head</th><th width="15%">Members</th></tr></thead>
-                <tbody>${rows}</tbody></table><br><br>
-                <div style="display:flex;justify-content:space-between;font-size:9pt;">
-                    <div style="text-align:center;width:40%;"><div style="border-top:1px solid black;padding-top:5px;font-weight:bold;">${settings.secretary || '_______________'}</div>Barangay Secretary</div>
-                    <div style="text-align:center;width:40%;"><div style="border-top:1px solid black;padding-top:5px;font-weight:bold;">${settings.captain || '_______________'}</div>Punong Barangay</div>
-                </div>`;
-            document.getElementById('print-area').innerHTML = html;
-            window.print();
-        }
-
-
 
         function printHHHeads() { printStatCategory('families'); }
 
@@ -1984,9 +1882,23 @@
         function saveSettings() {
             const sec = document.getElementById('set-sec').value; const brgy = document.getElementById('set-brgy').value; const prov = document.getElementById('set-prov').value; const muni = document.getElementById('set-muni').value; const lguType = document.getElementById('set-lgu-type').value; const region = document.getElementById('set-region').value; const captain = document.getElementById('set-captain').value;
             if(!sec || !brgy) return showSystemAlert("Please fill in Barangay and Secretary name.");
-            settings.secretary = sec.toUpperCase(); settings.barangay = brgy.toUpperCase(); settings.province = prov ? prov.toUpperCase() : ''; settings.municipality = muni ? muni.toUpperCase() : ''; settings.lguType = lguType; settings.region = region ? region.toUpperCase() : ''; settings.captain = captain ? captain.toUpperCase() : ''; settings.dateFormat = document.getElementById('set-date-format').value || 'YYYY-MM-DD';
+            settings.secretary = sec.toUpperCase(); settings.barangay = brgy.toUpperCase(); settings.province = prov ? prov.toUpperCase() : ''; settings.municipality = muni ? muni.toUpperCase() : ''; settings.lguType = lguType; settings.region = region ? region.toUpperCase() : ''; settings.captain = captain ? captain.toUpperCase() : '';
             localStorage.setItem('rbi_settings', JSON.stringify(settings)); showSystemAlert('Configuration Saved!');
         }
+    </script>
+    <script>
+      // ── PWA Service Worker Registration ──
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js', { scope: './' })
+            .then(reg => {
+              console.log('[PWA] Service Worker registered. Scope:', reg.scope);
+              // Check for SW updates on every page load
+              reg.update();
+            })
+            .catch(err => console.warn('[PWA] SW registration failed:', err));
+        });
+      }
     </script>
 </body>
 </html>

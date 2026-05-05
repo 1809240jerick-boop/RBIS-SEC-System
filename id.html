@@ -3,6 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="./manifest.json">
+    <link rel="icon" type="image/png" href="./icon.png">
+    <link rel="apple-touch-icon" href="./icon.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="RBI 2026">
     <title>Barangay ID System - RBI 2026</title>
     <meta name="theme-color" content="#0d6efd">
     
@@ -271,7 +278,7 @@
         <div style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 1.2rem;">
             <i class="fas fa-id-card text-primary me-2"></i> Barangay ID Generation
         </div>
-        <a href="#" onclick="goBackToIndex(); return false;"><i class="fas fa-arrow-left me-1"></i> Back to RBIS</a>
+        <a href="#" onclick="goBackToIndex(); return false;"><i class="fas fa-arrow-left me-1"></i> Back to Index</a>
     </div>
 
     <div id="tabs-nav" class="px-4 pt-3 pb-0" style="max-width: 1400px; margin: 0 auto;">
@@ -1188,6 +1195,20 @@
             backContainer.innerHTML = backHTML;
         }
 
+    </script>
+    <script>
+      // ── PWA Service Worker Registration ──
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js', { scope: './' })
+            .then(reg => {
+              console.log('[PWA] Service Worker registered. Scope:', reg.scope);
+              // Check for SW updates on every page load
+              reg.update();
+            })
+            .catch(err => console.warn('[PWA] SW registration failed:', err));
+        });
+      }
     </script>
 </body>
 </html>
