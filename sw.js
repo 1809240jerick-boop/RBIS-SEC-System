@@ -3,7 +3,7 @@
 // Bump CACHE_NAME whenever you deploy a new version so users
 // get fresh files automatically.
 // ─────────────────────────────────────────────────────────────
-const CACHE_NAME = 'rbi-system-v21';
+const CACHE_NAME = 'rbi-system-v22';
 
 // All local pages and assets the app needs to work offline
 const LOCAL_ASSETS = [
