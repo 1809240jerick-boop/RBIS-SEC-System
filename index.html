@@ -181,6 +181,10 @@
     .filter-bar label { font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0; white-space: nowrap; }
     .filter-bar .form-select { padding: 6px 12px; font-size: 0.82rem; border-radius: 8px; min-width: 140px; }
     .filter-bar .form-control { padding: 6px 12px; font-size: 0.82rem; border-radius: 8px; min-width: 140px; }
+    
+    /* FIX: Force Bootstrap modals and backdrops above the security overlay (z-index: 9999) */
+    .modal-backdrop { z-index: 10004 !important; }
+    #custom-alert-modal { z-index: 10005 !important; }
     </style>
 </head>
 <body>
@@ -585,6 +589,7 @@
         </div>
     </div>
 
+    <!-- Modals -->
     <div class="modal fade" id="modal-new-hh" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5>Create New Household</h5></div><div class="modal-body"><label>Household Name (Family Name)</label><input type="text" id="new-hh-name" class="form-control text-uppercase mb-2"><label>Purok</label><input type="text" id="new-hh-purok" class="form-control text-uppercase mb-2"><label>House Number</label><input type="text" id="new-hh-num" class="form-control text-uppercase"></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button><button type="button" class="btn btn-primary" onclick="createHH()">Create</button></div></div></div></div>
 
     <div class="modal fade" id="modal-edit-hh" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5>Edit Household Details</h5></div><div class="modal-body"><input type="hidden" id="edit-hh-old-name"><label>Household Name (Family Name)</label><input type="text" id="edit-hh-name" class="form-control text-uppercase mb-2"><label>Purok</label><input type="text" id="edit-hh-purok" class="form-control text-uppercase mb-2"><label>House Number</label><input type="text" id="edit-hh-num" class="form-control text-uppercase"></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button><button type="button" class="btn btn-success" onclick="saveEditedHH()">Save Changes</button></div></div></div></div>
@@ -660,7 +665,6 @@
     </div></div></div>
 
     <div id="print-area"></div>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('input', function(e) {
@@ -681,7 +685,14 @@
 
         let db = [];
         let household_db = [];
-        let settings = JSON.parse(localStorage.getItem('rbi_settings')) || { user_password: null, barangay: '', province: '', municipality: '', secretary: '', region: '', captain: '', lguType: 'MUNICIPALITY', customFilters: [] };
+
+        // FIX: Safely merge saved settings with default structure to prevent password loss
+        const defaultSettings = { 
+            user_password: null, barangay: '', province: '', municipality: '', 
+            secretary: '', region: '', captain: '', lguType: 'MUNICIPALITY', customFilters: [] 
+        };
+        const savedSettings = JSON.parse(localStorage.getItem('rbi_settings')) || {};
+        let settings = { ...defaultSettings, ...savedSettings }; 
         if (!settings.customFilters) settings.customFilters = [];
         
         let stagingValid = [], stagingInvalid = [], stagingDup = [];
@@ -856,10 +867,20 @@
             }
         }
 
+        // FIX: Recognize named Puroks, Sitios, and Zones, not just numbers
         function extractPurokFromAddress(address) {
             if (!address) return null;
-            const match = address.match(/\bP(?:urok)?\s*(\d+)\b/i);
-            if (match) return 'Purok ' + match[1];
+            
+            const namedMatch = address.match(/\b(?:Purok|Sitio|Zone)\s+([a-zA-Z0-9\-\s]+)/i);
+            if (namedMatch) {
+                return namedMatch[0].trim();
+            }
+            
+            const shortMatch = address.match(/\bP\s*[-]?\s*(\d+)\b/i);
+            if (shortMatch) {
+                return 'Purok ' + shortMatch[1];
+            }
+            
             return null;
         }
 
@@ -1680,31 +1701,38 @@
                 const json = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {defval: ""}); 
                 stagingValid = []; stagingInvalid = []; stagingDup = [];
                 
+                // FIX: Helper to safely extract string data from Excel to prevent crashes on empty cells
+                const safeStr = (val, defaultVal = '') => {
+                    if (val === null || val === undefined) return defaultVal;
+                    return val.toString().toUpperCase().trim();
+                };
+                
                 for(let i=0; i<json.length; i++) {
                     const row = json[i]; 
                     if(!row || Object.keys(row).length === 0) continue;
                     
-                    const type = (row['INHABITANT TYPE'] || "NON-MIGRANT").toString().toUpperCase();
-                    const philsys = (row['PHYLSYS ID NUMBER'] || row['Phylsys ID Number'] || row['PhilSys ID'] || '').toString().trim();
-                    const last = (row['LAST NAME'] || row['Last Name'] || '').toString().toUpperCase().trim();
-                    const first = (row['FIRST NAME'] || row['First Name'] || '').toString().toUpperCase().trim();
-                    const middle = (row['MIDDLE NAME'] || row['Middle Name'] || '').toString().toUpperCase().trim();
-                    const suffix = (row['SUFFIX'] || row['Suffix'] || '').toString().toUpperCase().trim();
-                    const bplace = (row['BIRTH PLACE'] || row['Birth Place'] || '').toString().toUpperCase().trim();
+                    const type = safeStr(row['INHABITANT TYPE'], "NON-MIGRANT");
+                    const philsys = safeStr(row['PHYLSYS ID NUMBER'] || row['Phylsys ID Number'] || row['PhilSys ID']);
+                    const last = safeStr(row['LAST NAME'] || row['Last Name']);
+                    const first = safeStr(row['FIRST NAME'] || row['First Name']);
+                    const middle = safeStr(row['MIDDLE NAME'] || row['Middle Name']);
+                    const suffix = safeStr(row['SUFFIX'] || row['Suffix']);
+                    const bplace = safeStr(row['BIRTH PLACE'] || row['Birth Place']);
+                    // Bdate doesn't need toUpperCase, just trim
                     const bdate = (row['BIRTHDATE (YYYY-MM-DD)'] || row['Birthdate'] || row['BIRTHDATE'] || '').toString().trim();
-                    const sex = (row['SEX'] || row['Sex'] || '').toString().toUpperCase().trim();
-                    const civil = (row['CIVIL STATUS'] || row['Civil Status'] || '').toString().toUpperCase().trim();
-                    const citizen = (row['CITIZENSHIP'] || row['Citizenship'] || 'FILIPINO').toString().toUpperCase().trim();
-                    const prof = (row['PROFESSION/ OCCUPATION'] || row['PROFESSION/OCCUPATION'] || row['Profession'] || '').toString().toUpperCase().trim();
+                    const sex = safeStr(row['SEX'] || row['Sex']);
+                    const civil = safeStr(row['CIVIL STATUS'] || row['Civil Status']);
+                    const citizen = safeStr(row['CITIZENSHIP'] || row['Citizenship'], 'FILIPINO');
+                    const prof = safeStr(row['PROFESSION/ OCCUPATION'] || row['PROFESSION/OCCUPATION'] || row['Profession']);
                     const contact = (row['CONTACT NUMBER'] || row['Contact Number'] || '').toString().trim();
                     const email = (row['EMAIL ADDRESS'] || row['Email Address'] || '').toString().trim();
-                    const edu = (row['HIGHEST EDUCATIONAL ATTAINMENT'] || row['Educational Attainment'] || '').toString().toUpperCase().trim();
-                    const mFirst = (row["MOTHER'S FIRST NAME"] || row["Mother's First Name"] || '').toString().toUpperCase().trim();
-                    const mMiddle = (row["MOTHER'S MIDDLE NAME"] || row["Mother's Middle Name"] || '').toString().toUpperCase().trim();
-                    const mLast = (row["MOTHER'S LAST NAME"] || row["Mother's Last Name"] || '').toString().toUpperCase().trim();
-                    
-                    const purok = (row['PUROK/SITIO'] || row['Purok/Sitio'] || '').toString().toUpperCase().trim();
-                    const addAdd = (row['ADDITIONAL ADDRESS'] || row['Additional Address'] || '').toString().toUpperCase().trim();
+                    const edu = safeStr(row['HIGHEST EDUCATIONAL ATTAINMENT'] || row['Educational Attainment']);
+                    const mFirst = safeStr(row["MOTHER'S FIRST NAME"] || row["Mother's First Name"]);
+                    const mMiddle = safeStr(row["MOTHER'S MIDDLE NAME"] || row["Mother's Middle Name"]);
+                    const mLast = safeStr(row["MOTHER'S LAST NAME"] || row["Mother's Last Name"]);
+
+                    const purok = safeStr(row['PUROK/SITIO'] || row['Purok/Sitio']);
+                    const addAdd = safeStr(row['ADDITIONAL ADDRESS'] || row['Additional Address']);
                     let address = '';
                     if(purok && addAdd) address = `${addAdd} PUROK ${purok.replace(/^PUROK\s*/i, '')}`;
                     else if (purok) address = `PUROK ${purok.replace(/^PUROK\s*/i, '')}`;
@@ -1900,5 +1928,5 @@
         });
       }
     </script>
-</body>
+</body> 
 </html>
