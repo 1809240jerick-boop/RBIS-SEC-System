@@ -1928,5 +1928,36 @@
         });
       }
     </script>
+    <!-- ========================================== -->
+<!-- EMERGENCY FIX FOR UNCLICKABLE MODALS       -->
+<!-- ========================================== -->
+<style>
+    /* 1. Push the dark background overlay backwards */
+    .modal-backdrop, 
+    .bg-gray-900\/50,
+    .modal-overlay {
+        z-index: 40 !important;
+    }
+
+    /* 2. Pull the actual modal box to the absolute front and force it to be clickable */
+    .modal, 
+    .modal-dialog, 
+    .modal-content, 
+    [role="dialog"] {
+        z-index: 9999 !important;
+        pointer-events: auto !important;
+    }
+    
+    /* 3. Ensure the inputs inside the modal are explicitly interactive */
+    .modal input, 
+    .modal button, 
+    .modal select,
+    [role="dialog"] input,
+    [role="dialog"] button {
+        pointer-events: auto !important;
+        position: relative !important;
+        z-index: 10000 !important;
+    }
+</style>
 </body> 
 </html>
