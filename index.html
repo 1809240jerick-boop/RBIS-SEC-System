@@ -265,19 +265,19 @@
                     </div>
                 </div>
                 <div class="col-md-3 anim-in anim-d1">
-                    <div class="stat-card stat-info" onclick="printStatCategory('households')" title="Click to print households">
+                    <div class="stat-card stat-info" onclick="showHouseholdDownloadModal()" title="Click to view & download Household List">
                         <div class="stat-icon"><i class="fas fa-home"></i></div>
                         <div class="stat-label">Total Households</div>
                         <div class="stat-value" id="rep-hh-total">0</div>
-                        <div class="print-hint"><i class="fas fa-print"></i> Click to print</div>
+                        <div class="print-hint"><i class="fas fa-home"></i> View Household List</div>
                     </div>
                 </div>
                 <div class="col-md-3 anim-in anim-d2">
-                    <div class="stat-card stat-success" onclick="printStatCategory('families')" title="Click to print families">
+                    <div class="stat-card stat-success" onclick="showFamilyDownloadModal()" title="Click to view & download Family List">
                         <div class="stat-icon"><i class="fas fa-people-roof"></i></div>
                         <div class="stat-label">Total Families</div>
                         <div class="stat-value" id="rep-family-total">0</div>
-                        <div class="print-hint"><i class="fas fa-print"></i> Click to print</div>
+                        <div class="print-hint"><i class="fas fa-users"></i> View Family List</div>
                     </div>
                 </div>
                 <div class="col-md-3 anim-in anim-d3">
@@ -444,6 +444,10 @@
                         <h4 style="font-family:'Plus Jakarta Sans'; font-weight:700;"><i class="fas fa-file-excel" style="color:var(--accent-green);"></i> Export Data</h4>
                         <p class="text-muted">Download database compatible with DILG BIMS (Excel format).</p>
                         <button class="btn btn-success" onclick="processExport()">Download BIMS Excel</button>
+                        <div class="d-flex gap-2 mt-2 flex-wrap">
+                            <button class="btn btn-outline-primary" onclick="showHouseholdDownloadModal()"><i class="fas fa-home me-1"></i> Download Household List</button>
+                            <button class="btn btn-outline-secondary" onclick="showFamilyDownloadModal()"><i class="fas fa-users me-1"></i> Download Family List</button>
+                        </div>
                         <hr>
                         <h4 style="font-family:'Plus Jakarta Sans'; font-weight:700;"><i class="fas fa-database" style="color:var(--accent-blue);"></i> System Backup</h4>
                         <p class="text-muted">Full system backup (JSON) including settings and logs.</p>
@@ -493,6 +497,18 @@
                         <div class="mb-3"><label>Barangay</label><input type="text" id="set-brgy" class="form-control text-uppercase"></div>
                         <div class="mb-3"><label>Punong Barangay (Signatory)</label><input type="text" id="set-captain" class="form-control text-uppercase" placeholder="Full Name of Captain"></div>
                         <div class="mb-3"><label>Barangay Secretary (Signatory)</label><input type="text" id="set-sec" class="form-control text-uppercase" placeholder="Full Name of Secretary"></div>
+                        <div class="mb-3">
+                            <label><i class="fas fa-calendar-alt me-1" style="color:var(--accent-blue);"></i> Date Display Format</label>
+                            <select id="set-date-format" class="form-select">
+                                <option value="YYYY-MM-DD">YYYY-MM-DD (e.g. 2000-12-30)</option>
+                                <option value="MM/DD/YYYY">MM/DD/YYYY (e.g. 12/30/2000)</option>
+                                <option value="DD/MM/YYYY">DD/MM/YYYY (e.g. 30/12/2000)</option>
+                                <option value="MMMM DD, YYYY">MMMM DD, YYYY (e.g. December 30, 2000)</option>
+                                <option value="DD MMMM YYYY">DD MMMM YYYY (e.g. 30 December 2000)</option>
+                                <option value="MMM DD, YYYY">MMM DD, YYYY (e.g. Dec 30, 2000)</option>
+                            </select>
+                            <small class="text-muted">Applies to all date entries (birthdates, death dates, etc.)</small>
+                        </div>
                         <button class="btn btn-primary" onclick="saveSettings()"><i class="fas fa-save me-1"></i> Save Configuration</button>
                     </div>
                 </div>
@@ -689,7 +705,8 @@
         // FIX: Safely merge saved settings with default structure to prevent password loss
         const defaultSettings = { 
             user_password: null, barangay: '', province: '', municipality: '', 
-            secretary: '', region: '', captain: '', lguType: 'MUNICIPALITY', customFilters: [] 
+            secretary: '', region: '', captain: '', lguType: 'MUNICIPALITY', customFilters: [],
+            dateFormat: 'YYYY-MM-DD'
         };
         const savedSettings = JSON.parse(localStorage.getItem('rbi_settings')) || {};
         let settings = { ...defaultSettings, ...savedSettings }; 
@@ -718,6 +735,28 @@
         const debouncedRenderList = debounce(() => { residentPage = 0; renderList(); }, 400);
         const debouncedSearchMother = debounce((val) => searchMother(val), 400);
         const debouncedFilterHHList = debounce(() => { hhPage = 0; renderHHList(); }, 400);
+
+        // ── DATE FORMAT HELPER ──
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            const fmt = settings.dateFormat || 'YYYY-MM-DD';
+            // Parse YYYY-MM-DD
+            const parts = dateStr.split('-');
+            if (parts.length !== 3) return dateStr; // fallback if unexpected
+            const year = parts[0]; const month = parseInt(parts[1]); const day = parseInt(parts[2]);
+            const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+            const monthShort = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            const mm = String(month).padStart(2,'0');
+            const dd = String(day).padStart(2,'0');
+            switch(fmt) {
+                case 'MM/DD/YYYY': return mm + '/' + dd + '/' + year;
+                case 'DD/MM/YYYY': return dd + '/' + mm + '/' + year;
+                case 'MMMM DD, YYYY': return monthNames[month-1] + ' ' + dd + ', ' + year;
+                case 'DD MMMM YYYY': return dd + ' ' + monthNames[month-1] + ' ' + year;
+                case 'MMM DD, YYYY': return monthShort[month-1] + ' ' + dd + ', ' + year;
+                default: return dateStr; // YYYY-MM-DD
+            }
+        }
         const debouncedSearchMemForHH = debounce(() => searchMemForHH(), 400);
 
         function showSystemAlert(message, title = "System Notification") {
@@ -798,6 +837,7 @@
             document.getElementById('set-brgy').value = settings.barangay || '';
             document.getElementById('set-captain').value = settings.captain || '';
             document.getElementById('set-sec').value = settings.secretary || '';
+            document.getElementById('set-date-format').value = settings.dateFormat || 'YYYY-MM-DD';
             renderCustomFilterList();
             onLguTypeChange();
         }
@@ -1006,7 +1046,7 @@
                     html += `<tr style="background:${isKeep ? '#f0fdf4' : '#fff5f5'};">
                         <td style="padding:6px 10px; border-bottom:1px solid #e5e7eb;"><span class="badge" style="background:${isKeep ? '#059669' : '#dc2626'}; color:white;">${isKeep ? '✓ KEEP' : '✗ DELETE'}</span></td>
                         <td style="padding:6px 10px; border-bottom:1px solid #e5e7eb;">${r.last.toUpperCase()}, ${r.first.toUpperCase()} ${(r.suffix||'').toUpperCase()}</td>
-                        <td style="padding:6px 10px; border-bottom:1px solid #e5e7eb;">${r.bdate}</td>
+                        <td style="padding:6px 10px; border-bottom:1px solid #e5e7eb;">${formatDate(r.bdate)}</td>
                         <td style="padding:6px 10px; border-bottom:1px solid #e5e7eb; font-size:0.7rem; color:#6b7280;">${r.id}</td>
                         <td style="padding:6px 10px; border-bottom:1px solid #e5e7eb;">${r.hh_name || '-'}</td>
                     </tr>`;
@@ -1156,7 +1196,7 @@
             const list = document.getElementById('death-list'); list.innerHTML = ''; const dead = db.filter(r => r.isDead); document.getElementById('death-total').innerText = dead.length;
             const totalPages = Math.ceil(dead.length / deathPerPage); const start = deathPage * deathPerPage; const end = Math.min(start + deathPerPage, dead.length); const pageData = dead.slice(start, end);
             if(dead.length === 0) { list.innerHTML = '<div class="col-12 text-center text-muted p-4">No records found.</div>'; }
-            pageData.forEach(r => { list.innerHTML += `<div class="col-md-4 mb-3"><div class="card card-custom p-3" style="border-left:4px solid var(--accent-red); cursor:pointer;" onclick="loadRecord('${r.id}')"><div class="d-flex justify-content-between align-items-center"><div><h6 class="fw-bold mb-0" style="color:var(--accent-red);">${r.last.toUpperCase()}, ${r.first.toUpperCase()}</h6><small class="text-muted">Died: ${r.deathDate || 'N/A'}</small></div><i class="fas fa-edit text-secondary"></i></div></div></div>`; });
+            pageData.forEach(r => { list.innerHTML += `<div class="col-md-4 mb-3"><div class="card card-custom p-3" style="border-left:4px solid var(--accent-red); cursor:pointer;" onclick="loadRecord('${r.id}')"><div class="d-flex justify-content-between align-items-center"><div><h6 class="fw-bold mb-0" style="color:var(--accent-red);">${r.last.toUpperCase()}, ${r.first.toUpperCase()}</h6><small class="text-muted">Died: ${r.deathDate ? formatDate(r.deathDate) : 'N/A'}</small></div><i class="fas fa-edit text-secondary"></i></div></div></div>`; });
             document.getElementById('death-page-info').innerText = `Page ${deathPage + 1} of ${totalPages || 1} (${dead.length} total)`;
             document.getElementById('btn-death-prev').disabled = deathPage === 0; document.getElementById('btn-death-next').disabled = end >= dead.length;
         }
@@ -1275,7 +1315,7 @@
                 const hhObj = household_db.find(h => h.name === r.hh_name); 
                 if (hhObj) hhNum = hhObj.houseNo || ''; 
             }
-            return `<div class="form-b-container"><div class="form-header"><div style="font-size: 9pt;">RBI Form B (Revised 2024)</div><div class="form-title">INDIVIDUAL RECORDS OF BARANGAY INHABITANT</div></div><table style="width:100%; font-size: 9pt; font-weight: bold; margin-bottom: 10px;"><tr><td width="10%">REGION</td><td width="2%">:</td><td style="border-bottom: 1px solid black;">${settings.region}</td><td width="5%"></td><td width="15%">CITY/MUN</td><td width="2%">:</td><td style="border-bottom: 1px solid black;">${settings.municipality}</td></tr><tr><td>PROVINCE</td><td>:</td><td style="border-bottom: 1px solid black;">${settings.province}</td><td></td><td>BARANGAY</td><td>:</td><td style="border-bottom: 1px solid black;">${settings.barangay}</td></tr></table><div class="main-box"><div class="box-title">PERSONAL INFORMATION</div><table class="layout-table"><tr><td width="30%"><div class="input-box">${r.philsys || ''}</div><div class="label-under">(PhilSys Card No.)</div></td><td width="70%"></td></tr></table><table class="layout-table"><tr><td width="25%"><div class="input-box">${r.last.toUpperCase()}</div><div class="label-under">(Last Name)</div></td><td width="10%"><div class="input-box">${(r.suffix || '').toUpperCase()}</div><div class="label-under">(Suffix)</div></td><td width="35%"><div class="input-box">${r.first.toUpperCase()}</div><div class="label-under">(First Name)</div></td><td width="30%"><div class="input-box">${(r.middle || '').toUpperCase()}</div><div class="label-under">(Middle Name)</div></td></tr></table><table class="layout-table"><tr><td width="20%"><div class="input-box">${r.bdate}</div><div class="label-under">(Birth Date)</div></td><td width="30%"><div class="input-box">${(r.bplace || '').toUpperCase()}</div><div class="label-under">(Birth Place)</div></td><td width="10%"><div class="input-box">${r.sex}</div><div class="label-under">(Sex)</div></td><td width="15%"><div class="input-box">${r.civil}</div><div class="label-under">(Civil Status)</div></td><td width="25%"><div class="input-box">${(r.religion || '').toUpperCase()}</div><div class="label-under">(Religion)</div></td></tr></table><table class="layout-table"><tr><td width="65%"><div class="input-box">${(r.address || '').toUpperCase()}</div><div class="label-under">(Residence Address)</div></td><td width="35%"><div class="input-box">${r.citizen || 'FILIPINO'}</div><div class="label-under">(Citizenship)</div></td></tr></table><table class="layout-table"><tr><td width="35%"><div class="input-box">${(r.prof || '').toUpperCase()}</div><div class="label-under">(Profession / Occupation)</div></td><td width="30%"><div class="input-box">${(r.contact || '').toUpperCase()}</div><div class="label-under">(Contact Number)</div></td><td width="35%"><div class="input-box">${(r.email || '').toUpperCase()}</div><div class="label-under">(E-mail Address)</div></td></tr></table><hr style="border-top: 1px dashed #ccc; margin: 5px 0;"><div style="font-size: 9pt; padding: 5px;"><strong>HIGHEST EDUCATIONAL ATTAINMENT:</strong><span class="chk-group" style="display:inline-flex;"><span><span class="chk-box">${chk(isElem, true)}</span> ELEMENTARY</span><span><span class="chk-box">${chk(isHS, true)}</span> HIGH SCHOOL</span><span><span class="chk-box">${chk(isCol, true)}</span> COLLEGE</span><span><span class="chk-box">${chk(isPost, true)}</span> POST GRAD</span><span><span class="chk-box">${chk(isVoc, true)}</span> VOCATIONAL</span></span><div style="margin-top:5px; margin-left: 200px;"><em>Please specify:</em> <span class="chk-box" style="margin-left: 10px;">${chk(isGrad, true)}</span> Graduate <span class="chk-box" style="margin-left: 20px;">${chk(isUnder, true)}</span> Under Graduate</div></div><div class="legal-text">I hereby certify that the above information is true and correct to the best of my knowledge. I understand that for the Barangay to carry out its mandate pursuant to Section 394 (d)(6) of the Local Government Code of 1991, they must necessarily process my personal information for easy identification of inhabitants, as a tool in planning, and as an updated reference in the number of inhabitants of the Barangay. Therefore, I grant my consent and recognize the authority of the Barangay to process my personal information, subject to the provision of the Philippine Data Privacy Act of 2012.</div><table style="width:100%; margin-top: 30px; font-size: 9pt;"><tr><td width="40%" style="text-align:center;"><div class="sig-line"></div><div>Date Accomplished</div></td><td width="20%"></td><td width="40%" style="text-align:center;"><div class="sig-line"></div><div>Name/Signature of Person Accomplishing the Form</div></td></tr></table><div style="margin-top: 20px; font-size: 9pt;">Attested By:</div><table style="width:100%; margin-top: 10px; font-size: 9pt;"><tr><td width="40%" style="text-align:center; vertical-align: bottom;"><div class="sig-line" style="font-weight:bold; text-transform:uppercase;">${settings.secretary}</div><div style="font-weight:bold;">Barangay Secretary</div></td><td width="30%" style="text-align:center;"><div class="thumb-box"></div><div style="font-size:8pt;">Left Thumbmark</div></td><td width="30%" style="text-align:center;"><div class="thumb-box"></div><div style="font-size:8pt;">Right Thumbmark</div></td></tr></table><div style="margin-top: 20px; display: flex; align-items: center;"><span style="font-weight:bold; font-size: 9pt; margin-right: 10px;">Household Number:</span><div style="border: 2px solid black; width: 200px; height: 30px; display:flex; align-items:center; justify-content:center; font-weight:bold;">${hhNum}</div></div><div style="font-size: 8pt; font-style: italic; margin-top: 5px;">Note: The household number shall be filled up by the Barangay Secretary.</div></div></div>`;
+            return `<div class="form-b-container"><div class="form-header"><div style="font-size: 9pt;">RBI Form B (Revised 2024)</div><div class="form-title">INDIVIDUAL RECORDS OF BARANGAY INHABITANT</div></div><table style="width:100%; font-size: 9pt; font-weight: bold; margin-bottom: 10px;"><tr><td width="10%">REGION</td><td width="2%">:</td><td style="border-bottom: 1px solid black;">${settings.region}</td><td width="5%"></td><td width="15%">CITY/MUN</td><td width="2%">:</td><td style="border-bottom: 1px solid black;">${settings.municipality}</td></tr><tr><td>PROVINCE</td><td>:</td><td style="border-bottom: 1px solid black;">${settings.province}</td><td></td><td>BARANGAY</td><td>:</td><td style="border-bottom: 1px solid black;">${settings.barangay}</td></tr></table><div class="main-box"><div class="box-title">PERSONAL INFORMATION</div><table class="layout-table"><tr><td width="30%"><div class="input-box">${r.philsys || ''}</div><div class="label-under">(PhilSys Card No.)</div></td><td width="70%"></td></tr></table><table class="layout-table"><tr><td width="25%"><div class="input-box">${r.last.toUpperCase()}</div><div class="label-under">(Last Name)</div></td><td width="10%"><div class="input-box">${(r.suffix || '').toUpperCase()}</div><div class="label-under">(Suffix)</div></td><td width="35%"><div class="input-box">${r.first.toUpperCase()}</div><div class="label-under">(First Name)</div></td><td width="30%"><div class="input-box">${(r.middle || '').toUpperCase()}</div><div class="label-under">(Middle Name)</div></td></tr></table><table class="layout-table"><tr><td width="20%"><div class="input-box">${formatDate(r.bdate)}</div><div class="label-under">(Birth Date)</div></td><td width="30%"><div class="input-box">${(r.bplace || '').toUpperCase()}</div><div class="label-under">(Birth Place)</div></td><td width="10%"><div class="input-box">${r.sex}</div><div class="label-under">(Sex)</div></td><td width="15%"><div class="input-box">${r.civil}</div><div class="label-under">(Civil Status)</div></td><td width="25%"><div class="input-box">${(r.religion || '').toUpperCase()}</div><div class="label-under">(Religion)</div></td></tr></table><table class="layout-table"><tr><td width="65%"><div class="input-box">${(r.address || '').toUpperCase()}</div><div class="label-under">(Residence Address)</div></td><td width="35%"><div class="input-box">${r.citizen || 'FILIPINO'}</div><div class="label-under">(Citizenship)</div></td></tr></table><table class="layout-table"><tr><td width="35%"><div class="input-box">${(r.prof || '').toUpperCase()}</div><div class="label-under">(Profession / Occupation)</div></td><td width="30%"><div class="input-box">${(r.contact || '').toUpperCase()}</div><div class="label-under">(Contact Number)</div></td><td width="35%"><div class="input-box">${(r.email || '').toUpperCase()}</div><div class="label-under">(E-mail Address)</div></td></tr></table><hr style="border-top: 1px dashed #ccc; margin: 5px 0;"><div style="font-size: 9pt; padding: 5px;"><strong>HIGHEST EDUCATIONAL ATTAINMENT:</strong><span class="chk-group" style="display:inline-flex;"><span><span class="chk-box">${chk(isElem, true)}</span> ELEMENTARY</span><span><span class="chk-box">${chk(isHS, true)}</span> HIGH SCHOOL</span><span><span class="chk-box">${chk(isCol, true)}</span> COLLEGE</span><span><span class="chk-box">${chk(isPost, true)}</span> POST GRAD</span><span><span class="chk-box">${chk(isVoc, true)}</span> VOCATIONAL</span></span><div style="margin-top:5px; margin-left: 200px;"><em>Please specify:</em> <span class="chk-box" style="margin-left: 10px;">${chk(isGrad, true)}</span> Graduate <span class="chk-box" style="margin-left: 20px;">${chk(isUnder, true)}</span> Under Graduate</div></div><div class="legal-text">I hereby certify that the above information is true and correct to the best of my knowledge. I understand that for the Barangay to carry out its mandate pursuant to Section 394 (d)(6) of the Local Government Code of 1991, they must necessarily process my personal information for easy identification of inhabitants, as a tool in planning, and as an updated reference in the number of inhabitants of the Barangay. Therefore, I grant my consent and recognize the authority of the Barangay to process my personal information, subject to the provision of the Philippine Data Privacy Act of 2012.</div><table style="width:100%; margin-top: 30px; font-size: 9pt;"><tr><td width="40%" style="text-align:center;"><div class="sig-line"></div><div>Date Accomplished</div></td><td width="20%"></td><td width="40%" style="text-align:center;"><div class="sig-line"></div><div>Name/Signature of Person Accomplishing the Form</div></td></tr></table><div style="margin-top: 20px; font-size: 9pt;">Attested By:</div><table style="width:100%; margin-top: 10px; font-size: 9pt;"><tr><td width="40%" style="text-align:center; vertical-align: bottom;"><div class="sig-line" style="font-weight:bold; text-transform:uppercase;">${settings.secretary}</div><div style="font-weight:bold;">Barangay Secretary</div></td><td width="30%" style="text-align:center;"><div class="thumb-box"></div><div style="font-size:8pt;">Left Thumbmark</div></td><td width="30%" style="text-align:center;"><div class="thumb-box"></div><div style="font-size:8pt;">Right Thumbmark</div></td></tr></table><div style="margin-top: 20px; display: flex; align-items: center;"><span style="font-weight:bold; font-size: 9pt; margin-right: 10px;">Household Number:</span><div style="border: 2px solid black; width: 200px; height: 30px; display:flex; align-items:center; justify-content:center; font-weight:bold;">${hhNum}</div></div><div style="font-size: 8pt; font-style: italic; margin-top: 5px;">Note: The household number shall be filled up by the Barangay Secretary.</div></div></div>`;
         }
 
         function printFormB(id) {
@@ -1345,7 +1385,7 @@
                     <td style="text-align:center;">${i + 1}</td>
                     <td>${m.last.toUpperCase()}</td><td>${m.first.toUpperCase()}</td><td>${(m.middle || '').toUpperCase()}</td><td>${(m.suffix || '').toUpperCase()}</td>
                     <td>${(m.bplace || '').toUpperCase()}</td>
-                    <td style="text-align:center;">${m.bdate}</td>
+                    <td style="text-align:center;">${formatDate(m.bdate)}</td>
                     <td style="text-align:center;">${ageInfo.y}</td>
                     <td style="text-align:center;">${m.sex ? m.sex.substring(0,1) : ''}</td>
                     <td style="text-align:center;">${m.civil || ''}</td>
@@ -1548,6 +1588,197 @@
         }
 
         function backupData() { const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({db, settings, household_db})); const a = document.createElement('a'); a.href = dataStr; a.download = "RBI_Backup.json"; a.click(); }
+
+        // ── DOWNLOAD HOUSEHOLD EXCEL ──
+        // ── SHOW HOUSEHOLD DOWNLOAD MODAL ──
+        function showHouseholdDownloadModal() {
+            const hhMap = {};
+            household_db.forEach(h => { if(h && h.name) hhMap[h.name] = h; });
+            const hhNameSet = new Set([
+                ...household_db.map(h => h.name).filter(n => n && n.trim()),
+                ...db.filter(r => !r.isDead && r.hh_name && r.hh_name.trim()).map(r => r.hh_name)
+            ]);
+            const sorted = [...hhNameSet].sort();
+            document.getElementById('hh-dl-total').innerText = sorted.length;
+            const tbody = document.getElementById('hh-dl-body');
+            tbody.innerHTML = '';
+            sorted.forEach((hhName, idx) => {
+                const meta = hhMap[hhName] || { purok: '', houseNo: '' };
+                const allInHH = db.filter(r => r.hh_name === hhName && !r.isDead);
+                const headCount = allInHH.filter(m => m.hh_role && m.hh_role.toUpperCase().includes('HEAD')).length;
+                const memberCount = allInHH.filter(m => !m.hh_role || !m.hh_role.toUpperCase().includes('HEAD')).length;
+                tbody.innerHTML += `<tr>
+                    <td>${idx + 1}</td>
+                    <td><strong>${hhName}</strong></td>
+                    <td>${meta.purok || '-'}</td>
+                    <td>${meta.houseNo || '-'}</td>
+                    <td style="text-align:center;">${headCount}</td>
+                    <td style="text-align:center;">${memberCount}</td>
+                    <td style="text-align:center;font-weight:700;">${allInHH.length}</td>
+                </tr>`;
+            });
+            new bootstrap.Modal(document.getElementById('modal-hh-download')).show();
+        }
+
+        // ── SHOW FAMILY DOWNLOAD MODAL ──
+        function showFamilyDownloadModal() {
+            const hhMap = {};
+            household_db.forEach(h => { if(h && h.name) hhMap[h.name] = h; });
+            const heads = db.filter(r => !r.isDead && r.hh_role && r.hh_role.toUpperCase().includes('HEAD'))
+                           .sort((a, b) => a.last.localeCompare(b.last));
+            document.getElementById('fam-dl-total').innerText = heads.length;
+            const tbody = document.getElementById('fam-dl-body');
+            tbody.innerHTML = '';
+            heads.forEach((r, idx) => {
+                const fullName = r.last.toUpperCase() + ', ' + r.first.toUpperCase() + (r.suffix ? ' ' + r.suffix.toUpperCase() : '');
+                const hhName = r.hh_name || '-';
+                const meta = hhMap[r.hh_name] || { purok: '', houseNo: '' };
+                const membersInHH = db.filter(m => m.hh_name === r.hh_name && !m.isDead).length;
+                let age = '-';
+                if (r.bdate) {
+                    const today = new Date(); const bd = new Date(r.bdate);
+                    let a = today.getFullYear() - bd.getFullYear();
+                    if (today.getMonth() - bd.getMonth() < 0 || (today.getMonth() - bd.getMonth() === 0 && today.getDate() < bd.getDate())) a--;
+                    age = a;
+                }
+                tbody.innerHTML += `<tr>
+                    <td>${idx + 1}</td>
+                    <td><strong>${fullName}</strong></td>
+                    <td>${hhName}</td>
+                    <td>${meta.purok || '-'}</td>
+                    <td>${r.sex || '-'}</td>
+                    <td style="text-align:center;">${age}</td>
+                    <td>${r.civil || '-'}</td>
+                    <td style="text-align:center;font-weight:700;">${membersInHH}</td>
+                </tr>`;
+            });
+            new bootstrap.Modal(document.getElementById('modal-family-download')).show();
+        }
+
+        // ── DOWNLOAD HOUSEHOLD EXCEL ──
+        // One row per HOUSEHOLD: Household Name | No. of Head | No. of Members
+        function downloadHouseholdExcel() {
+            const hhMap = {};
+            household_db.forEach(h => { if(h && h.name) hhMap[h.name] = h; });
+
+            // Collect all known household names (from registry + from residents)
+            const hhNameSet = new Set([
+                ...household_db.map(h => h.name).filter(n => n && n.trim()),
+                ...db.filter(r => !r.isDead && r.hh_name && r.hh_name.trim()).map(r => r.hh_name)
+            ]);
+
+            const header = [
+                '#',
+                'HOUSEHOLD NAME',
+                'PUROK',
+                'HOUSE NO.',
+                'NO. OF HEAD',
+                'NO. OF MEMBERS',
+                'TOTAL IN HOUSEHOLD'
+            ];
+
+            const rows = [...hhNameSet].sort().map((hhName, idx) => {
+                const meta = hhMap[hhName] || { purok: '', houseNo: '' };
+                const allInHH = db.filter(r => r.hh_name === hhName && !r.isDead);
+                // Head = anyone with role containing HEAD
+                const headCount = allInHH.filter(m => m.hh_role && m.hh_role.toUpperCase().includes('HEAD')).length;
+                // Members = everyone else (spouse, son, daughter, member, or no role)
+                const memberCount = allInHH.filter(m => !m.hh_role || !m.hh_role.toUpperCase().includes('HEAD')).length;
+                return [
+                    idx + 1,
+                    hhName,
+                    meta.purok || '',
+                    meta.houseNo || '',
+                    headCount,
+                    memberCount,
+                    allInHH.length
+                ];
+            });
+
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
+            ws['!cols'] = [
+                { wch: 5 },  // #
+                { wch: 32 }, // Household Name
+                { wch: 15 }, // Purok
+                { wch: 12 }, // House No.
+                { wch: 14 }, // No. of Head
+                { wch: 16 }, // No. of Members
+                { wch: 20 }  // Total
+            ];
+            XLSX.utils.book_append_sheet(wb, ws, 'HOUSEHOLDS');
+            XLSX.writeFile(wb, 'RBI_Household_List.xlsx');
+        }
+
+        // ── DOWNLOAD FAMILY EXCEL ──
+        // One row per HEAD OF HOUSEHOLD: the actual person who is the head
+        function downloadFamilyExcel() {
+            const hhMap = {};
+            household_db.forEach(h => { if(h && h.name) hhMap[h.name] = h; });
+
+            // Find all living residents who are heads of their household
+            const heads = db.filter(r =>
+                !r.isDead &&
+                r.hh_role &&
+                r.hh_role.toUpperCase().includes('HEAD')
+            ).sort((a, b) => a.last.localeCompare(b.last));
+
+            const header = [
+                '#',
+                'NAME OF HEAD OF HOUSEHOLD',
+                'HOUSEHOLD NAME',
+                'PUROK',
+                'HOUSE NO.',
+                'SEX',
+                'AGE',
+                'CIVIL STATUS',
+                'NO. OF MEMBERS IN HOUSEHOLD'
+            ];
+
+            const rows = heads.map((r, idx) => {
+                const fullName = r.last.toUpperCase() + ', ' + r.first.toUpperCase() + (r.middle ? ' ' + r.middle.toUpperCase().charAt(0) + '.' : '') + (r.suffix ? ' ' + r.suffix.toUpperCase() : '');
+                const hhName = r.hh_name || '';
+                const meta = hhMap[hhName] || { purok: '', houseNo: '' };
+                const membersInHH = db.filter(m => m.hh_name === hhName && !m.isDead).length;
+                // Calculate age
+                let age = '';
+                if (r.bdate) {
+                    const today = new Date();
+                    const bd = new Date(r.bdate);
+                    let a = today.getFullYear() - bd.getFullYear();
+                    const m = today.getMonth() - bd.getMonth();
+                    if (m < 0 || (m === 0 && today.getDate() < bd.getDate())) a--;
+                    age = a;
+                }
+                return [
+                    idx + 1,
+                    fullName,
+                    hhName,
+                    meta.purok || '',
+                    meta.houseNo || '',
+                    r.sex || '',
+                    age,
+                    r.civil || '',
+                    membersInHH
+                ];
+            });
+
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
+            ws['!cols'] = [
+                { wch: 5 },  // #
+                { wch: 36 }, // Name of Head
+                { wch: 28 }, // Household Name
+                { wch: 15 }, // Purok
+                { wch: 12 }, // House No.
+                { wch: 8 },  // Sex
+                { wch: 6 },  // Age
+                { wch: 14 }, // Civil Status
+                { wch: 24 }  // No. of Members
+            ];
+            XLSX.utils.book_append_sheet(wb, ws, 'FAMILY LIST');
+            XLSX.writeFile(wb, 'RBI_Family_List.xlsx');
+        }
 
         let _driveToken = null;
         let _driveUser  = null;
@@ -1909,8 +2140,10 @@
 
         function saveSettings() {
             const sec = document.getElementById('set-sec').value; const brgy = document.getElementById('set-brgy').value; const prov = document.getElementById('set-prov').value; const muni = document.getElementById('set-muni').value; const lguType = document.getElementById('set-lgu-type').value; const region = document.getElementById('set-region').value; const captain = document.getElementById('set-captain').value;
+            const dateFormat = document.getElementById('set-date-format').value;
             if(!sec || !brgy) return showSystemAlert("Please fill in Barangay and Secretary name.");
             settings.secretary = sec.toUpperCase(); settings.barangay = brgy.toUpperCase(); settings.province = prov ? prov.toUpperCase() : ''; settings.municipality = muni ? muni.toUpperCase() : ''; settings.lguType = lguType; settings.region = region ? region.toUpperCase() : ''; settings.captain = captain ? captain.toUpperCase() : '';
+            settings.dateFormat = dateFormat || 'YYYY-MM-DD';
             localStorage.setItem('rbi_settings', JSON.stringify(settings)); showSystemAlert('Configuration Saved!');
         }
     </script>
@@ -1959,5 +2192,51 @@
         z-index: 10000 !important;
     }
 </style>
+
+    <!-- MODAL: Household Download Preview -->
+    <div class="modal fade" id="modal-hh-download" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content">
+        <div class="modal-header">
+            <h5 style="font-family:'Plus Jakarta Sans'; font-weight:700;"><i class="fas fa-home me-2" style="color:var(--accent-cyan);"></i>Household List</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div><span class="text-muted">Total households: </span><strong id="hh-dl-total">0</strong></div>
+            </div>
+            <div style="max-height: 420px; overflow-y: auto;">
+                <table class="print-preview-table" id="hh-dl-table">
+                    <thead><tr><th>#</th><th>Household Name</th><th>Purok</th><th>House No.</th><th>No. of Head</th><th>No. of Members</th><th>Total</th></tr></thead>
+                    <tbody id="hh-dl-body"></tbody>
+                </table>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button class="btn btn-success" onclick="downloadHouseholdExcel()"><i class="fas fa-file-excel me-1"></i> Download Excel</button>
+        </div>
+    </div></div></div>
+
+    <!-- MODAL: Family Download Preview -->
+    <div class="modal fade" id="modal-family-download" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content">
+        <div class="modal-header">
+            <h5 style="font-family:'Plus Jakarta Sans'; font-weight:700;"><i class="fas fa-users me-2" style="color:var(--accent-green);"></i>Family List (Heads of Household)</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div><span class="text-muted">Total families: </span><strong id="fam-dl-total">0</strong></div>
+            </div>
+            <div style="max-height: 420px; overflow-y: auto;">
+                <table class="print-preview-table" id="fam-dl-table">
+                    <thead><tr><th>#</th><th>Name of Head</th><th>Household Name</th><th>Purok</th><th>Sex</th><th>Age</th><th>Civil Status</th><th>Members</th></tr></thead>
+                    <tbody id="fam-dl-body"></tbody>
+                </table>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button class="btn btn-success" onclick="downloadFamilyExcel()"><i class="fas fa-file-excel me-1"></i> Download Excel</button>
+        </div>
+    </div></div></div>
 </body> 
 </html>
