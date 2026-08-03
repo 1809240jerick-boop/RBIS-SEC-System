@@ -337,7 +337,7 @@
                     <div class="col-md-3"><label>Suffix</label><input type="text" id="f-suffix" class="form-control text-uppercase" placeholder="e.g. JR, III"></div>
                     <div class="col-md-3"><label>Birth Date <span class="text-danger">*</span></label><input type="date" id="f-bdate" class="form-control"></div>
                     <div class="col-md-3"><label>Sex <span class="text-danger">*</span></label><select id="f-sex" class="form-select"><option value="MALE">MALE</option><option value="FEMALE">FEMALE</option></select></div>
-                    <div class="col-md-3"><label>Civil Status</label><select id="f-civil" class="form-select"><option value="SINGLE">SINGLE</option><option value="MARRIED">MARRIED</option><option value="WIDOWED">WIDOWED</option><option value="SEPARATED">SEPARATED</option><option value="LIVE-IN">LIVE-IN / COMMON LAW</option><option value="ANNULLED">ANNULLED</option></select></div>
+                    <div class="col-md-3"><label>Civil Status</label><select id="f-civil" class="form-select"><option value="SINGLE">SINGLE</option><option value="MARRIED">MARRIED</option><option value="WIDOWED">WIDOWED</option><option value="DIVORCED">DIVORCED</option><option value="SEPARATED">SEPARATED</option><option value="COMMON LAW/ LIVE-IN">COMMON LAW / LIVE-IN</option><option value="UNKNOWN">UNKNOWN</option><option value="ANNULLED">ANNULLED</option></select></div>
                     <div class="col-md-3"><label>Religion</label><input type="text" id="f-religion" class="form-control text-uppercase" placeholder="e.g. ROMAN CATHOLIC"></div>
                     <div class="col-md-3"><label>Citizenship</label><select id="f-citizen" class="form-select"><option value="FILIPINO">FILIPINO</option><option value="FOREIGNER">FOREIGNER</option></select></div>
                     <div class="col-md-4"><label>Birth Place</label><input type="text" id="f-bplace" class="form-control text-uppercase"></div>
@@ -771,6 +771,11 @@
             if (oldDB) { try { await iDB.residents.bulkPut(JSON.parse(oldDB)); localStorage.removeItem('rbi_db'); } catch(e) { console.error("Migration Error", e); } }
             if (oldHH) { try { await iDB.households.bulkPut(JSON.parse(oldHH)); localStorage.removeItem('rbi_hh_db'); } catch(e) { console.error("Migration Error", e); } }
             await refreshData();
+            const healedCount = await selfHealResidentData();
+            if (healedCount > 0) {
+                await refreshData();
+                console.log(`[Self-Heal] Normalized ${healedCount} resident record(s) for BIMS compatibility. No data was deleted.`);
+            }
             const bypassSecurity = sessionStorage.getItem('rbis_bypass_security');
             if (bypassSecurity === 'true') {
                 sessionStorage.removeItem('rbis_bypass_security');
@@ -785,6 +790,62 @@
             else { document.getElementById('login-phase-1').classList.remove('d-none'); document.getElementById('login-phase-2').classList.add('d-none'); document.getElementById('login-phase-3').classList.add('d-none'); }
             updateServerTime(); renderList();
         });
+
+        // ══════════════════════════════════════════════════════════════════
+        // SELF-HEAL: Normalizes legacy/mismatched enum values so records stay
+        // BIMS-import compatible. This ONLY rewrites known enumerated fields
+        // (Inhabitant Type, Sex, Civil Status, Citizenship) to their official
+        // accepted spelling. It NEVER deletes a field, a record, a household
+        // link, or any of the extra data (address, religion, PWD/OSY/4Ps/etc).
+        // Everything else on the record is preserved exactly as-is.
+        // ══════════════════════════════════════════════════════════════════
+        function normalizeCivilStatus(civil) {
+            if (!civil) return '';
+            const c = civil.toString().toUpperCase().trim();
+            if (c === 'LIVE-IN' || c === 'LIVE-IN / COMMON LAW' || c === 'COMMON LAW' || c === 'COMMON-LAW') return 'COMMON LAW/ LIVE-IN';
+            const accepted = ['SINGLE','MARRIED','WIDOWED','DIVORCED','SEPARATED','COMMON LAW/ LIVE-IN','UNKNOWN','ANNULLED'];
+            return accepted.includes(c) ? c : c; // unknown/custom values are left untouched, never dropped
+        }
+        function normalizeInhabitantType(type) {
+            const t = (type || '').toString().toUpperCase().trim();
+            const accepted = ['NON-MIGRANT','MIGRANT','TRANSIENT'];
+            return accepted.includes(t) ? t : 'NON-MIGRANT';
+        }
+        function normalizeSex(sex) {
+            const s = (sex || '').toString().toUpperCase().trim();
+            return (s === 'MALE' || s === 'FEMALE') ? s : s;
+        }
+        function normalizeCitizenship(citizen) {
+            const c = (citizen || '').toString().toUpperCase().trim();
+            if (!c) return 'FILIPINO';
+            return (c === 'FILIPINO' || c === 'FOREIGNER') ? c : c;
+        }
+
+        async function selfHealResidentData() {
+            const changed = [];
+            db.forEach(r => {
+                let touched = false;
+                const newCivil = normalizeCivilStatus(r.civil);
+                if (newCivil !== (r.civil || '')) { r.civil = newCivil; touched = true; }
+
+                const newType = normalizeInhabitantType(r.type);
+                if (newType !== (r.type || '')) { r.type = newType; touched = true; }
+
+                const newSex = normalizeSex(r.sex);
+                if (newSex !== (r.sex || '')) { r.sex = newSex; touched = true; }
+
+                const newCitizen = normalizeCitizenship(r.citizen);
+                if (newCitizen !== (r.citizen || '')) { r.citizen = newCitizen; touched = true; }
+
+                if (touched) changed.push(r);
+            });
+            if (changed.length > 0) {
+                // bulkPut only overwrites the fields on these exact objects — every other
+                // property (household links, checkboxes, address, ids, etc.) is untouched.
+                await iDB.residents.bulkPut(changed);
+            }
+            return changed.length;
+        }
 
         async function refreshData() {
             db = await iDB.residents.toArray();
@@ -1106,7 +1167,7 @@
                 suffix: document.getElementById('f-suffix').value.toUpperCase(), 
                 bdate: bdate, 
                 sex: document.getElementById('f-sex').value, 
-                civil: document.getElementById('f-civil').value, 
+                civil: normalizeCivilStatus(document.getElementById('f-civil').value), 
                 religion: document.getElementById('f-religion').value.toUpperCase(), 
                 citizen: document.getElementById('f-citizen').value, 
                 philsys: document.getElementById('f-philsys').value.toUpperCase(), 
@@ -1576,15 +1637,86 @@
         // ========== IMPORT / EXPORT ==========
         function processExport() {
             const instrHeader = ["COLUMNS", "EXPECTED VALUES/ FORMAT", "REMARKS"];
-            const instrData = [["INHABITANT TYPE", "NON-MIGRANT", "Required Field"], ["", "MIGRANT", ""], ["", "TRANSIENT", ""], ["LAST NAME", "", "Required Field"], ["FIRST NAME", "", "Required Field"], ["MIDDLE NAME", "", "Optional Field"], ["SUFFIX", "", "Optional Field"], ["BIRTH PLACE", "", "Optional Field"], ["BIRTHDATE (YYYY-MM-DD)", "2000-12-30", "Required Field"], ["SEX", "MALE", "Required Field"], ["", "FEMALE", "Required Field"], ["CIVIL STATUS", "SINGLE", "Required Field"], ["", "MARRIED", "Required Field"], ["", "WIDOWED", "Required Field"], ["", "DIVORCED", "Required Field"], ["", "SEPARATED", "Required Field"], ["", "COMMON LAW/ LIVE-IN", "Required Field"], ["", "UNKNOWN", "Required Field"], ["", "ANNULLED", "Required Field"], ["CITIZENSHIP", "FILIPINO", "Required Field"], ["", "FOREIGNER", "Required Field"], ["RELIGION", "", "Optional Field"], ["PROFESSION/ OCCUPATION", "", "Optional Field"], ["CONTACT NUMBER", "", "Optional Field"], ["EMAIL ADDRESS", "", "Optional Field"], ["HIGHEST EDUCATIONAL ATTAINMENT", "", "Optional Field"], ["MOTHER'S FIRST NAME", "", "Optional Field"], ["MOTHER'S MIDDLE NAME", "", "Optional Field"], ["MOTHER'S LAST NAME", "", "Optional Field"]];
-            const dataHeader = ["INHABITANT TYPE", "LAST NAME", "FIRST NAME", "MIDDLE NAME", "SUFFIX", "BIRTH PLACE", "BIRTHDATE (YYYY-MM-DD)", "SEX", "CIVIL STATUS", "CITIZENSHIP", "PROFESSION/ OCCUPATION", "CONTACT NUMBER", "EMAIL ADDRESS", "HIGHEST EDUCATIONAL ATTAINMENT", "MOTHER'S FIRST NAME", "MOTHER'S MIDDLE NAME", "MOTHER'S LAST NAME", "PUROK/SITIO", "ADDITIONAL ADDRESS", "RELIGION", "IS OSY", "IS PWD", "IS 4Ps", "IS IPS", "IS SOLO PARENT", "LABOR STATUS", "IS OFW", "IS ISY"];
+            const instrData = [
+                ["INHABITANT TYPE", "NON-MIGRANT", "Required Field"],
+                ["", "MIGRANT", ""],
+                ["", "TRANSIENT", ""],
+                ["LAST NAME", "", "Required Field"],
+                ["FIRST NAME", "", "Required Field"],
+                ["MIDDLE NAME", "", "Optional Field"],
+                ["SUFFIX", "", "Optional Field"],
+                ["BIRTH PLACE", "", "Optional Field"],
+                ["BIRTHDATE (YYYY-MM-DD)", "2000-12-30", "Required Field", "Updated: 12012025"],
+                ["SEX", "MALE", "Required Field"],
+                ["", "FEMALE", "Required Field"],
+                ["CIVIL STATUS", "SINGLE", "Required Field"],
+                ["", "MARRIED", "Required Field"],
+                ["", "WIDOWED", "Required Field", "Updated: 12012025"],
+                ["", "DIVORCED", "Required Field", "Updated: 12012025"],
+                ["", "SEPARATED", "Required Field", "Updated: 12012025"],
+                ["", "COMMON LAW/ LIVE-IN", "Required Field", "Updated: 12012025"],
+                ["", "UNKNOWN", "Required Field", "Updated: 12012025"],
+                ["", "ANNULLED", "Required Field", "Updated: 12012025"],
+                ["CITIZENSHIP", "FILIPINO", "Required Field"],
+                ["", "FOREIGNER", "Required Field"],
+                ["PROFESSION/ OCCUPATION", "", "Optional Field"],
+                ["CONTACT NUMBER", "", "Optional Field"],
+                ["EMAIL ADDRESS", "", "Optional Field"],
+                ["HIGHEST EDUCATIONAL ATTAINMENT", "", "Optional Field"],
+                ["MOTHER'S FIRST NAME", "", "Optional Field", "Updated: 10302024"],
+                ["MOTHER'S MIDDLE NAME", "", "Optional Field"],
+                ["MOTHER'S LAST NAME", "", "Optional Field", "Updated: 10302024"],
+                [],
+                ["Encode inhabitant profiles using the DATA Tab."],
+                ["Required fields cannot be null."],
+                ["Please follow the correct date format above."],
+                ["Maximum Number of Rows: 5,000"]
+            ];
+
+            // The DATA sheet must match Import_Inhabitant_Template_v1_4_2.xlsx EXACTLY:
+            // 17 columns, in this exact order, nothing added or removed — otherwise
+            // BIMS will reject the file. All the app's extra fields (Purok, Religion,
+            // PWD/OSY/4Ps/etc.) still live safely in the local database; they are simply
+            // not part of this particular official export format.
+            const dataHeader = ["INHABITANT TYPE", "LAST NAME", "FIRST NAME", "MIDDLE NAME", "SUFFIX", "BIRTH PLACE",
+                "BIRTHDATE (YYYY-MM-DD)", "SEX", "CIVIL STATUS", "CITIZENSHIP", "PROFESSION/ OCCUPATION",
+                "CONTACT NUMBER", "EMAIL ADDRESS", "HIGHEST EDUCATIONAL ATTAINMENT",
+                "MOTHER'S FIRST NAME", "MOTHER'S MIDDLE NAME", "MOTHER'S LAST NAME"];
+
             const living = db.filter(r => !r.isDead);
-            const dataRows = living.map(r => {
-                let purok = '', addAdd = r.address || '';
-                if(r.address && r.address.includes('Purok')) { const parts = r.address.split('Purok'); addAdd = parts[0].trim(); purok = parts[1].trim(); }
-                return [r.type || "NON-MIGRANT", r.last.toUpperCase() || "", r.first.toUpperCase() || "", (r.middle || "").toUpperCase(), (r.suffix || "").toUpperCase(), (r.bplace || "").toUpperCase(), r.bdate || "", r.sex || "", r.civil || "", (r.citizen || "FILIPINO").toUpperCase(), (r.prof || "").toUpperCase(), (r.contact || "").toUpperCase(), (r.email || "").toUpperCase(), r.edu || "", (r.mother_first || "").toUpperCase(), (r.mother_middle || "").toUpperCase(), (r.mother_last || "").toUpperCase(), purok, addAdd, (r.religion || "").toUpperCase(), r.isOSY ? "YES" : "NO", r.isPwd ? "YES" : "NO", "NO", r.isIp ? "YES" : "NO", r.isSoloParent ? "YES" : "NO", r.isUnemployed ? "UNEMPLOYED" : "EMPLOYED", r.isOfw ? "YES" : "NO", "NO"];
-            });
-            const wb = XLSX.utils.book_new(); const wsInstr = XLSX.utils.aoa_to_sheet([instrHeader, ...instrData]); XLSX.utils.book_append_sheet(wb, wsInstr, "INSTRUCTIONS"); const wsData = XLSX.utils.aoa_to_sheet([dataHeader, ...dataRows]); XLSX.utils.book_append_sheet(wb, wsData, "DATA"); XLSX.writeFile(wb, "RBI_Export_BIMS.xlsx");
+            const dataRows = living.map(r => [
+                normalizeInhabitantType(r.type),
+                (r.last || "").toUpperCase(),
+                (r.first || "").toUpperCase(),
+                (r.middle || "").toUpperCase(),
+                (r.suffix || "").toUpperCase(),
+                (r.bplace || "").toUpperCase(),
+                r.bdate || "",
+                normalizeSex(r.sex),
+                normalizeCivilStatus(r.civil),
+                normalizeCitizenship(r.citizen),
+                (r.prof || "").toUpperCase(),
+                (r.contact || "").toUpperCase(),
+                (r.email || "").toUpperCase(),
+                r.edu || "",
+                (r.mother_first || "").toUpperCase(),
+                (r.mother_middle || "").toUpperCase(),
+                (r.mother_last || "").toUpperCase()
+            ]);
+
+            const wb = XLSX.utils.book_new();
+            const wsInstr = XLSX.utils.aoa_to_sheet([instrHeader, ...instrData]);
+            XLSX.utils.book_append_sheet(wb, wsInstr, "INSTRUCTIONS");
+
+            const wsData = XLSX.utils.aoa_to_sheet([dataHeader, ...dataRows]);
+            wsData['!cols'] = [
+                {wch:17.88},{wch:11.88},{wch:10.13},{wch:12.13},{wch:7.88},{wch:10.5},{wch:22.88},
+                {wch:13},{wch:12},{wch:11.38},{wch:23.75},{wch:16.63},{wch:23.63},{wch:31.5},
+                {wch:20.38},{wch:21.63},{wch:19.5}
+            ];
+            XLSX.utils.book_append_sheet(wb, wsData, "DATA");
+
+            XLSX.writeFile(wb, "RBI_Export_BIMS.xlsx");
         }
 
         function backupData() { const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({db, settings, household_db})); const a = document.createElement('a'); a.href = dataStr; a.download = "RBI_Backup.json"; a.click(); }
@@ -1942,7 +2074,7 @@
                     const row = json[i]; 
                     if(!row || Object.keys(row).length === 0) continue;
                     
-                    const type = safeStr(row['INHABITANT TYPE'], "NON-MIGRANT");
+                    const type = normalizeInhabitantType(safeStr(row['INHABITANT TYPE'], "NON-MIGRANT"));
                     const philsys = safeStr(row['PHYLSYS ID NUMBER'] || row['Phylsys ID Number'] || row['PhilSys ID']);
                     const last = safeStr(row['LAST NAME'] || row['Last Name']);
                     const first = safeStr(row['FIRST NAME'] || row['First Name']);
@@ -1951,9 +2083,9 @@
                     const bplace = safeStr(row['BIRTH PLACE'] || row['Birth Place']);
                     // Bdate doesn't need toUpperCase, just trim
                     const bdate = (row['BIRTHDATE (YYYY-MM-DD)'] || row['Birthdate'] || row['BIRTHDATE'] || '').toString().trim();
-                    const sex = safeStr(row['SEX'] || row['Sex']);
-                    const civil = safeStr(row['CIVIL STATUS'] || row['Civil Status']);
-                    const citizen = safeStr(row['CITIZENSHIP'] || row['Citizenship'], 'FILIPINO');
+                    const sex = normalizeSex(safeStr(row['SEX'] || row['Sex']));
+                    const civil = normalizeCivilStatus(safeStr(row['CIVIL STATUS'] || row['Civil Status']));
+                    const citizen = normalizeCitizenship(safeStr(row['CITIZENSHIP'] || row['Citizenship'], 'FILIPINO'));
                     const prof = safeStr(row['PROFESSION/ OCCUPATION'] || row['PROFESSION/OCCUPATION'] || row['Profession']);
                     const contact = (row['CONTACT NUMBER'] || row['Contact Number'] || '').toString().trim();
                     const email = (row['EMAIL ADDRESS'] || row['Email Address'] || '').toString().trim();
